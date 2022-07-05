@@ -1,0 +1,8 @@
+
+server:
+  port: 5000
+
+spring:
+  security:
+    user:
+      password: bc22c077-82eb-4f06-a200-253df96503a0

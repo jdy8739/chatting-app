@@ -1,6 +1,7 @@
 import React, { useRef } from "react";
+import Seo from "../../components/Seo";
 
-function ChattingRoom() {
+function ChattingRoom({ id }: { id: number }) {
     const formRef = useRef<HTMLInputElement>(null);
     const handleChatSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -9,6 +10,7 @@ function ChattingRoom() {
     };
     return (
         <>
+            <Seo title={`Chato room ${id}`}/>
             <form onSubmit={handleChatSubmit}>
                 <input ref={formRef} />
                 <button>submit</button>
@@ -16,5 +18,11 @@ function ChattingRoom() {
         </>
     )
 };
+
+export function getServerSideProps({ params: { id }}: { params: { id: number }}) {
+    return {
+        props: { id }
+    };
+}
 
 export default ChattingRoom;
