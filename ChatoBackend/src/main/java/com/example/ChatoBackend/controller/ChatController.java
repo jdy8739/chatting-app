@@ -16,14 +16,9 @@ import java.util.Map;
         allowedHeaders = "*")
 public class ChatController {
 
-    @GetMapping("/test")
-    public ResponseEntity<String> test() {
-        return new ResponseEntity<String>("Hi", HttpStatus.OK);
-    }
-
-    @PostMapping("/receive")
-    public ResponseEntity<Void> receiveChatMsg(@RequestBody Map<String, String> map) {
-        log.info("" + map.get("msg"));
-        return new ResponseEntity<Void>(HttpStatus.OK);
+    @GetMapping("/chat")
+    public String chatGET(){
+        log.info("@ChatController, chat GET()");
+        return "chat";
     }
 }
