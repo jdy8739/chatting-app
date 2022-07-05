@@ -2,6 +2,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 
 function NavBar() {
+    const router = useRouter();
     return (
         <>
             <div className="bar-bg">
@@ -9,15 +10,15 @@ function NavBar() {
                     <h1>ChaTo</h1>
                     &emsp;
                     <Link href="/chat/list">
-                        <button>chat</button>
+                        <button className={router.pathname === '/chat/list' ? 'clicked' : ''}>chat</button>
                     </Link>
                     <Link href="/chat/create">
-                        <button>make chat</button>
+                        <button className={router.pathname === '/chat/create' ? 'clicked' : ''}>make chat</button>
                     </Link>
                     <button>search chat</button>
                     <div style={{ flexGrow: '1' }}></div>
                     <Link href="/user/signup">
-                        <button>sign up</button>
+                        <button className={router.pathname === '/user/signup' ? 'clicked' : ''}>sign up</button>
                     </Link>
                     <button>sign in</button>
                     <Link href="#">
@@ -43,8 +44,13 @@ function NavBar() {
                     margin: auto;
                 }
 
+                .clicked {
+                    color: orange;
+                }
+
                 h1 {
                     color: orange;
+                    font-weight: bold;
                 }
             `}</style>
         </>

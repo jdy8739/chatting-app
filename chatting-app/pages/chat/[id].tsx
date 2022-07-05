@@ -1,4 +1,5 @@
 import React, { useRef } from "react";
+import { io } from "socket.io-client";
 import Seo from "../../components/Seo";
 
 function ChattingRoom({ id }: { id: number }) {
@@ -8,6 +9,8 @@ function ChattingRoom({ id }: { id: number }) {
         if(formRef.current)
             formRef.current.value = '';
     };
+
+    const socket = io('ws://localhost:5000');
     return (
         <>
             <Seo title={`Chato room ${id}`}/>
