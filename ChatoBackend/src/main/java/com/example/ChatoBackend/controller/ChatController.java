@@ -23,9 +23,9 @@ public class ChatController {
         JSONParser jsonParser = new JSONParser();
         JSONObject jsonObject = (JSONObject) jsonParser.parse(messageString);
         MessageDTO messageDTO = new MessageDTO(
+                jsonObject.get("roomId").toString(),
                 jsonObject.get("writer").toString(),
-                jsonObject.get("message").toString(),
-                jsonObject.get("roomId").toString()
+                jsonObject.get("message").toString()
                 );
         template.convertAndSend("/sub/chat/room/" + messageDTO.getRoomId(), messageDTO);
     }
