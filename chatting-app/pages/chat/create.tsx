@@ -1,6 +1,11 @@
 
 function CreateChat() {
-    return "create chat";
+    
+    return (
+        <div className="container">
+            
+        </div>
+    )
 }
 
 export default CreateChat;

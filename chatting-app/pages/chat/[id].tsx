@@ -14,6 +14,7 @@ let stomp: any;
 let randonUserId: string = '';
 
 const MASTER = 'MASTER';
+const REJECTED = 'rejected';
 
 function ChattingRoom({ id }: { id: number }) {
     let newMessage: string;
@@ -41,11 +42,11 @@ function ChattingRoom({ id }: { id: number }) {
     const sendMasterMessage = (isUserEntered: boolean) => {
         const masterMsg = isUserEntered ? 'joind' : 'left'
         if (socket && stomp) {
-            stomp.send('/pub/chat/message', JSON.stringify({
-                roomId: id, message: `${randonUserId.slice(0, 9)} has just ${masterMsg} the room.` , writer: MASTER }));
+            stomp.send('/pub/chat/enter_or_leave', JSON.stringify({
+                roomId: id, message: `${randonUserId.slice(0, 9)} has just ${masterMsg} the room.`, writer: MASTER }));
         }
     }
-    const subScribeNewMessage = () => {
+    const subscribeNewMessage = () => {
         stomp.subscribe(`/sub/chat/room/${id}`, ({ body }: { body: string }) => {
             const newMessage: IMessageBody = JSON.parse(body);
             updateMessageList(newMessage);
@@ -53,6 +54,8 @@ function ChattingRoom({ id }: { id: number }) {
         })
     };
     const updateMessageList = (newMessageInfo: IMessageBody) => {
+        if (newMessageInfo.writer === MASTER && newMessageInfo.message === REJECTED)
+            return;
         setMessages(messages => {
             const copied = [...messages];
             copied.push(newMessageInfo);
@@ -63,19 +66,19 @@ function ChattingRoom({ id }: { id: number }) {
         socket = new WebSocket('ws://localhost:5000/stomp/chat');
         stomp = webstomp.over(socket);
         stomp.connect({}, () => {
-            subScribeNewMessage();
+            subscribeNewMessage();
             sendMasterMessage(true);
         });
-        stomp.debug = () => null;
+        // stomp.debug = () => null;
         randonUserId = generateRandonUserId();
         return () => {
-            sendMasterMessage(false)
+            sendMasterMessage(false);
             randonUserId = '';
         }
     }, []);
     return (
         <>
-            <Seo title={`Chato room ${id}`}/>
+            <Seo title={`Chato room ${id}`} />
             <div className="container">
                 {
                     messages.map((msg, i) => 
