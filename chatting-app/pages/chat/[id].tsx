@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
+import webstomp from "webstomp-client";
 import Seo from "../../components/Seo";
 
 let socket: WebSocket;
+let stomp: any;
 
 function ChattingRoom({ id }: { id: number }) {
     let newMessage: string;
@@ -13,7 +15,10 @@ function ChattingRoom({ id }: { id: number }) {
             newMessage = formRef.current.value;
             formRef.current.value = '';
         }
-        if (socket) socket.send(newMessage);
+        if (socket && stomp) {
+            stomp.send('/pub/chat/message', JSON.stringify({
+                roomId: '11', message: newMessage, writer: 'jdy8739' }));
+        }
     };
     const onMessage = (msgEvent: MessageEvent) => {
         setMessages(messages => {
@@ -23,8 +28,13 @@ function ChattingRoom({ id }: { id: number }) {
         });
     }
     useEffect(() => {
-        socket = new WebSocket('ws://localhost:5000/ws/chat/' + id);
-        socket.onmessage = onMessage;
+        socket = new WebSocket('ws://localhost:5000/stomp/chat');
+        stomp = webstomp.over(socket);
+        stomp.connect({}, () => {
+            stomp.subscribe(`/sub/chat/room/11`, (chat: any) => {
+                console.log(chat);
+            })
+        })
     }, [])
     return (
         <>

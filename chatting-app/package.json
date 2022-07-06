@@ -13,7 +13,8 @@
     "next": "12.2.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "styled-components": "^5.3.5"
+    "styled-components": "^5.3.5",
+    "webstomp-client": "^1.2.6"
   },
   "devDependencies": {
     "@types/node": "18.0.1",
