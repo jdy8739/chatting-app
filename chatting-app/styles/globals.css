@@ -31,3 +31,36 @@ button:hover {
 * {
   box-sizing: border-box;
 }
+
+.chat {
+  color: white;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.my-chat {
+  background-color: orange;
+}
+
+.others-chat {
+  background-color: rgb(0, 219, 146);
+}
+
+.chat-box {
+  padding: 20px 0px;
+}
+
+.my-chat-box {
+  text-align: right;
+}
+
+.others-chat-box {
+  text-align: left;
+}
+
+.container {
+  width: 70%;
+  max-width: 2250px;
+  min-width: 450px;
+  margin: 100px auto;
+}
