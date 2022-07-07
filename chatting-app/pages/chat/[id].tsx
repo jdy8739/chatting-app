@@ -1,3 +1,4 @@
+import { useRouter } from "next/router";
 import React, { useEffect, useRef, useState } from "react";
 import webstomp from "webstomp-client";
 import Seo from "../../components/Seo";
@@ -17,6 +18,7 @@ const MASTER = 'MASTER';
 const REJECTED = 'rejected';
 
 function ChattingRoom({ id }: { id: number }) {
+    const router = useRouter();
     let newMessage: string;
     const [messages, setMessages] = useState<IMessageBody[]>([]);
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -54,8 +56,12 @@ function ChattingRoom({ id }: { id: number }) {
         })
     };
     const updateMessageList = (newMessageInfo: IMessageBody) => {
-        if (newMessageInfo.writer === MASTER && newMessageInfo.message === REJECTED)
+        if (newMessageInfo.writer === MASTER && newMessageInfo.message === REJECTED) {
+            stomp.disconnect(() => {
+                router.back();
+            }, {})
             return;
+        }
         setMessages(messages => {
             const copied = [...messages];
             copied.push(newMessageInfo);
@@ -69,7 +75,7 @@ function ChattingRoom({ id }: { id: number }) {
             subscribeNewMessage();
             sendMasterMessage(true);
         });
-        // stomp.debug = () => null;
+        stomp.debug = () => null;
         randonUserId = generateRandonUserId();
         return () => {
             sendMasterMessage(false);

@@ -13,6 +13,7 @@
     "next": "12.2.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "react-toastify": "^9.0.5",
     "styled-components": "^5.3.5",
     "webstomp-client": "^1.2.6"
   },
