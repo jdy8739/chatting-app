@@ -38,18 +38,18 @@ function CreateChat() {
         const subject = isSubjectInputDisabled ? subjectSelectRef.current?.value : subjectInputRef.current?.value;
         const password = pwInputRef.current?.value
         if (!checkFormValidation(roomName, subject, password)) return;
-        // const { status } = await axios.post(``, {
-        //     roomName: roomName,
-        //     subject: subject,
-        //     limit: limit,
-        //     isPwRequired: isPwRequired,
-        //     password: isPwRequired ? pwInputRef.current?.value : null,
-        //     owner: null,
-        // })
-        // if (status === 200) router.push('/chat/list');
-        // else toast.error('There might be an error in the server. Please try later. :(', toastConfig);
-        toast.success('The room has created!', toastConfig);
-        router.push('/chat/list');
+        const { status } = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/create`, {
+            roomName: roomName,
+            subject: subject,
+            limit: limit,
+            isPwRequired: isPwRequired,
+            password: isPwRequired ? pwInputRef.current?.value : null,
+            owner: null,
+        })
+        if (status === 200) {
+            toast.success('The room has been created!', toastConfig);
+            router.push('/chat/list');
+        } else toast.error('There might be an error in the server. Please try later. :(', toastConfig);
     }
     const checkFormValidation = (roomName?: string, subject?: string, password?: string) :boolean => {
         if (!roomName) {
@@ -120,6 +120,7 @@ function CreateChat() {
                         style={{ width: '220px' }}
                         disabled={!isPwRequired}
                         ref={pwInputRef}
+                        type="password"
                     />
                 </div>
             </form>

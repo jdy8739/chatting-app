@@ -29,6 +29,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 	implementation group: 'org.webjars', name: 'stomp-websocket', version: '2.3.3-1'
 	implementation group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
+	// implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa', version: '2.6.4'
 }
 
 tasks.named('test') {

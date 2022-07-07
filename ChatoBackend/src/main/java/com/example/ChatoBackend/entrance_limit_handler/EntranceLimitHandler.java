@@ -21,5 +21,10 @@ public class EntranceLimitHandler {
         } else {
             return false;
         }
-    };
+    }
+
+    public void reduceNumberOfParticipants(Integer roomId) {
+        List<Integer> targetList = entranceLimitMap.get(roomId);
+        targetList.set(0, targetList.get(0) - 1);
+    }
 }
