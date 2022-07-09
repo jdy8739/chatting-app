@@ -20,8 +20,8 @@ public class ChatRoom {
     @Column(length = 50, nullable = false)
     private String roomName;
 
-    @Column(nullable = false)
-    private Integer limit;
+    @Column(length = 2, nullable = false)
+    private Long limitation;
 
     @Column(length = 20, nullable = false)
     private String subject;

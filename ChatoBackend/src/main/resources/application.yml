@@ -1,16 +1,11 @@
-
 server:
   port: 5000
 
 spring:
-  security:
-    user:
-      password: bc22c077-82eb-4f06-a200-253df96503a0
-
   datasource:
-    url: jdbc:mysql://localhost:3306/chatodb?serverTimezone=UTC&useSSL=false
-    username: root
-    password: 0886
+    url: jdbc:mysql://localhost:3306/chatodb?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+    username: chato
+    password: chato
     driver-class-name: com.mysql.cj.jdbc.Driver
     dialect: org.hibernate.dialect.MySQL8Dialect
 

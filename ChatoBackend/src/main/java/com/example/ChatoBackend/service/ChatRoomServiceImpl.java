@@ -10,9 +10,8 @@ import java.util.List;
 @Service
 public class ChatRoomServiceImpl implements ChatRoomService {
 
-//    @Autowired
-//    private ChatRoomRepository chatRoomRepository;
-    //얘가 문제
+    @Autowired
+    private ChatRoomRepository chatRoomRepository;
 
     @Override
     public void saveChatRoom(ChatRoom chatRoom) {
