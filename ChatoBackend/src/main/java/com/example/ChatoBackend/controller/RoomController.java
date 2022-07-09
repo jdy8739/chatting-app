@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class RoomController {
 
     @Autowired
-    ChatRoomService chatRoomService;
+    ChatRoomServiceImpl chatRoomService;
 
     @PostMapping("/create")
     public ResponseEntity<Void> createRoom(@Validated @RequestBody ChatRoom chatRoom) {

@@ -4,7 +4,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { toastConfig } from "../../utils/utils";
 
-const roomSubjectOptions = ['life', 'sports', 'study', 'jobs', 'leisure', 'dish', 'tour', 'economy', 'world'];
+const roomSubjectOptions = [
+    'life', 'sports', 'study', 'jobs', 'leisure', 'dish', 'tour', 'economy', 'world', 'else'
+];
 
 function CreateChat() {
     const router = useRouter();
@@ -37,7 +39,7 @@ function CreateChat() {
         const roomName = roomNameInputRef.current?.value;
         const subject = isSubjectInputDisabled ? subjectSelectRef.current?.value : subjectInputRef.current?.value;
         const password = pwInputRef.current?.value
-        if (!checkFormValidation(roomName, subject, password)) return;
+        if (!checkFormValidation(roomName, password)) return;
         const { status } = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/create`, {
             roomName: roomName,
             subject: subject,
@@ -51,7 +53,7 @@ function CreateChat() {
             router.push('/chat/list');
         } else toast.error('There might be an error in the server. Please try later. :(', toastConfig);
     }
-    const checkFormValidation = (roomName?: string, subject?: string, password?: string) :boolean => {
+    const checkFormValidation = (roomName?: string, password?: string) :boolean => {
         if (!roomName) {
             toast.error('We need your new chat room name.', toastConfig);
             return false;
