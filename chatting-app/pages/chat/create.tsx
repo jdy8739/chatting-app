@@ -43,7 +43,7 @@ function CreateChat() {
         const { status } = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/create`, {
             roomName: roomName,
             subject: subject,
-            limit: limit,
+            limitation: limit,
             isPwRequired: isPwRequired,
             password: isPwRequired ? pwInputRef.current?.value : null,
             owner: null,

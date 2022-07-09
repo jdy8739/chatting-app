@@ -15,12 +15,11 @@ public class ChatRoomServiceImpl implements ChatRoomService {
 
     @Override
     public void saveChatRoom(ChatRoom chatRoom) {
-        //chatRoomRepository.save(chatRoom);
+        chatRoomRepository.save(chatRoom);
     }
 
     @Override
     public List<ChatRoom> findEveryChatRoom() {
-        //return chatRoomRepository.findAll();
-        return null;
+        return chatRoomRepository.findAll();
     }
 }
