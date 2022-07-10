@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import { toastConfig } from "../../utils/utils";
 
 const roomSubjectOptions = [
-    'life', 'sports', 'study', 'jobs', 'leisure', 'dish', 'tour', 'economy', 'world', 'else'
+    'life', 'sports', 'study', 'jobs', 'leisure', 'dish', 'tour', 'economy', 'world', 'art', 'music', 'else'
 ];
 
 function CreateChat() {
