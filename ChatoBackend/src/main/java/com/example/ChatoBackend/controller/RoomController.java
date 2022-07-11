@@ -12,6 +12,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Controller
@@ -19,6 +20,9 @@ import java.util.List;
 @CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*")
 public class RoomController {
 
+    private final String ROOM_ID = "roomId";
+
+    private final String NEW_SUBJECT = "newSubject";
     @Autowired
     ChatRoomServiceImpl chatRoomService;
 
@@ -31,5 +35,11 @@ public class RoomController {
     @GetMapping("/list")
     public ResponseEntity<List<ChatRoom>> getRoomList() {
         return new ResponseEntity<>(chatRoomService.findEveryChatRoom(), HttpStatus.OK);
+    }
+
+    @PutMapping("/change_subject")
+    public ResponseEntity<Void> changeSubject(@RequestBody Map<String, String> map) {
+        chatRoomService.changeSubject(Long.parseLong(map.get(ROOM_ID)), map.get(NEW_SUBJECT));
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }

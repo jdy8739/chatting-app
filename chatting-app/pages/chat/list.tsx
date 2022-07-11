@@ -23,41 +23,46 @@ function ChattingList() {
         })
         setRoomList(defaultRoomListObject);
     }
-    const onDragEnd = (args: DropResult) => console.log(args.destination);
+    const onDragEnd = ({ destination, source }: DropResult) => {
+        if (destination) {
+            const copied = {...roomList};
+            const target = roomList[source.droppableId].list[source.index];
+            let isChangeAvail = false;
+            if (source.droppableId !== destination.droppableId) {
+                if (!changeToNewSubject(target.roomId, destination.droppableId)) return;
+                isChangeAvail = true;
+            } else isChangeAvail = true;
+            if (isChangeAvail) {
+                setRoomList(roomList => {
+                    if (destination) {
+                        copied[source.droppableId].list.splice(source.index, 1);
+                        copied[destination.droppableId].list.splice(destination.index, 0, target);
+                    }
+                    return copied;
+                })
+            }
+        }
+    }
+    const changeToNewSubject = async (roomId: number, newSubject?: string) => {
+        const result = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/room/change_subject`, {
+            newSubject: newSubject,
+            roomId: String(roomId)
+        });
+        if (result.status === 200) {
+            return true;
+        } else return false;
+    }
     useEffect(() => {
         fetchRoomList();
     }, [])
     return (
         <>
-            <div className="container grid-box">
-                {Object.keys(roomList).map((key, i) => <ClassifiedRooms key={i} rooms={roomList[key].list} />)}
-            </div>
-            {/* <DragDropContext onDragEnd={onDragEnd}>
-                <div>
-                    <Droppable droppableId="0" >
-                        {(magic) => (
-                            <ul ref={magic.innerRef} {...magic.droppableProps}>
-                                <Draggable draggableId="first" index={0} key={0}>
-                                    {(magic) => (
-                                    <li ref={magic.innerRef} {...magic.draggableProps}>
-                                        <span {...magic.dragHandleProps}>🔥</span>
-                                        One
-                                    </li>
-                                    )}
-                                </Draggable>
-                                <Draggable draggableId="second" index={1} key={1}>
-                                    {(magic) => (
-                                    <li ref={magic.innerRef} {...magic.draggableProps}>
-                                        <span {...magic.dragHandleProps}>🔥</span>
-                                        two
-                                    </li>
-                                    )}
-                                </Draggable>
-                            </ul>
-                        )}
-                    </Droppable>
+            <DragDropContext onDragEnd={onDragEnd}>
+                <div className="container grid-box">
+                    {Object.keys(roomList).map((key, i) => 
+                    <ClassifiedRooms key={i} rooms={roomList[key].list} subject={key} />)}
                 </div>
-            </DragDropContext> */}
+            </DragDropContext>
             <style>{`
                 .grid-box {
                     display: grid;

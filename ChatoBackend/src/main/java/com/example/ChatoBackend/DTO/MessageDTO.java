@@ -11,4 +11,5 @@ public class MessageDTO {
     private String roomId;
     private String writer;
     private String message;
+    private String time;
 }

@@ -1,3 +1,4 @@
+import { time } from "console";
 import { useRouter } from "next/router";
 import React, { useEffect, useRef, useState } from "react";
 import webstomp from "webstomp-client";
@@ -8,6 +9,7 @@ interface IMessageBody {
     roomId: string,
     message: string,
     writer: string,
+    time?: string
 }
 
 let socket: WebSocket;
@@ -17,7 +19,7 @@ let randonUserId: string = '';
 const MASTER = 'MASTER';
 const REJECTED = 'rejected';
 
-function ChattingRoom({ id }: { id: number }) {
+function ChattingRoom({ id, roomName }: { id: number, roomName: string }) {
     const router = useRouter();
     let newMessage: string;
     const [messages, setMessages] = useState<IMessageBody[]>([]);
@@ -36,13 +38,19 @@ function ChattingRoom({ id }: { id: number }) {
             textAreaRef.current.value = '';
         }
         if (socket && stomp) {
+            const now = new Date();
+            const time = `${now.getHours()}:${now.getMinutes()}`;
             stomp.send('/pub/chat/message', JSON.stringify({
-                roomId: id, message: newMessage, writer: randonUserId }));
-                textAreaRef.current?.setSelectionRange(0, 0);
+                roomId: id, 
+                message: newMessage,
+                writer: randonUserId, 
+                time: time
+            }));
+            textAreaRef.current?.setSelectionRange(0, 0);
         }
     }
     const sendMasterMessage = (isUserEntered: boolean) => {
-        const masterMsg = isUserEntered ? 'joind' : 'left'
+        const masterMsg = isUserEntered ? 'joined' : 'left'
         if (socket && stomp) {
             stomp.send('/pub/chat/enter_or_leave', JSON.stringify({
                 roomId: id, message: `${randonUserId.slice(0, 9)} has just ${masterMsg} the room.`, writer: MASTER }));
@@ -58,7 +66,7 @@ function ChattingRoom({ id }: { id: number }) {
     const updateMessageList = (newMessageInfo: IMessageBody) => {
         if (newMessageInfo.writer === MASTER && newMessageInfo.message === REJECTED) {
             stomp.disconnect(() => {
-                router.back();
+                router.push('/chat/list');
             }, {})
             return;
         }
@@ -84,7 +92,7 @@ function ChattingRoom({ id }: { id: number }) {
     }, []);
     return (
         <>
-            <Seo title={`Chato room ${id}`} />
+            <Seo title={`Chato room ${roomName}`} />
             <div className="container">
                 {
                     messages.map((msg, i) => 
@@ -97,13 +105,29 @@ function ChattingRoom({ id }: { id: number }) {
                                 <NameOfTheChatUser msg={msg}/>
                             }
                             {
-                                msg.writer == MASTER ?
+                                msg.writer === MASTER ?
                                 <span className="master-chat">{msg.message}</span> :
-                                <span 
-                                    className={`chat ${msg.writer === randonUserId ? 'my-chat' : 'others-chat'}`}
-                                >
-                                    {msg.message}
-                                </span>
+                                <>
+                                    {i !== 0 && 
+                                    messages[i - 1].time !== msg.time && 
+                                    msg.writer === randonUserId &&
+                                    <ChatTimeComponent 
+                                        time={msg.time || ''}
+                                        isMyMessage={msg.writer === randonUserId} 
+                                    />}
+                                    <span 
+                                        className={`chat ${msg.writer === randonUserId ? 'my-chat' : 'others-chat'}`}
+                                    >
+                                        {msg.message}
+                                    </span>
+                                    {i !== 0 && 
+                                    messages[i - 1].time !== msg.time && 
+                                    msg.writer !== randonUserId &&
+                                    <ChatTimeComponent 
+                                        time={msg.time || ''}
+                                        isMyMessage={msg.writer === randonUserId} 
+                                    />}
+                                </>
                             }
                         </div>
                     )
@@ -138,19 +162,34 @@ function ChattingRoom({ id }: { id: number }) {
                         font-size: 20px;
                         font-weight: bold;
                     }
+                    .time {
+                        font-size: 7px;
+                        color: gray;
+                    }
                 `}</style>
             </div>
         </>
     )
 };
-export function getServerSideProps({ params: { id }}: { params: { id: number }}) {
+export function getServerSideProps({ params: { id }, query: { roomName }}: 
+    { params: {id: number}, query: {roomName: string} }) {
     return {
-        props: { id }
+        props: { id, roomName: roomName || '' }
     };
 }
 
 function NameOfTheChatUser({ msg }: { msg: IMessageBody }) {
     return msg.writer !== MASTER ? <h5>{msg.writer.slice(0, 9)}</h5> : null;
+}
+
+function ChatTimeComponent({ time, isMyMessage }: { time: string, isMyMessage: boolean }) {
+    return (
+        <span>
+            { !isMyMessage && <>&ensp;</> }
+            <span className="time">{time}</span>
+            { isMyMessage && <>&ensp;</> }
+        </span>
+    )
 }
 
 export default ChattingRoom;
