@@ -8,6 +8,12 @@ spring:
     password: chato
     driver-class-name: com.mysql.cj.jdbc.Driver
     dialect: org.hibernate.dialect.MySQL8Dialect
+    hikari:
+      connection-timeout: 3000
+      validation-timeout: 3000
+      minimum-idle: 5
+      max-lifetime: 240000
+      maximum-pool-size: 20
 
   jpa:
     open-in-view: false

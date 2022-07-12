@@ -25,9 +25,7 @@ public class MessageServiceImpl implements MessageService {
     @Override
     public void saveMessage(MessageDTO messageDTO) {
         try {
-            if (messageRepository.saveMessage(messageDTO) != 1) {
-                throw new SQLException();
-            }
+            messageRepository.saveMessage(messageDTO);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

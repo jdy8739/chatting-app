@@ -20,7 +20,7 @@ public class MessageRepository {
     @Autowired
     private DataSource dataSource;
 
-    public int createDynamicTable(Long roomId) throws SQLException {
+    public void createDynamicTable(Long roomId) throws SQLException {
         Connection con = dataSource.getConnection();
         Statement sm = con.createStatement();
         String tableName = "room_" + roomId.toString();
@@ -33,10 +33,11 @@ public class MessageRepository {
                 "is_deleted TINYINT(1) NOT NULL DEFAULT 0, " +
                 "PRIMARY KEY (msg_id) " +
                 ");";
-        return sm.executeUpdate(query);
+        sm.executeUpdate(query);
+        con.close();
     }
 
-    public int saveMessage(MessageDTO messageDTO) throws SQLException {
+    public void saveMessage(MessageDTO messageDTO) throws SQLException {
         String tableName = "room_" + messageDTO.getRoomId();
         String query = "insert into " + tableName + " (writer, message, time) values (?, ?, ?)";
         Connection con = dataSource.getConnection();
@@ -44,7 +45,8 @@ public class MessageRepository {
         ps.setString(1, messageDTO.getWriter());
         ps.setString(2, messageDTO.getMessage());
         ps.setString(3, messageDTO.getTime());
-        return ps.executeUpdate();
+        ps.executeUpdate();
+        con.close();
     }
 
     public List<MessageDTO> getMessages(Long roomId, Integer offset) throws SQLException {
@@ -63,6 +65,7 @@ public class MessageRepository {
             boolean isDeleted = rs.getBoolean(5);
             messageDTOList.add(new MessageDTO(msgNo.longValue(), null, writer, message, time, isDeleted));
         }
+        con.close();
         return messageDTOList;
     }
 }
