@@ -44,7 +44,7 @@ function CreateChat() {
             roomName: roomName,
             subject: subject,
             limitation: limit,
-            isPwRequired: isPwRequired,
+            pwRequired: isPwRequired,
             password: isPwRequired ? pwInputRef.current?.value : null,
             owner: null,
         })

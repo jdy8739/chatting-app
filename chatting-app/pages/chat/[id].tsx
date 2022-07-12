@@ -2,7 +2,6 @@ import axios from "axios";
 import { time } from "console";
 import { useRouter } from "next/router";
 import React, { useEffect, useRef, useState } from "react";
-import { toast } from "react-toastify";
 import webstomp from "webstomp-client";
 import Seo from "../../components/Seo";
 import { generateRandonUserId } from "../../utils/utils";
@@ -18,14 +17,28 @@ interface IMessageBody {
 let socket: WebSocket;
 let stomp: any;
 let randonUserId: string = '';
+let previousShowCnt = 0;
 
 const MASTER = 'MASTER';
 const REJECTED = 'rejected';
 
+const fetchPreviousChat = async (id: number, count: number) => {
+    let previousChat: IMessageBody[] | undefined;
+    try {
+        previousChat = await (await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/room/message/${id}?offset=${count}`)).data;
+        previousChat?.reverse();
+    } catch (e) {
+        console.log(`Failed to fetch previous chat of room id ${id}.`);
+    }
+    return previousChat;
+}
+
 function ChattingRoom({ id, roomName, previousChat }: { id: number, roomName: string, previousChat: IMessageBody[] }) {
-    const router = useRouter();
     let newMessage: string;
+    const router = useRouter();
     const [messages, setMessages] = useState<IMessageBody[]>(previousChat);
+    const [isAllChatShown, setIsAllChatShown] = useState(previousChat.length < 10);
+    const [targetChatNumber, setTargetChatNumber] = useState(-1);
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
     const handleChatSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -79,6 +92,27 @@ function ChattingRoom({ id, roomName, previousChat }: { id: number, roomName: st
             return copied;
         });
     };
+    const showPreviousChat = async () => {
+        setTargetChatNumber(-1);
+        previousShowCnt += 1;
+        const previousChat = await fetchPreviousChat(id, previousShowCnt);
+        if (previousChat) {
+            if (previousChat.length < 10) {
+                setIsAllChatShown(true);
+            }
+            setMessages(messages => {
+                const copied = [...previousChat, ...messages];
+                return copied;
+            })
+        }
+    };
+    const handleChatDblClick = (index: number) => {
+        if (index === targetChatNumber) setTargetChatNumber(-1);
+        else setTargetChatNumber(index);
+    }
+    const deleteChat = () => {
+        
+    }
     useEffect(() => {
         socket = new WebSocket('ws://localhost:5000/stomp/chat');
         stomp = webstomp.over(socket);
@@ -91,11 +125,21 @@ function ChattingRoom({ id, roomName, previousChat }: { id: number, roomName: st
         return () => {
             sendMasterMessage(false);
             randonUserId = '';
+            previousShowCnt = 0;
         }
     }, []);
     return (
         <>
             <Seo title={`Chato room ${roomName}`} />
+            {
+                isAllChatShown ||
+                <div
+                    className="previous-chat-show"
+                    onClick={showPreviousChat}
+                >
+                    <h4>show previous</h4>
+                </div>
+            }
             <div className="container">
                 {
                     messages.map((msg, i) => 
@@ -118,9 +162,15 @@ function ChattingRoom({ id, roomName, previousChat }: { id: number, roomName: st
                                         time={msg.time || ''}
                                         isMyMessage={msg.writer === randonUserId} 
                                     />}
-                                    <span 
+                                    <span
+                                        onDoubleClick={() => msg.writer === randonUserId ? handleChatDblClick(i) : null}
                                         className={`chat ${msg.writer === randonUserId ? 'my-chat' : 'others-chat'}`}
                                     >
+                                        {targetChatNumber === i && 
+                                        <span
+                                            onClick={() => deleteChat()}
+                                            className="delete-btn">x
+                                        </span>}
                                         {msg.message}
                                     </span>
                                     {i !== 0 && 
@@ -169,20 +219,28 @@ function ChattingRoom({ id, roomName, previousChat }: { id: number, roomName: st
                         font-size: 7px;
                         color: gray;
                     }
+                    .previous-chat-show {
+                        width: 100vw;
+                        height: 100px;
+                        background-color: gray;
+                        position: absolute;
+                        top: 55px;
+                        opacity: 0.3;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: white;
+                    }
                 `}</style>
             </div>
         </>
     )
 };
+
 export async function getServerSideProps({ params: { id }, query: { roomName }}: 
     { params: {id: number}, query: {roomName: string} }) {
-    let previousChat: IMessageBody[] | undefined;
-    try {
-        previousChat = await (await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/room/message/${id}?offset=0`)).data;
-        previousChat?.reverse();
-    } catch (e) {
-        console.log(`Failed to fetch previous chat of room id ${id}.`);
-    }
+    const previousChat: IMessageBody[] | undefined = await fetchPreviousChat(id, previousShowCnt);
     return {
         props: { id, roomName: roomName || '', previousChat: previousChat ? previousChat : [] }
     };

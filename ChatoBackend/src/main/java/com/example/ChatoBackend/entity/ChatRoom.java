@@ -27,7 +27,7 @@ public class ChatRoom {
     private String subject;
 
     @Column(nullable = false)
-    private boolean isPwRequired;
+    private boolean pwRequired;
 
     @Column(length = 20)
     private String password;
