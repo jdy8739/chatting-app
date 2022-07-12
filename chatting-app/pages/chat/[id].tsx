@@ -1,6 +1,8 @@
+import axios from "axios";
 import { time } from "console";
 import { useRouter } from "next/router";
 import React, { useEffect, useRef, useState } from "react";
+import { toast } from "react-toastify";
 import webstomp from "webstomp-client";
 import Seo from "../../components/Seo";
 import { generateRandonUserId } from "../../utils/utils";
@@ -9,7 +11,8 @@ interface IMessageBody {
     roomId: string,
     message: string,
     writer: string,
-    time?: string
+    time?: string,
+    isDeleted?: boolean,
 }
 
 let socket: WebSocket;
@@ -19,10 +22,10 @@ let randonUserId: string = '';
 const MASTER = 'MASTER';
 const REJECTED = 'rejected';
 
-function ChattingRoom({ id, roomName }: { id: number, roomName: string }) {
+function ChattingRoom({ id, roomName, previousChat }: { id: number, roomName: string, previousChat: IMessageBody[] }) {
     const router = useRouter();
     let newMessage: string;
-    const [messages, setMessages] = useState<IMessageBody[]>([]);
+    const [messages, setMessages] = useState<IMessageBody[]>(previousChat);
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
     const handleChatSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -171,10 +174,17 @@ function ChattingRoom({ id, roomName }: { id: number, roomName: string }) {
         </>
     )
 };
-export function getServerSideProps({ params: { id }, query: { roomName }}: 
+export async function getServerSideProps({ params: { id }, query: { roomName }}: 
     { params: {id: number}, query: {roomName: string} }) {
+    let previousChat: IMessageBody[] | undefined;
+    try {
+        previousChat = await (await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/room/message/${id}?offset=0`)).data;
+        previousChat?.reverse();
+    } catch (e) {
+        console.log(`Failed to fetch previous chat of room id ${id}.`);
+    }
     return {
-        props: { id, roomName: roomName || '' }
+        props: { id, roomName: roomName || '', previousChat: previousChat ? previousChat : [] }
     };
 }
 

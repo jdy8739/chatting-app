@@ -22,7 +22,6 @@ function Room({ room, index }: { room: IRoom, index: number }) {
             >
                 {(provided, snapshot) => (
                     <div 
-                        key={room.roomId}
                         className={`element ${snapshot.isDragging ? 'isDragging' : 'isNotDragging'}`}
                         ref={provided.innerRef}
                         {...provided.draggableProps}

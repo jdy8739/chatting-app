@@ -15,7 +15,6 @@ function ClassifiedRooms({ rooms, subject }: { rooms: IRoom[], subject: string }
                 <Droppable droppableId={subject}>
                     {(provided, snapshot) => (
                         <div 
-                            key={subject}
                             className={`body 
                             ${snapshot.draggingFromThisWith ? 'draggingFromThisWith' : ''} 
                             ${snapshot.draggingOverWith ? 'isDraggingOver' : ''}`}  

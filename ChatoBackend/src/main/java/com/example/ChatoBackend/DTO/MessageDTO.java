@@ -8,8 +8,10 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class MessageDTO {
+    private Long msgNo;
     private String roomId;
     private String writer;
     private String message;
     private String time;
+    private boolean isDeleted;
 }

@@ -1,5 +1,6 @@
 package com.example.ChatoBackend.repository;
 
+import com.example.ChatoBackend.DTO.MessageDTO;
 import com.example.ChatoBackend.entity.ChatRoom;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;

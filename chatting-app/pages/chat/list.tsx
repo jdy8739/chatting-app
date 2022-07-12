@@ -25,7 +25,6 @@ function ChattingList() {
     }
     const onDragEnd = ({ destination, source }: DropResult) => {
         if (destination) {
-            const copied = {...roomList};
             const target = roomList[source.droppableId].list[source.index];
             let isChangeAvail = false;
             if (source.droppableId !== destination.droppableId) {
@@ -34,10 +33,9 @@ function ChattingList() {
             } else isChangeAvail = true;
             if (isChangeAvail) {
                 setRoomList(roomList => {
-                    if (destination) {
-                        copied[source.droppableId].list.splice(source.index, 1);
-                        copied[destination.droppableId].list.splice(destination.index, 0, target);
-                    }
+                    const copied = {...roomList};
+                    copied[source.droppableId].list.splice(source.index, 1);
+                    copied[destination.droppableId].list.splice(destination.index, 0, target);
                     return copied;
                 })
             }

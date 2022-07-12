@@ -3,6 +3,7 @@ package com.example.ChatoBackend.controller;
 import com.example.ChatoBackend.DTO.MessageDTO;
 import com.example.ChatoBackend.entrance_limit_handler.EntranceLimitHandler;
 import com.example.ChatoBackend.service.ChatRoomServiceImpl;
+import com.example.ChatoBackend.service.MessageServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
@@ -34,15 +35,20 @@ public class ChatController {
     @Autowired
     ChatRoomServiceImpl chatRoomService;
 
+    @Autowired
+    MessageServiceImpl messageService;
+
     @MessageMapping(value = "/chat/enter_or_leave")
     public void handleUser(String messageString) throws ParseException {
         JSONParser jsonParser = new JSONParser();
         JSONObject jsonObject = (JSONObject) jsonParser.parse(messageString);
         MessageDTO messageDTO = new MessageDTO(
+                null,
                 jsonObject.get(ROOM_ID).toString(),
                 jsonObject.get(WRITER).toString(),
                 jsonObject.get(MESSAGE).toString(),
-                null
+                null,
+                false
         );
         String roomId = messageDTO.getRoomId();
         /* if (!entranceLimitHandler.checkIfEntranceAvailable(Integer.parseInt(roomId)))
@@ -59,12 +65,14 @@ public class ChatController {
         JSONParser jsonParser = new JSONParser();
         JSONObject jsonObject = (JSONObject) jsonParser.parse(messageString);
         MessageDTO messageDTO = new MessageDTO(
+                null,
                 jsonObject.get(ROOM_ID).toString(),
                 jsonObject.get(WRITER).toString(),
                 jsonObject.get(MESSAGE).toString(),
-                jsonObject.get(TIME).toString()
+                jsonObject.get(TIME).toString(),
+                false
                 );
-        log.info("?" + messageDTO.getTime());
+        messageService.saveMessage(messageDTO);
         template.convertAndSend(
                 "/sub/chat/room/" + messageDTO.getRoomId(), messageDTO);
     }
