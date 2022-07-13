@@ -38,9 +38,10 @@ public class ChatController {
     @Autowired
     MessageServiceImpl messageService;
 
+    JSONParser jsonParser = new JSONParser();
+
     @MessageMapping(value = "/chat/enter_or_leave")
     public void handleUser(String messageString) throws ParseException {
-        JSONParser jsonParser = new JSONParser();
         JSONObject jsonObject = (JSONObject) jsonParser.parse(messageString);
         MessageDTO messageDTO = new MessageDTO(
                 null,
@@ -62,7 +63,6 @@ public class ChatController {
 
     @MessageMapping(value = "/chat/message")
     public void handleMessage(String messageString) throws ParseException {
-        JSONParser jsonParser = new JSONParser();
         JSONObject jsonObject = (JSONObject) jsonParser.parse(messageString);
         MessageDTO messageDTO = new MessageDTO(
                 null,
@@ -73,6 +73,21 @@ public class ChatController {
                 false
                 );
         messageDTO.setMsgNo(messageService.saveMessage(messageDTO));
+        template.convertAndSend(
+                "/sub/chat/room/" + messageDTO.getRoomId(), messageDTO);
+    }
+
+    @MessageMapping(value = "/chat/delete_message")
+    public void deleteMessage(String messageString) throws ParseException {
+        JSONObject jsonObject = (JSONObject) jsonParser.parse(messageString);
+        MessageDTO messageDTO = new MessageDTO(
+                null,
+                jsonObject.get(ROOM_ID).toString(),
+                jsonObject.get(WRITER).toString(),
+                jsonObject.get(MESSAGE).toString(),
+                "",
+                false
+        );
         template.convertAndSend(
                 "/sub/chat/room/" + messageDTO.getRoomId(), messageDTO);
     }

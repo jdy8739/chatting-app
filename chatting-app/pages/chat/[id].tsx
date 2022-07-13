@@ -59,21 +59,24 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
         if (socket && stomp) {
             const now = new Date();
             const time = `${now.getHours()}:${now.getMinutes()}`;
-            stomp.send('/pub/chat/message', JSON.stringify({
-                roomId: id, 
+            shootChatMessage('message', {
+                msgNo: 0,
+                roomId: String(id), 
                 message: newMessage,
                 writer: randonUserId, 
                 time: time
-            }));
+            });
             textAreaRef.current?.setSelectionRange(0, 0);
         }
     }
     const sendMasterMessage = (isUserEntered: boolean) => {
-        const masterMsg = isUserEntered ? 'joined' : 'left'
-        if (socket && stomp) {
-            stomp.send('/pub/chat/enter_or_leave', JSON.stringify({
-                roomId: id, message: `${randonUserId.slice(0, 9)} has just ${masterMsg} the room.`, writer: MASTER }));
-        }
+        const masterMsg = isUserEntered ? 'joined' : 'left';
+        shootChatMessage('enter_or_leave', {
+            msgNo: 0,
+            roomId: String(id), 
+            message: `${randonUserId.slice(0, 9)} has just ${masterMsg} the room.`,
+            writer: MASTER,
+        });
     }
     const subscribeNewMessage = () => {
         stomp.subscribe(`/sub/chat/room/${id}`, ({ body }: { body: string }) => {
@@ -88,6 +91,17 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
                 router.push('/chat/list');
             }, {})
             return;
+        } else {
+            const target = parseInt(newMessageInfo.message);
+            if (newMessageInfo.writer === MASTER && Number.isInteger(target)) {
+                setMessages(messages => {
+                    const copied = [...messages];
+                    const targetIndex = copied.findIndex(chat => chat.msgNo === target);
+                    copied[targetIndex]['isDeleted'] = true;
+                    return copied;
+                })
+                return;
+            }
         }
         setMessages(messages => {
             const copied = [...messages];
@@ -113,16 +127,22 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
         if (index === targetChatNumber) setTargetChatNumber(-1);
         else setTargetChatNumber(index);
     }
-    const deleteChat = async (id: number, msgNo: number, index: number) => {
+    const deleteChat = async (id: number, msgNo: number) => {
         const { status } = await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/room/del_message/${id}?msg_no=${msgNo}`);
-        if (status == 200) {
-            setMessages(messages => {
-                const copied = [...messages];
-                copied[index]['isDeleted'] = true;
-                return copied;
+        if (status === 200) {
+            shootChatMessage('delete_message', {
+                msgNo: 0,
+                roomId: String(id), 
+                message: String(msgNo),
+                writer: MASTER,
             })
+            setTargetChatNumber(-1);
         }
-        setTargetChatNumber(-1);
+    }
+    const shootChatMessage = (target: string, message: IMessageBody) => {
+        if (socket && stomp) {
+            stomp.send(`/pub/chat/${target}`, JSON.stringify(message));
+        }
     }
     useEffect(() => {
         socket = new WebSocket('ws://localhost:5000/stomp/chat');
@@ -182,7 +202,7 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
                                     >
                                         {!msg.isDeleted && targetChatNumber === i &&
                                         <span
-                                            onClick={() => deleteChat(id, msg.msgNo, i)}
+                                            onClick={() => deleteChat(id, msg.msgNo)}
                                             className="delete-btn">x
                                         </span>}
                                         {msg.isDeleted ? 'deleted message' : msg.message}
@@ -261,6 +281,7 @@ export async function getServerSideProps({ params: { id }, query: { roomName, pa
     let previousChat: IMessageBody[] | undefined;
     try {
         previousChat = await fetchPreviousChat(id, previousShowCnt, password);
+        previousChat?.forEach(chat => {if (chat.isDeleted) chat.message = ''});
     } catch (e) {
         console.log(`Failed to fetch previous chat of room id ${id}.`);
         return {
