@@ -68,4 +68,13 @@ public class RoomController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         else return new ResponseEntity<>(messageDTOList, HttpStatus.OK);
     }
+
+    @DeleteMapping("/del_message/{id}")
+    public ResponseEntity<Void> deleteMessage(
+            @PathVariable("id") Long roomId,
+            @RequestParam("msg_no") Long msgNo
+            ) {
+        messageService.deleteMessage(roomId, msgNo);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 }

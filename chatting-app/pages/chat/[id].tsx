@@ -6,6 +6,7 @@ import Seo from "../../components/Seo";
 import { generateRandonUserId } from "../../utils/utils";
 
 interface IMessageBody {
+    msgNo: number,
     roomId: string,
     message: string,
     writer: string,
@@ -112,8 +113,16 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
         if (index === targetChatNumber) setTargetChatNumber(-1);
         else setTargetChatNumber(index);
     }
-    const deleteChat = () => {
-        
+    const deleteChat = async (id: number, msgNo: number, index: number) => {
+        const { status } = await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/room/del_message/${id}?msg_no=${msgNo}`);
+        if (status == 200) {
+            setMessages(messages => {
+                const copied = [...messages];
+                copied[index]['isDeleted'] = true;
+                return copied;
+            })
+        }
+        setTargetChatNumber(-1);
     }
     useEffect(() => {
         socket = new WebSocket('ws://localhost:5000/stomp/chat');
@@ -162,18 +171,21 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
                                     msg.writer === randonUserId &&
                                     <ChatTimeComponent 
                                         time={msg.time || ''}
-                                        isMyMessage={msg.writer === randonUserId} 
+                                        isMyMessage={msg.writer === randonUserId}
                                     />}
                                     <span
                                         onDoubleClick={() => msg.writer === randonUserId ? handleChatDblClick(i) : null}
-                                        className={`chat ${msg.writer === randonUserId ? 'my-chat' : 'others-chat'}`}
+                                        className={`chat 
+                                        ${msg.writer === randonUserId ? 'my-chat' : 'others-chat'}
+                                        ${msg.isDeleted ? 'deleted-chat' : ''}
+                                        `}
                                     >
-                                        {targetChatNumber === i && 
+                                        {!msg.isDeleted && targetChatNumber === i &&
                                         <span
-                                            onClick={() => deleteChat()}
+                                            onClick={() => deleteChat(id, msg.msgNo, i)}
                                             className="delete-btn">x
                                         </span>}
-                                        {msg.message}
+                                        {msg.isDeleted ? 'deleted message' : msg.message}
                                     </span>
                                     {i !== 0 && 
                                     messages[i - 1].time !== msg.time && 
@@ -253,8 +265,8 @@ export async function getServerSideProps({ params: { id }, query: { roomName, pa
         console.log(`Failed to fetch previous chat of room id ${id}.`);
         return {
             redirect: {
-              permanent: false,
-              destination: "/chat/list",
+                permanent: false,
+                destination: "/chat/list",
             },
             props:{},
         };

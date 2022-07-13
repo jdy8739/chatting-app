@@ -53,6 +53,7 @@ function Modal({ roomId, query, hideModal, pushToChatRoom }: IModal) {
                     display: flex;
                     align-items: center;
                     justify-content: center;
+                    z-index: 99;
                 }
                 .modal {
                     width: 400px;

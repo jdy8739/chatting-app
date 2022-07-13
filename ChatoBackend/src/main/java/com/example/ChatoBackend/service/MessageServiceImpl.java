@@ -23,12 +23,14 @@ public class MessageServiceImpl implements MessageService {
     MessageRepository messageRepository;
 
     @Override
-    public void saveMessage(MessageDTO messageDTO) {
+    public long saveMessage(MessageDTO messageDTO) {
+        long newId = -1;
         try {
-            messageRepository.saveMessage(messageDTO);
+            newId = messageRepository.saveMessage(messageDTO);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+        return newId;
     }
 
     @Override
@@ -48,5 +50,14 @@ public class MessageServiceImpl implements MessageService {
                 throw new RuntimeException();
             }
         } else return null;
+    }
+
+    @Override
+    public void deleteMessage(Long roomId, Long msgNo) {
+        try {
+            messageRepository.deleteMessage(roomId, msgNo);
+        } catch (SQLException e) {
+            throw new RuntimeException();
+        }
     }
 }

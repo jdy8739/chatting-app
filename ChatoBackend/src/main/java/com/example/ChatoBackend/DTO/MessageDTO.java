@@ -13,5 +13,5 @@ public class MessageDTO {
     private String writer;
     private String message;
     private String time;
-    private boolean isDeleted;
+    private Boolean isDeleted;
 }

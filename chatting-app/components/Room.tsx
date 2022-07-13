@@ -1,3 +1,5 @@
+import { AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { useState } from "react";
@@ -35,27 +37,37 @@ function Room({ room, index }: { room: IRoom, index: number }) {
                         {...provided.dragHandleProps}
                         onClick={handleClickChatRoom}
                     >
-                    {
-                        room.roomName.length > 30 ?
-                        room.roomName.slice(0, 29) + '...' : 
-                        room.roomName
-                    }
-                </div>
+                        {
+                            room.roomName.length > 30 ?
+                            room.roomName.slice(0, 29) + '...' : 
+                            room.roomName
+                        }
+                        {room.pwRequired && 
+                        <img
+                            src="/lock_icon.png"
+                            width="25px"
+                            height="25px"
+                            className="lock"
+                        />}
+                    </div>
                 )}
             </Draggable>
-            {isModalShown && 
-            <Modal
-                roomId={room.roomId}
-                query={'This room requires a password.'}
-                hideModal={hideModal}
-                pushToChatRoom={pushToChatRoom}
-            />}
+            <AnimatePresence>
+                {isModalShown && 
+                <Modal
+                    roomId={room.roomId}
+                    query={'This room requires a password.'}
+                    hideModal={hideModal}
+                    pushToChatRoom={pushToChatRoom}
+                />}
+            </AnimatePresence>
             <style>{`
                 .element {
                     padding: 12px;
                     margin: 5px;
                     color: #2d2d2d;
                     transition: all 1s;
+                    position: relative;
                 }
                 .isDragging {
                     background-color: rgb(0, 219, 146);
@@ -66,6 +78,11 @@ function Room({ room, index }: { room: IRoom, index: number }) {
                 }
                 .element:hover {
                     background-color: orange;
+                }
+                .lock {
+                    position: absolute;
+                    top: 9px;
+                    right: 10px;
                 }
             `}</style>
         </>

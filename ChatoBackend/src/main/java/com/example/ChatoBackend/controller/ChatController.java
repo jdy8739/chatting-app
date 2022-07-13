@@ -72,7 +72,7 @@ public class ChatController {
                 jsonObject.get(TIME).toString(),
                 false
                 );
-        messageService.saveMessage(messageDTO);
+        messageDTO.setMsgNo(messageService.saveMessage(messageDTO));
         template.convertAndSend(
                 "/sub/chat/room/" + messageDTO.getRoomId(), messageDTO);
     }

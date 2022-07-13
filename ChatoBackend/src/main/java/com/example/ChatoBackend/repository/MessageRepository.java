@@ -3,12 +3,15 @@ package com.example.ChatoBackend.repository;
 import com.example.ChatoBackend.DTO.MessageDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Repository
@@ -18,6 +21,7 @@ public class MessageRepository {
 
     @Autowired
     private DataSource dataSource;
+    SimpleJdbcInsert simpleJdbcInsert;
 
     public void createDynamicTable(Long roomId) throws SQLException {
         Connection con = dataSource.getConnection();
@@ -36,16 +40,17 @@ public class MessageRepository {
         con.close();
     }
 
-    public void saveMessage(MessageDTO messageDTO) throws SQLException {
+    public long saveMessage(MessageDTO messageDTO) throws SQLException {
         String tableName = "room_" + messageDTO.getRoomId();
-        String query = "insert into " + tableName + " (writer, message, time) values (?, ?, ?)";
-        Connection con = dataSource.getConnection();
-        PreparedStatement ps = con.prepareStatement(query);
-        ps.setString(1, messageDTO.getWriter());
-        ps.setString(2, messageDTO.getMessage());
-        ps.setString(3, messageDTO.getTime());
-        ps.executeUpdate();
-        con.close();
+        simpleJdbcInsert = new SimpleJdbcInsert(dataSource)
+                .withTableName(tableName).usingGeneratedKeyColumns("msg_id");
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("writer", messageDTO.getWriter());
+        parameters.put("message", messageDTO.getMessage());
+        parameters.put("time", messageDTO.getTime());
+        parameters.put("is_deleted", false);
+        Long newId = simpleJdbcInsert.executeAndReturnKey(parameters).longValue();
+        return newId;
     }
 
     public List<MessageDTO> getMessages(Long roomId, Integer offset) throws SQLException {
@@ -66,6 +71,15 @@ public class MessageRepository {
         }
         con.close();
         return messageDTOList;
+    }
+
+    public void deleteMessage(Long roomId, Long msgNo) throws SQLException {
+        Connection con = dataSource.getConnection();
+        Statement sm = con.createStatement();
+        String tableName = "room_" + roomId;
+        String query = "update " + tableName + " set is_deleted = true where msg_id = " + msgNo + ";";
+        if (sm.executeUpdate(query) != 1) throw new SQLException();
+        con.close();
     }
 }
 

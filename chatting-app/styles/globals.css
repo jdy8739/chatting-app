@@ -77,6 +77,10 @@ h5 {
   text-align: left;
 }
 
+.deleted-chat {
+  background-color: gray;
+}
+
 .container {
   width: 70%;
   max-width: 2250px;
