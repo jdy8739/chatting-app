@@ -1,18 +1,25 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
-import React from "react";
+import React, { useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
 import { IRoom } from "../types/types";
+import Modal from "./Modal";
 
 function Room({ room, index }: { room: IRoom, index: number }) {
     const router = useRouter();
-    const goToChatRoom = () => {
+    const [isModalShown, setIsModalShown] = useState(false);
+    const handleClickChatRoom = () => {
+        if (room.pwRequired) setIsModalShown(true);
+        else pushToChatRoom();
+    }
+    const pushToChatRoom = (password?: string) => {
         const roomId = room.roomId;
         router.push({
             pathname: `/chat/${roomId}`,
-            query: { roomName: room.roomName },
+            query: { roomName: room.roomName, password: password },
         }, `/chat/${roomId}`)
     }
+    const hideModal = () => { setIsModalShown(false) };
     return (
         <>
             <Draggable 
@@ -26,7 +33,7 @@ function Room({ room, index }: { room: IRoom, index: number }) {
                         ref={provided.innerRef}
                         {...provided.draggableProps}
                         {...provided.dragHandleProps}
-                        onClick={goToChatRoom}
+                        onClick={handleClickChatRoom}
                     >
                     {
                         room.roomName.length > 30 ?
@@ -36,6 +43,13 @@ function Room({ room, index }: { room: IRoom, index: number }) {
                 </div>
                 )}
             </Draggable>
+            {isModalShown && 
+            <Modal
+                roomId={room.roomId}
+                query={'This room requires a password.'}
+                hideModal={hideModal}
+                pushToChatRoom={pushToChatRoom}
+            />}
             <style>{`
                 .element {
                     padding: 12px;

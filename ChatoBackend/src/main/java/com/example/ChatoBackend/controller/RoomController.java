@@ -49,12 +49,23 @@ public class RoomController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @GetMapping("/message/{id}")
+    @PostMapping("/enter_password")
+    public ResponseEntity<Boolean> checkPwValidation(@RequestBody Map<String, String> map) {
+        Long roomId = Long.valueOf(map.get("roomId"));
+        String password = map.get("password");
+        Boolean isValidPw = chatRoomService.checkPwValidation(roomId, password);
+        return new ResponseEntity<>(isValidPw, HttpStatus.OK);
+    }
+
+    @PostMapping("/message/{id}")
     public ResponseEntity<List<MessageDTO>> getMessage(
             @PathVariable("id") Long roomId,
-            @RequestParam(value = "password", required = false) String password, // 보안 문제 추후에 해결.
-            @RequestParam(value = "offset") String offset) {
-        return new ResponseEntity<>(
-                messageService.getMessages(roomId, password, Integer.parseInt(offset)), HttpStatus.OK);
+            @RequestParam(value = "offset") String offset,
+            @RequestBody Map<String, String> map) {
+        List<MessageDTO> messageDTOList =
+                messageService.getMessages(roomId, map.get("password"), Integer.valueOf(offset));
+        if (messageDTOList == null)
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        else return new ResponseEntity<>(messageDTOList, HttpStatus.OK);
     }
 }

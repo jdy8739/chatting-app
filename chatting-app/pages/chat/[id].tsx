@@ -1,6 +1,5 @@
 import axios from "axios";
-import { time } from "console";
-import { useRouter } from "next/router";
+import { Router, useRouter } from "next/router";
 import React, { useEffect, useRef, useState } from "react";
 import webstomp from "webstomp-client";
 import Seo from "../../components/Seo";
@@ -14,6 +13,13 @@ interface IMessageBody {
     isDeleted?: boolean,
 }
 
+interface IChatRoomProps {
+    id: number,
+    roomName: string,
+    previousChat: IMessageBody[],
+    password?: string
+}
+
 let socket: WebSocket;
 let stomp: any;
 let randonUserId: string = '';
@@ -22,23 +28,19 @@ let previousShowCnt = 0;
 const MASTER = 'MASTER';
 const REJECTED = 'rejected';
 
-const fetchPreviousChat = async (id: number, count: number) => {
-    let previousChat: IMessageBody[] | undefined;
-    try {
-        previousChat = await (await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/room/message/${id}?offset=${count}`)).data;
-        previousChat?.reverse();
-    } catch (e) {
-        console.log(`Failed to fetch previous chat of room id ${id}.`);
-    }
+const fetchPreviousChat = async (id: number, count: number, password?: string) => {
+    const previousChat = await (await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/message/${id}?offset=${count}`, { password })).data;
+    previousChat?.reverse();
     return previousChat;
 }
 
-function ChattingRoom({ id, roomName, previousChat }: { id: number, roomName: string, previousChat: IMessageBody[] }) {
+function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) {
     let newMessage: string;
     const router = useRouter();
     const [messages, setMessages] = useState<IMessageBody[]>(previousChat);
     const [isAllChatShown, setIsAllChatShown] = useState(previousChat.length < 10);
     const [targetChatNumber, setTargetChatNumber] = useState(-1);
+    const [isModalShown, setIsModalShown] = useState(false);
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
     const handleChatSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -95,7 +97,7 @@ function ChattingRoom({ id, roomName, previousChat }: { id: number, roomName: st
     const showPreviousChat = async () => {
         setTargetChatNumber(-1);
         previousShowCnt += 1;
-        const previousChat = await fetchPreviousChat(id, previousShowCnt);
+        const previousChat = await fetchPreviousChat(id, previousShowCnt, password);
         if (previousChat) {
             if (previousChat.length < 10) {
                 setIsAllChatShown(true);
@@ -238,11 +240,32 @@ function ChattingRoom({ id, roomName, previousChat }: { id: number, roomName: st
     )
 };
 
-export async function getServerSideProps({ params: { id }, query: { roomName }}: 
-    { params: {id: number}, query: {roomName: string} }) {
-    const previousChat: IMessageBody[] | undefined = await fetchPreviousChat(id, previousShowCnt);
+interface IServerProps { 
+    params: {id: number}, 
+    query: {roomName?: string, password?: string} 
+}
+
+export async function getServerSideProps({ params: { id }, query: { roomName, password }}: IServerProps) {
+    let previousChat: IMessageBody[] | undefined;
+    try {
+        previousChat = await fetchPreviousChat(id, previousShowCnt, password);
+    } catch (e) {
+        console.log(`Failed to fetch previous chat of room id ${id}.`);
+        return {
+            redirect: {
+              permanent: false,
+              destination: "/chat/list",
+            },
+            props:{},
+        };
+    }
     return {
-        props: { id, roomName: roomName || '', previousChat: previousChat ? previousChat : [] }
+        props: {
+            id,
+            roomName: roomName || '',
+            previousChat: previousChat ? previousChat : [],
+            password: password || null
+        }
     };
 }
 

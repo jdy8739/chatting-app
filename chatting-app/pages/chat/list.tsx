@@ -8,10 +8,9 @@ interface IClassifiedRoom {
     [key: string]: { isPinned?: boolean, list: IRoom[] }
 }
 
-function ChattingList() {
+function ChattingList({ rooms }: { rooms: IRoom[] }) {
     const [roomList, setRoomList] = useState<IClassifiedRoom>({});
     const fetchRoomList = async () => {
-        const rooms: IRoom[] = (await axios.get<IRoom[]>(`${process.env.NEXT_PUBLIC_API_URL}/room/list`)).data;
         const defaultRoomListObject: IClassifiedRoom = {};
         rooms.forEach(room => {
             const subject = room.subject;
@@ -74,5 +73,13 @@ function ChattingList() {
         </>
     )
 };
+
+export async function getServerSideProps() {
+    const rooms: IRoom[] = (await axios.get<IRoom[]>(`${process.env.NEXT_PUBLIC_API_URL}/room/list`)).data;
+    rooms.forEach(room => {if (room.password) delete room.password });
+    return {
+        props: { rooms }
+    }
+}
 
 export default ChattingList;

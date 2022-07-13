@@ -15,4 +15,6 @@ public interface ChatRoomService {
     public void changeSubject(Long roomId, String newSubject);
 
     public boolean checkIfChatRoomExist(Long roomId);
+
+    public boolean checkPwValidation(Long roomId, String password);
 }

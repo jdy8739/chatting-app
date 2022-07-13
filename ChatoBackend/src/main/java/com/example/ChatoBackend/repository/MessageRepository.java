@@ -49,7 +49,7 @@ public class MessageRepository {
     }
 
     public List<MessageDTO> getMessages(Long roomId, Integer offset) throws SQLException {
-        String tableName = "room_" +roomId;
+        String tableName = "room_" + roomId;
         String query = "select * from " + tableName + " order by msg_id desc limit 10 offset " + offset * OFFSET_STANDARD + ";";
         // select * from room_1 order by msg_id desc limit 3 offset 0; limit 읽을갯수 offset 읽을위치.
         Connection con = dataSource.getConnection();

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -44,5 +45,14 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     @Override
     public boolean checkIfChatRoomExist(Long roomId) {
         return chatRoomRepository.findByRoomId(roomId).isPresent();
+    }
+
+    @Override
+    public boolean checkPwValidation(Long roomId, String password) {
+        Optional<ChatRoom> optionalChatRoom = chatRoomRepository.findByRoomId(roomId);
+        if (optionalChatRoom.isPresent()) {
+            if (optionalChatRoom.get().getPassword().equals(password)) return true;
+        }
+        return false;
     }
 }
