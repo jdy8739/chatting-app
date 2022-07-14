@@ -77,4 +77,11 @@ public class RoomController {
         messageService.deleteMessage(roomId, msgNo);
         return new ResponseEntity<>(HttpStatus.OK);
     }
+
+    @DeleteMapping("/delete/{roomId}")
+    public ResponseEntity<Void> deleteRoom(@PathVariable("roomId") Long roomId) {
+        chatRoomService.deleteRoom(roomId);
+        messageService.deleteRoom(roomId);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 }

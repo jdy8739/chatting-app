@@ -56,7 +56,7 @@ function Room({ room, index }: { room: IRoom, index: number }) {
                 {isModalShown && 
                 <Modal
                     roomId={room.roomId}
-                    query={'This room requires a password.'}
+                    query={'This room requires the password.'}
                     hideModal={hideModal}
                     pushToChatRoom={pushToChatRoom}
                 />}

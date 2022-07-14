@@ -60,4 +60,13 @@ public class MessageServiceImpl implements MessageService {
             throw new RuntimeException();
         }
     }
+
+    @Override
+    public void deleteRoom(Long roomId) {
+        try {
+            messageRepository.deleteRoom(roomId);
+        } catch (SQLException e) {
+            throw new RuntimeException();
+        }
+    }
 }

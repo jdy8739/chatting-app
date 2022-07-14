@@ -81,5 +81,14 @@ public class MessageRepository {
         if (sm.executeUpdate(query) != 1) throw new SQLException();
         con.close();
     }
+
+    public void deleteRoom(Long roomId) throws SQLException {
+        Connection con = dataSource.getConnection();
+        Statement sm = con.createStatement();
+        String tableName = "room_" + roomId;
+        String query = "drop table " + tableName + ";";
+        sm.executeUpdate(query);
+        con.close();
+    }
 }
 

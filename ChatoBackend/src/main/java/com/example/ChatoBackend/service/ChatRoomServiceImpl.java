@@ -55,4 +55,9 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         }
         return false;
     }
+
+    @Override
+    public void deleteRoom(Long roomId) {
+        chatRoomRepository.deleteByRoomId(roomId);
+    }
 }

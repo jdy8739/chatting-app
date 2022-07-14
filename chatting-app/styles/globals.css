@@ -103,3 +103,12 @@ h5 {
   font-weight: 900;
   cursor: pointer;
 }
+
+.footer {
+  width: 100vw;
+  height: 100px;    
+  text-align: right;
+  position: fixed;
+  bottom: 50px;
+  right: 50px;
+}

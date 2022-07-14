@@ -17,4 +17,8 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
     void changeSubject(Long roomId, String newSubject);
 
     Optional<ChatRoom> findByRoomId(Long roomId);
+
+    @Transactional
+    @Modifying
+    void deleteByRoomId(Long rooId);
 }

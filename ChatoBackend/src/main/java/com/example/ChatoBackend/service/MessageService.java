@@ -11,4 +11,6 @@ public interface MessageService {
     public List<MessageDTO> getMessages(Long roomId, String password, Integer offset);
 
     public void deleteMessage(Long roomId, Long msgNo);
+
+    public void deleteRoom(Long roomId);
 }

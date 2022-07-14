@@ -24,6 +24,10 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     }
     const onDragEnd = ({ destination, source }: DropResult) => {
         if (destination) {
+            if (destination.droppableId === 'trash-can') {
+                deleteRoom(source.droppableId, source.index);
+                return;
+            }
             const target = roomList[source.droppableId].list[source.index];
             let isChangeAvail = false;
             if (source.droppableId !== destination.droppableId) {
@@ -39,6 +43,15 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                 })
             }
         }
+    }
+    const deleteRoom = (sourceId: string, index: number) => {
+        const targetRoomId = roomList[sourceId].list[index].roomId;
+        axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/room/delete/${targetRoomId}`);
+        setRoomList(roomList => {
+            const copied = {...roomList};
+            copied[sourceId].list.splice(index, 1);
+            return copied;
+        })
     }
     const changeToNewSubject = async (roomId: number, newSubject?: string) => {
         const result = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/room/change_subject`, {
@@ -59,15 +72,26 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                     {Object.keys(roomList).map((key, i) => 
                     <ClassifiedRooms key={i} rooms={roomList[key].list} subject={key} />)}
                 </div>
+                <Droppable droppableId="trash-can">
+                    {(provided, snapshot) => (
+                        <div className="footer">
+                        <img
+                            width={'75px'}
+                            height={'75px'}
+                            src={'/trash_can.jpg.png'}
+                            ref={provided.innerRef} 
+                            {...provided.droppableProps}
+                            {...snapshot}
+                        />
+                        </div>
+                    )}
+                </Droppable>
             </DragDropContext>
             <style>{`
                 .grid-box {
                     display: grid;
                     grid-template-columns: repeat(auto-fill, 335px);
                     justify-content: center;
-                }
-                .flex-box {
-                    margin-right: auto;
                 }
             `}</style>
         </>

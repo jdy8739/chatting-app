@@ -1,7 +1,6 @@
 import axios from "axios";
-import { motion } from "framer-motion";
-import { useRouter } from "next/router";
-import React, { useRef } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import React, { useRef, useState } from "react";
 
 interface IModal {
     roomId: number,
@@ -10,8 +9,20 @@ interface IModal {
     pushToChatRoom: (password?: string) => void
 }
 
+const modalBgVariant = {
+    initial: {
+        opacity: 0
+    },
+    animate: {
+        opacity: 1
+    },
+    exit: {
+        opacity: 0
+    }
+}
+
 function Modal({ roomId, query, hideModal, pushToChatRoom }: IModal) {
-    const router = useRouter();
+    const modalRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const stopPropagation = (e: React.MouseEvent<HTMLDivElement>) => e.stopPropagation();
     const submitPassword = async (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -22,6 +33,13 @@ function Modal({ roomId, query, hideModal, pushToChatRoom }: IModal) {
             })).data;
             if (isPwValid)
                 pushToChatRoom(inputRef.current?.value);
+            else {
+                const targetRef = modalRef.current;
+                if (targetRef) {
+                    targetRef.classList.add('wrong-pw');
+                    setTimeout(() => targetRef.classList.remove('wrong-pw'), 300);
+                }
+            }
         }
     }
     return (
@@ -29,18 +47,25 @@ function Modal({ roomId, query, hideModal, pushToChatRoom }: IModal) {
             <motion.div
                 className="modal-bg"
                 onClick={hideModal}
+                variants={modalBgVariant}
+                initial="initial"
+                animate="animate"
+                exit="exit"
             >
-                <div
-                    className="modal"
-                    onClick={stopPropagation}
-                >
-                    <p>{query}</p>
-                    <input 
-                        placeholder="Input room password."
-                        onKeyUp={submitPassword}
-                        ref={inputRef}
-                    />
-                </div>
+                <AnimatePresence>
+                    <motion.div
+                        className="modal"
+                        onClick={stopPropagation}
+                        ref={modalRef}
+                    >
+                        <p>{query}</p>
+                        <input 
+                            placeholder="Input room password."
+                            onKeyUp={submitPassword}
+                            ref={inputRef}
+                        />
+                    </motion.div>
+                </AnimatePresence>
             </motion.div>
             <style>{`
                 .modal-bg {
@@ -65,6 +90,30 @@ function Modal({ roomId, query, hideModal, pushToChatRoom }: IModal) {
                 }
                 input {
                     width: 200px;
+                }
+                .wrong-pw {
+                    animation-name: shake;
+                    animation-duration: 0.3s;
+                }
+                @keyframes shake {
+                    0% {
+                        transform: translateX(0px)
+                    }
+                    20% {
+                        transform: translateX(30px)
+                    }
+                    40% {
+                        transform: translateX(-30px)
+                    }
+                    60% {
+                        transform: translateX(30px)
+                    }
+                    80% {
+                        transform: translateX(-30px)
+                    }
+                    100% {
+                        transform: translateX(0px)
+                    }
                 }
             `}</style>
         </>
