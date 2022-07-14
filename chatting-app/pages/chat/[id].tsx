@@ -92,8 +92,8 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
             }, {})
             return;
         } else {
-            const target = parseInt(newMessageInfo.message);
-            if (newMessageInfo.writer === MASTER && Number.isInteger(target)) {
+            const target = Number(newMessageInfo.message);
+            if (newMessageInfo.writer === MASTER && !window.isNaN(target)) {
                 setMessages(messages => {
                     const copied = [...messages];
                     const targetIndex = copied.findIndex(chat => chat.msgNo === target);
