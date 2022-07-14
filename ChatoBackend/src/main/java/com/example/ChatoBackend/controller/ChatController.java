@@ -77,7 +77,7 @@ public class ChatController {
                 "/sub/chat/room/" + messageDTO.getRoomId(), messageDTO);
     }
 
-    @MessageMapping(value = "/chat/delete_message")
+    @MessageMapping(value = "/chat/delete")
     public void deleteMessage(String messageString) throws ParseException {
         JSONObject jsonObject = (JSONObject) jsonParser.parse(messageString);
         MessageDTO messageDTO = new MessageDTO(

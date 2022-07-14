@@ -1,16 +1,21 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { DragDropContext, Draggable, Droppable, DropResult } from "react-beautiful-dnd";
+import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import ClassifiedRooms from "../../components/ClassifiedRooms";
-import { IRoom } from "../../types/types";
+import { IMessageBody, IRoom } from "../../types/types";
+import webstomp from "webstomp-client";
+import { DISBANDED, MASTER } from "../../utils/utils";
 
 interface IClassifiedRoom {
     [key: string]: { isPinned?: boolean, list: IRoom[] }
 }
 
+let socket: WebSocket;
+let stomp: any;
+
 function ChattingList({ rooms }: { rooms: IRoom[] }) {
     const [roomList, setRoomList] = useState<IClassifiedRoom>({});
-    const fetchRoomList = async () => {
+    const arrangeRoomList = async () => {
         const defaultRoomListObject: IClassifiedRoom = {};
         rooms.forEach(room => {
             const subject = room.subject;
@@ -46,12 +51,23 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     }
     const deleteRoom = (sourceId: string, index: number) => {
         const targetRoomId = roomList[sourceId].list[index].roomId;
-        axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/room/delete/${targetRoomId}`);
+        axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/room/delete/${targetRoomId}`)
+            .then(() => sendRoomDeleteMessage({
+                msgNo: 0,
+                roomId: String(targetRoomId),
+                message: DISBANDED,
+                writer: MASTER,
+            }));
         setRoomList(roomList => {
             const copied = {...roomList};
             copied[sourceId].list.splice(index, 1);
             return copied;
         })
+    }
+    const sendRoomDeleteMessage = (message: IMessageBody) => {
+        if (socket && stomp) {
+            stomp.send('/pub/chat/delete', JSON.stringify(message));
+        }
     }
     const changeToNewSubject = async (roomId: number, newSubject?: string) => {
         const result = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/room/change_subject`, {
@@ -63,7 +79,11 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         } else return false;
     }
     useEffect(() => {
-        fetchRoomList();
+        arrangeRoomList();
+        socket = new WebSocket('ws://localhost:5000/stomp/chat');
+        stomp = webstomp.over(socket);
+        stomp.connect({}, () => null);
+        stomp.debug = () => null;
     }, [])
     return (
         <>

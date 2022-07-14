@@ -1,18 +1,11 @@
 import axios from "axios";
-import { Router, useRouter } from "next/router";
+import { useRouter } from "next/router";
 import React, { useEffect, useRef, useState } from "react";
+import { toast } from "react-toastify";
 import webstomp from "webstomp-client";
 import Seo from "../../components/Seo";
-import { generateRandonUserId } from "../../utils/utils";
-
-interface IMessageBody {
-    msgNo: number,
-    roomId: string,
-    message: string,
-    writer: string,
-    time?: string,
-    isDeleted?: boolean,
-}
+import { IMessageBody } from "../../types/types";
+import { DISBANDED, generateRandonUserId, MASTER, REJECTED, toastConfig } from "../../utils/utils";
 
 interface IChatRoomProps {
     id: number,
@@ -25,9 +18,6 @@ let socket: WebSocket;
 let stomp: any;
 let randonUserId: string = '';
 let previousShowCnt = 0;
-
-const MASTER = 'MASTER';
-const REJECTED = 'rejected';
 
 const fetchPreviousChat = async (id: number, count: number, password?: string) => {
     const previousChat = await (await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/message/${id}?offset=${count}`, { password })).data;
@@ -86,24 +76,27 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
         })
     };
     const updateMessageList = (newMessageInfo: IMessageBody) => {
-        if (newMessageInfo.writer === MASTER && newMessageInfo.message === REJECTED) {
-            stomp.disconnect(() => {
-                router.push('/chat/list');
-            }, {})
+        const isSentFromMaster = (newMessageInfo.writer === MASTER);
+        const message = newMessageInfo.message;
+        if (isSentFromMaster && message === REJECTED) {
+            toast.error('You cannot enter this room!', toastConfig);
+            stomp.disconnect(() => router.push('/chat/list'), {});
             return;
-        } else {
-            const target = Number(newMessageInfo.message);
-            if (newMessageInfo.writer === MASTER && !window.isNaN(target)) {
-                setMessages(messages => {
-                    const copied = [...messages];
-                    const targetIndex = copied.findIndex(chat => chat.msgNo === target);
-                    copied[targetIndex]['isDeleted'] = true;
-                    return copied;
-                })
-                return;
-            }
-        }
-        setMessages(messages => {
+        } else if (isSentFromMaster && message === DISBANDED) {
+            toast.error('This room has just been disbanded!', toastConfig);
+            stomp.disconnect(() => router.push('/chat/list'), {});
+            return;
+        };
+        const target = Number(message);
+        if (isSentFromMaster && !window.isNaN(target)) {
+            setMessages(messages => {
+                const copied = [...messages];
+                const targetIndex = copied.findIndex(chat => chat.msgNo === target);
+                copied[targetIndex]['isDeleted'] = true;
+                return copied;
+            })
+            return;
+        } else setMessages(messages => {
             const copied = [...messages];
             copied.push(newMessageInfo);
             return copied;
@@ -130,7 +123,7 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
     const deleteChat = async (id: number, msgNo: number) => {
         const { status } = await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/room/del_message/${id}?msg_no=${msgNo}`);
         if (status === 200) {
-            shootChatMessage('delete_message', {
+            shootChatMessage('delete', {
                 msgNo: 0,
                 roomId: String(id), 
                 message: String(msgNo),

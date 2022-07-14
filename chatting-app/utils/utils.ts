@@ -16,3 +16,7 @@ export const toastConfig = {
 	progress: undefined,
 	theme: 'colored',
 };
+
+export const MASTER = 'MASTER';
+export const REJECTED = 'rejected';
+export const DISBANDED = 'disbanded';
