@@ -78,12 +78,8 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
     const updateMessageList = (newMessageInfo: IMessageBody) => {
         const isSentFromMaster = (newMessageInfo.writer === MASTER);
         const message = newMessageInfo.message;
-        if (isSentFromMaster && message === REJECTED) {
-            toast.error('You cannot enter this room!', toastConfig);
-            stomp.disconnect(() => router.push('/chat/list'), {});
-            return;
-        } else if (isSentFromMaster && message === DISBANDED) {
-            toast.error('This room has just been disbanded!', toastConfig);
+        if (isSentFromMaster && (message === REJECTED || message === DISBANDED)) {
+            toast.error(message === REJECTED ? 'You cannot enter this room!' : 'This room has just been disbanded!', toastConfig);
             stomp.disconnect(() => router.push('/chat/list'), {});
             return;
         };
