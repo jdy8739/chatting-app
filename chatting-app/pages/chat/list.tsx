@@ -78,11 +78,22 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
             return true;
         } else return false;
     }
+    const subscribeRoomParticipants = () => {
+        stomp.subscribe('/sub/chat/room/list', ({ body }: { body: string }) => {
+            const newMessage: IMessageBody = JSON.parse(body);
+            updateRoomParticipants(newMessage);
+        })
+    };
+    const updateRoomParticipants = (message: IMessageBody) => {
+        // logic ~
+    }
     useEffect(() => {
         arrangeRoomList();
         socket = new WebSocket('ws://localhost:5000/stomp/chat');
         stomp = webstomp.over(socket);
-        stomp.connect({}, () => null);
+        stomp.connect({}, () => {
+            subscribeRoomParticipants();
+        });
         stomp.debug = () => null;
     }, [])
     return (

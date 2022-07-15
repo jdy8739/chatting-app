@@ -2,7 +2,6 @@ package com.example.ChatoBackend.controller;
 
 import com.example.ChatoBackend.DTO.MessageDTO;
 import com.example.ChatoBackend.entity.ChatRoom;
-import com.example.ChatoBackend.service.ChatRoomService;
 import com.example.ChatoBackend.service.ChatRoomServiceImpl;
 import com.example.ChatoBackend.service.MessageServiceImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -51,7 +50,7 @@ public class RoomController {
 
     @PostMapping("/enter_password")
     public ResponseEntity<Boolean> checkPwValidation(@RequestBody Map<String, String> map) {
-        Long roomId = Long.valueOf(map.get("roomId"));
+        Long roomId = Long.valueOf(map.get(ROOM_ID));
         String password = map.get("password");
         Boolean isValidPw = chatRoomService.checkPwValidation(roomId, password);
         return new ResponseEntity<>(isValidPw, HttpStatus.OK);
@@ -79,7 +78,7 @@ public class RoomController {
     }
 
     @DeleteMapping("/delete/{roomId}")
-    public ResponseEntity<Void> deleteRoom(@PathVariable("roomId") Long roomId) {
+    public ResponseEntity<Void> deleteRoom(@PathVariable(ROOM_ID) Long roomId) {
         chatRoomService.deleteRoom(roomId);
         messageService.deleteRoom(roomId);
         return new ResponseEntity<>(HttpStatus.OK);

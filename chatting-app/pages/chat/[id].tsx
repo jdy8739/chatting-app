@@ -16,7 +16,7 @@ interface IChatRoomProps {
 
 let socket: WebSocket;
 let stomp: any;
-let randonUserId: string = '';
+let randomUserId: string = '';
 let previousShowCnt = 0;
 
 const fetchPreviousChat = async (id: number, count: number, password?: string) => {
@@ -31,7 +31,6 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
     const [messages, setMessages] = useState<IMessageBody[]>(previousChat);
     const [isAllChatShown, setIsAllChatShown] = useState(previousChat.length < 10);
     const [targetChatNumber, setTargetChatNumber] = useState(-1);
-    const [isModalShown, setIsModalShown] = useState(false);
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
     const handleChatSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -53,7 +52,7 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
                 msgNo: 0,
                 roomId: String(id), 
                 message: newMessage,
-                writer: randonUserId, 
+                writer: randomUserId, 
                 time: time
             });
             textAreaRef.current?.setSelectionRange(0, 0);
@@ -64,7 +63,7 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
         shootChatMessage('enter_or_leave', {
             msgNo: 0,
             roomId: String(id), 
-            message: `${randonUserId.slice(0, 9)} has just ${masterMsg} the room.`,
+            message: `${randomUserId.slice(0, 9)} has just ${masterMsg} the room.`,
             writer: MASTER,
         });
     }
@@ -130,21 +129,26 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
     }
     const shootChatMessage = (target: string, message: IMessageBody) => {
         if (socket && stomp) {
-            stomp.send(`/pub/chat/${target}`, JSON.stringify(message));
+            try {
+                stomp.send(`/pub/chat/${target}`, JSON.stringify(message));
+            } catch (e) {
+                toast.error('This room does not exist or exceeds capacity!');
+                stomp.disconnect(() => router.push('/chat/list'), {});
+            }
         }
     }
     useEffect(() => {
+        randomUserId = generateRandonUserId();
         socket = new WebSocket('ws://localhost:5000/stomp/chat');
         stomp = webstomp.over(socket);
-        stomp.connect({}, () => {
+        stomp.connect({ roomId: id, userId: randomUserId }, () => {
             subscribeNewMessage();
             sendMasterMessage(true);
         });
         stomp.debug = () => null;
-        randonUserId = generateRandonUserId();
         return () => {
             sendMasterMessage(false);
-            randonUserId = '';
+            randomUserId = '';
             previousShowCnt = 0;
         }
     }, []);
@@ -164,7 +168,7 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
                 {
                     messages.map((msg, i) => 
                         <div key={i} 
-                            className={`chat-box ${msg.writer === randonUserId ? 'my-chat-box' : 'others-chat-box'}`}
+                            className={`chat-box ${msg.writer === randomUserId ? 'my-chat-box' : 'others-chat-box'}`}
                         >   
                             {
                                 i === 0 ? <NameOfTheChatUser msg={msg}/> :
@@ -177,15 +181,15 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
                                 <>
                                     {i !== 0 && 
                                     messages[i - 1].time !== msg.time && 
-                                    msg.writer === randonUserId &&
+                                    msg.writer === randomUserId &&
                                     <ChatTimeComponent 
                                         time={msg.time || ''}
-                                        isMyMessage={msg.writer === randonUserId}
+                                        isMyMessage={msg.writer === randomUserId}
                                     />}
                                     <span
-                                        onDoubleClick={() => msg.writer === randonUserId ? handleChatDblClick(i) : null}
+                                        onDoubleClick={() => msg.writer === randomUserId ? handleChatDblClick(i) : null}
                                         className={`chat 
-                                        ${msg.writer === randonUserId ? 'my-chat' : 'others-chat'}
+                                        ${msg.writer === randomUserId ? 'my-chat' : 'others-chat'}
                                         ${msg.isDeleted ? 'deleted-chat' : ''}
                                         `}
                                     >
@@ -198,10 +202,10 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
                                     </span>
                                     {i !== 0 && 
                                     messages[i - 1].time !== msg.time && 
-                                    msg.writer !== randonUserId &&
+                                    msg.writer !== randomUserId &&
                                     <ChatTimeComponent 
                                         time={msg.time || ''}
-                                        isMyMessage={msg.writer === randonUserId} 
+                                        isMyMessage={msg.writer === randomUserId} 
                                     />}
                                 </>
                             }

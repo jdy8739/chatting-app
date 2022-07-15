@@ -3,6 +3,7 @@ export interface IRoom {
     roomId: number,
     roomName: string,
     limitation: number,
+    nowParticipants?: number,
     pwRequired: boolean,
     password?: string,
     owner: string

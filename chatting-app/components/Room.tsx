@@ -42,13 +42,21 @@ function Room({ room, index }: { room: IRoom, index: number }) {
                             room.roomName.slice(0, 29) + '...' : 
                             room.roomName
                         }
-                        {room.pwRequired && 
-                        <img
-                            src="/lock_icon.png"
-                            width="25px"
-                            height="25px"
-                            className="lock"
-                        />}
+                        <div className="sub-info">
+                            <img
+                                src="/people_icon.png"
+                                width="50px"
+                                height="25px"
+                            />
+                            <p>{`${room.nowParticipants}/${room.limitation}`}</p>
+                            <div style={{ flexGrow: '1' }}></div>
+                            {room.pwRequired && 
+                            <img
+                                src="/lock_icon.png"
+                                width="25px"
+                                height="25px"
+                            />}
+                        </div>
                     </div>
                 )}
             </Draggable>
@@ -79,10 +87,16 @@ function Room({ room, index }: { room: IRoom, index: number }) {
                 .element:hover {
                     background-color: orange;
                 }
-                .lock {
+                .sub-info {
+                    width: 110px;
                     position: absolute;
                     top: 9px;
                     right: 10px;
+                    display: flex;
+                }
+                .sub-info > p {
+                    margin-top: 6px;
+                    font-size: 12px;
                 }
             `}</style>
         </>

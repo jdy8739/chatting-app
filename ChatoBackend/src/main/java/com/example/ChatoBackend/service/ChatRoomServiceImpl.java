@@ -43,8 +43,21 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     }
 
     @Override
-    public boolean checkIfChatRoomExist(Long roomId) {
-        return chatRoomRepository.findByRoomId(roomId).isPresent();
+    public boolean checkRoomStatusOK(Long roomId) {
+        Optional <ChatRoom> chatRoomOptional = chatRoomRepository.findByRoomId(roomId);
+        if (chatRoomOptional.isEmpty()) {
+            throw new RuntimeException();
+        } else if (chatRoomOptional.get().getNowParticipants() + 1 > chatRoomOptional.get().getLimitation()) {
+            throw new RuntimeException();
+        } else {
+            chatRoomRepository.plusParticipantsCount(roomId);
+            return true;
+        }
+    }
+
+    @Override
+    public void minusParticipantsCount(Long roomId) {
+        chatRoomRepository.minusParticipantsCount(roomId);
     }
 
     @Override

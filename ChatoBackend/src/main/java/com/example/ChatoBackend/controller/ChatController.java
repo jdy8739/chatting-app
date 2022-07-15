@@ -1,6 +1,7 @@
 package com.example.ChatoBackend.controller;
 
 import com.example.ChatoBackend.DTO.MessageDTO;
+import com.example.ChatoBackend.entity.ChatRoom;
 import com.example.ChatoBackend.entrance_limit_handler.EntranceLimitHandler;
 import com.example.ChatoBackend.service.ChatRoomServiceImpl;
 import com.example.ChatoBackend.service.MessageServiceImpl;
@@ -12,7 +13,14 @@ import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.simp.user.SimpUser;
+import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.socket.WebSocketSession;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 @Controller
@@ -27,10 +35,9 @@ public class ChatController {
 
     private final String REJECTED = "rejected";
 
-    private final SimpMessagingTemplate template;
+    private final String IS_FULL = "isFull";
 
-    @Autowired
-    EntranceLimitHandler entranceLimitHandler;
+    private final SimpMessagingTemplate template;
 
     @Autowired
     ChatRoomServiceImpl chatRoomService;
@@ -51,12 +58,9 @@ public class ChatController {
                 null,
                 false
         );
-        String roomId = messageDTO.getRoomId();
-        /* if (!entranceLimitHandler.checkIfEntranceAvailable(Integer.parseInt(roomId)))
-            messageDTO.setMessage(REJECTED); */
-        if (!checkIfChatRoomExist(Long.parseLong(roomId))) {
-            messageDTO.setMessage(REJECTED);
-        }
+        Long roomId = Long.parseLong(messageDTO.getRoomId());
+        template.convertAndSend(
+                "/sub/chat/room/list", messageDTO);
         template.convertAndSend(
                 "/sub/chat/room/" + roomId, messageDTO);
     }
@@ -90,9 +94,5 @@ public class ChatController {
         );
         template.convertAndSend(
                 "/sub/chat/room/" + messageDTO.getRoomId(), messageDTO);
-    }
-
-    private boolean checkIfChatRoomExist(Long roomId) {
-        return chatRoomService.checkIfChatRoomExist(roomId);
     }
 }
