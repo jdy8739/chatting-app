@@ -15,10 +15,6 @@ import java.util.Map;
 @Component
 public class EntranceLimitHandler extends ChannelInterceptorAdapter {
 
-    private final String REJECTED = "rejected";
-
-    private final String IS_FULL = "isFull";
-
     @Autowired
     ConnectedUserAndRoomInfoStore connectedUserAndRoomInfoStore;
 
