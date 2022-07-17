@@ -1,9 +1,6 @@
 package com.example.ChatoBackend.controller;
 
 import com.example.ChatoBackend.DTO.MessageDTO;
-import com.example.ChatoBackend.entity.ChatRoom;
-import com.example.ChatoBackend.entrance_limit_handler.EntranceLimitHandler;
-import com.example.ChatoBackend.service.ChatRoomServiceImpl;
 import com.example.ChatoBackend.service.MessageServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,14 +10,7 @@ import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.messaging.simp.user.SimpUser;
-import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.socket.WebSocketSession;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 @Slf4j
 @Controller
@@ -33,15 +23,7 @@ public class ChatController {
 
     private final String TIME = "time";
 
-    private final String REJECTED = "rejected";
-
-    private final String IS_FULL = "isFull";
-
     private final SimpMessagingTemplate template;
-
-    @Autowired
-    ChatRoomServiceImpl chatRoomService;
-
     @Autowired
     MessageServiceImpl messageService;
 
