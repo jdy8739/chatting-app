@@ -69,9 +69,10 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
     }
     const subscribeNewMessage = () => {
         stomp.subscribe(`/sub/chat/room/${id}`, ({ body }: { body: string }) => {
-            const newMessage: IMessageBody = JSON.parse(body);
-            updateMessageList(newMessage);
-            window.scrollTo(0, document.body.scrollHeight);
+            alert(body);
+            // const newMessage: IMessageBody = JSON.parse(body);
+            // updateMessageList(newMessage);
+            // window.scrollTo(0, document.body.scrollHeight);
         })
     };
     const updateMessageList = (newMessageInfo: IMessageBody) => {

@@ -9,6 +9,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
@@ -20,9 +21,7 @@ public class ChatController {
     private final String ROOM_ID = "roomId";
     private final String WRITER = "writer";
     private final String MESSAGE = "message";
-
     private final String TIME = "time";
-
     private final SimpMessagingTemplate template;
     @Autowired
     MessageServiceImpl messageService;

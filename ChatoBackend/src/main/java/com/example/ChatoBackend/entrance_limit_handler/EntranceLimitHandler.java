@@ -17,10 +17,8 @@ public class EntranceLimitHandler extends ChannelInterceptorAdapter {
 
     @Autowired
     ConnectedUserAndRoomInfoStore connectedUserAndRoomInfoStore;
-
     @Autowired
     ChatRoomServiceImpl chatRoomService;
-
     private Map<String, String> map;
 
     public void postSend(Message message, MessageChannel channel, boolean sent) {
@@ -58,5 +56,5 @@ public class EntranceLimitHandler extends ChannelInterceptorAdapter {
 
     private String extractId(String id) {
         return id.replace("[", "").replace("]", "");
-    }
+    };
 }
