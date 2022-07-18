@@ -15,6 +15,8 @@ import java.util.Map;
 @Component
 public class EntranceLimitHandler extends ChannelInterceptorAdapter {
 
+    /* 메세징 템플릿을 사용할 수 없어서, 사용을 하지않는 컴포넌트 */
+
     @Autowired
     ConnectedUserAndRoomInfoStore connectedUserAndRoomInfoStore;
     @Autowired

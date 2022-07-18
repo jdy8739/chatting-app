@@ -80,7 +80,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     }
     const subscribeRoomParticipants = () => {
         stomp.subscribe('/sub/chat/room/list', ({ body }: { body: string }) => {
-            alert(body);
+            console.log(body);
             // const newMessage: IMessageBody = JSON.parse(body);
             // updateRoomParticipants(newMessage);
         })

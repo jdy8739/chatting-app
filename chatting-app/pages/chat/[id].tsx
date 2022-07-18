@@ -58,22 +58,13 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
             textAreaRef.current?.setSelectionRange(0, 0);
         }
     }
-    const sendMasterMessage = (isUserEntered: boolean) => {
-        const masterMsg = isUserEntered ? 'joined' : 'left';
-        shootChatMessage('enter_or_leave', {
-            msgNo: 0,
-            roomId: String(id), 
-            message: `${randomUserId.slice(0, 9)} has just ${masterMsg} the room.`,
-            writer: MASTER,
-        });
-    }
     const subscribeNewMessage = () => {
         stomp.subscribe(`/sub/chat/room/${id}`, ({ body }: { body: string }) => {
-            alert(body);
-            // const newMessage: IMessageBody = JSON.parse(body);
-            // updateMessageList(newMessage);
-            // window.scrollTo(0, document.body.scrollHeight);
-        })
+            console.log(body);
+            const newMessage: IMessageBody = JSON.parse(body);
+            updateMessageList(newMessage);
+            window.scrollTo(0, document.body.scrollHeight);
+        }, { roomId: id, userId: randomUserId })
     };
     const updateMessageList = (newMessageInfo: IMessageBody) => {
         const isSentFromMaster = (newMessageInfo.writer === MASTER);
@@ -142,13 +133,11 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
         randomUserId = generateRandonUserId();
         socket = new WebSocket('ws://localhost:5000/stomp/chat');
         stomp = webstomp.over(socket);
-        stomp.connect({ roomId: id, userId: randomUserId }, () => {
+        stomp.connect({}, () => {
             subscribeNewMessage();
-            sendMasterMessage(true);
         });
         stomp.debug = () => null;
         return () => {
-            sendMasterMessage(false);
             randomUserId = '';
             previousShowCnt = 0;
         }

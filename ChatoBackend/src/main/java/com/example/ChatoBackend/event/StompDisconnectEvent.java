@@ -1,5 +1,7 @@
 package com.example.ChatoBackend.event;
 
+import com.example.ChatoBackend.DTO.MessageDTO;
+import com.example.ChatoBackend.store.ConnectedUserAndRoomInfoStore;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
@@ -15,9 +17,29 @@ public class StompDisconnectEvent implements ApplicationListener<SessionDisconne
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
-    @EventListener
+    @Autowired
+    ConnectedUserAndRoomInfoStore connectedUserAndRoomInfoStore;
+
+    private final String MASTER = "MASTER";
+
     public void onApplicationEvent(SessionDisconnectEvent event) {
-        log.info("2");
-        messagingTemplate.convertAndSend("/sub/chat/room/1", "let's go??");
+        try {
+            String sessionId = event.getSessionId();
+            String roomId = connectedUserAndRoomInfoStore.connectedUserMap.get(sessionId)[0];
+            String userId = connectedUserAndRoomInfoStore.connectedUserMap.get(sessionId)[1];
+            connectedUserAndRoomInfoStore.connectedUserMap.remove(sessionId);
+
+            messagingTemplate.convertAndSend(
+                    "/sub/chat/room/" + roomId,
+                    new MessageDTO(
+                            null,
+                            roomId,
+                            MASTER,
+                            userId.substring(0, 9) + " has just left the room.",
+                            null,
+                            false));
+        } catch (NullPointerException e) {
+            return;
+        }
     }
 }

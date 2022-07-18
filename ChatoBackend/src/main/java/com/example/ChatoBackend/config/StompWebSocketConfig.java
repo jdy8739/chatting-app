@@ -28,6 +28,6 @@ public class StompWebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(entranceLimitHandler);
+        // registration.interceptors(entranceLimitHandler);
     }
 }
