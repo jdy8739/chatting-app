@@ -3,6 +3,9 @@ package com.example.ChatoBackend.event;
 import com.example.ChatoBackend.DTO.MessageDTO;
 import com.example.ChatoBackend.service.ChatRoomServiceImpl;
 import com.example.ChatoBackend.store.ConnectedUserAndRoomInfoStore;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
@@ -32,15 +35,9 @@ public class StompSubscribeEvent implements ApplicationListener<SessionSubscribe
         String roomId = extractId(String.valueOf(nativeHeaders.get("roomId")));
         String userId = extractId(String.valueOf(nativeHeaders.get("userId")));
         String sessionId = (String) map.get("simpSessionId");
-
         if (userId.equals(NULL) || roomId.equals(NULL)) return;
-
-        /* String[] values = {roomId, userId};
-        if (values[0] != null && values[1] != null) {
-            if (chatRoomService.checkRoomStatusOK(Long.valueOf(roomId))) {
-                connectedUserAndRoomInfoStore.connectedUserMap.put(sessionId, values);
-            }
-        } */
+        String[] values = {roomId, userId};
+        connectedUserAndRoomInfoStore.connectedUserMap.put(sessionId, values);
         messagingTemplate.convertAndSend(
                 "/sub/chat/room/" + roomId,
                 new MessageDTO(
@@ -50,9 +47,22 @@ public class StompSubscribeEvent implements ApplicationListener<SessionSubscribe
                         userId.substring(0, 9) + " has just joined the room.",
                         null,
                         false));
+
+        messagingTemplate.convertAndSend(
+                "/sub/chat/room/list", new RoomParticipantsInfo(Integer.valueOf(roomId), true));
     }
 
     private String extractId(String id) {
         return id.replace("[", "").replace("]", "");
     };
 }
+
+@Getter
+@Setter
+@AllArgsConstructor
+class RoomParticipantsInfo {
+    private Integer roomId;
+    private Boolean isEnter;
+}
+
+

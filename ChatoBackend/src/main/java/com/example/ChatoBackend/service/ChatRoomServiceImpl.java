@@ -46,9 +46,9 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     public boolean checkRoomStatusOK(Long roomId) {
         Optional <ChatRoom> chatRoomOptional = chatRoomRepository.findByRoomId(roomId);
         if (chatRoomOptional.isEmpty()) {
-            throw new RuntimeException();
+            return false;
         } else if (chatRoomOptional.get().getNowParticipants() + 1 > chatRoomOptional.get().getLimitation()) {
-            throw new RuntimeException();
+            return false;
         } else {
             chatRoomRepository.plusParticipantsCount(roomId);
             return true;

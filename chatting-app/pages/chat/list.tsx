@@ -78,22 +78,36 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
             return true;
         } else return false;
     }
-    const subscribeRoomParticipants = () => {
+    const subscribeAndUpdateRoomParticipants = () => {
         stomp.subscribe('/sub/chat/room/list', ({ body }: { body: string }) => {
-            console.log(body);
-            // const newMessage: IMessageBody = JSON.parse(body);
-            // updateRoomParticipants(newMessage);
+            const info: { roomId: number, isEnter: boolean } = JSON.parse(body);
+            setRoomList(roomList => {
+                const copied = {...roomList};
+                let targetKey = '';
+                let targetIndex = -1;
+                Object.keys(copied).forEach(key => {
+                    targetIndex = roomList[key].list.findIndex(room => room.roomId === info.roomId);
+                    if (targetIndex !== -1) targetKey = key;
+                    return;
+                })
+                if (targetIndex === -1) return copied;
+                if (targetKey && (targetIndex !== -1)) {
+                    const target = {...copied[targetKey].list[targetIndex]};
+                    if (target.nowParticipants !== undefined) {
+                        target.nowParticipants = info.isEnter ? target.nowParticipants + 1 : target.nowParticipants - 1;
+                    }
+                    copied[targetKey].list.splice(targetIndex, 1, target);
+                }
+                return {...copied, [targetKey]: { list: [...copied[targetKey].list]}};
+            })
         })
     };
-    const updateRoomParticipants = (message: IMessageBody) => {
-        // logic ~
-    }
     useEffect(() => {
         arrangeRoomList();
         socket = new WebSocket('ws://localhost:5000/stomp/chat');
         stomp = webstomp.over(socket);
         stomp.connect({}, () => {
-            subscribeRoomParticipants();
+            subscribeAndUpdateRoomParticipants();
         });
         stomp.debug = () => null;
         return () => {

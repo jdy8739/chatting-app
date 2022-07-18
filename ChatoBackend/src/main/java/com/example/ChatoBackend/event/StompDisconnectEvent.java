@@ -1,6 +1,7 @@
 package com.example.ChatoBackend.event;
 
 import com.example.ChatoBackend.DTO.MessageDTO;
+import com.example.ChatoBackend.service.ChatRoomServiceImpl;
 import com.example.ChatoBackend.store.ConnectedUserAndRoomInfoStore;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,15 +11,19 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Slf4j
 @Component
 public class StompDisconnectEvent implements ApplicationListener<SessionDisconnectEvent> {
 
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
-
     @Autowired
     ConnectedUserAndRoomInfoStore connectedUserAndRoomInfoStore;
+    @Autowired
+    ChatRoomServiceImpl chatRoomService;
 
     private final String MASTER = "MASTER";
 
@@ -27,8 +32,8 @@ public class StompDisconnectEvent implements ApplicationListener<SessionDisconne
             String sessionId = event.getSessionId();
             String roomId = connectedUserAndRoomInfoStore.connectedUserMap.get(sessionId)[0];
             String userId = connectedUserAndRoomInfoStore.connectedUserMap.get(sessionId)[1];
+            chatRoomService.minusParticipantsCount(Long.valueOf(roomId));
             connectedUserAndRoomInfoStore.connectedUserMap.remove(sessionId);
-
             messagingTemplate.convertAndSend(
                     "/sub/chat/room/" + roomId,
                     new MessageDTO(
@@ -38,6 +43,9 @@ public class StompDisconnectEvent implements ApplicationListener<SessionDisconne
                             userId.substring(0, 9) + " has just left the room.",
                             null,
                             false));
+
+            messagingTemplate.convertAndSend(
+                    "/sub/chat/room/list", new RoomParticipantsInfo(Integer.valueOf(roomId), false));
         } catch (NullPointerException e) {
             return;
         }

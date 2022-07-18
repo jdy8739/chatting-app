@@ -61,6 +61,12 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
     const subscribeNewMessage = () => {
         stomp.subscribe(`/sub/chat/room/${id}`, ({ body }: { body: string }) => {
             const newMessage: IMessageBody = JSON.parse(body);
+            if (newMessage.writer === MASTER && newMessage.message === DISBANDED) {
+                toast.error('This room is disbanded.', toastConfig);
+                stomp.disconnect(() => null, {});
+                router.push('/chat/list');
+                return;
+            }
             updateMessageList(newMessage);
             window.scrollTo(0, document.body.scrollHeight);
         }, { roomId: id, userId: randomUserId })

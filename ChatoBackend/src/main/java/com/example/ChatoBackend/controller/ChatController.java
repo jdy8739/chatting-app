@@ -9,7 +9,6 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
@@ -27,24 +26,6 @@ public class ChatController {
     MessageServiceImpl messageService;
 
     JSONParser jsonParser = new JSONParser();
-
-    @MessageMapping(value = "/chat/enter_or_leave")
-    public void handleUser(String messageString) throws ParseException {
-        JSONObject jsonObject = (JSONObject) jsonParser.parse(messageString);
-        MessageDTO messageDTO = new MessageDTO(
-                null,
-                jsonObject.get(ROOM_ID).toString(),
-                jsonObject.get(WRITER).toString(),
-                jsonObject.get(MESSAGE).toString(),
-                null,
-                false
-        );
-        Long roomId = Long.parseLong(messageDTO.getRoomId());
-        template.convertAndSend(
-                "/sub/chat/room/list", messageDTO);
-        template.convertAndSend(
-                "/sub/chat/room/" + roomId, messageDTO);
-    }
 
     @MessageMapping(value = "/chat/message")
     public void handleMessage(String messageString) throws ParseException {

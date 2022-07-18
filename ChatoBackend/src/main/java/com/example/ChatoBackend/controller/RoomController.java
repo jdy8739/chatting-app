@@ -61,8 +61,14 @@ public class RoomController {
             @PathVariable("id") Long roomId,
             @RequestParam(value = "offset") String offset,
             @RequestBody Map<String, String> map) {
-        List<MessageDTO> messageDTOList =
-                messageService.getMessages(roomId, map.get("password"), Integer.valueOf(offset));
+
+        List<MessageDTO> messageDTOList = null;
+        if (Integer.valueOf(offset) == 0) {
+            if (!chatRoomService.checkRoomStatusOK(roomId)) {
+                return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
+            }
+        }
+        messageDTOList = messageService.getMessages(roomId, map.get("password"), Integer.valueOf(offset));
         if (messageDTOList == null)
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         else return new ResponseEntity<>(messageDTOList, HttpStatus.OK);
