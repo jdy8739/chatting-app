@@ -60,7 +60,6 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
     }
     const subscribeNewMessage = () => {
         stomp.subscribe(`/sub/chat/room/${id}`, ({ body }: { body: string }) => {
-            console.log(body);
             const newMessage: IMessageBody = JSON.parse(body);
             updateMessageList(newMessage);
             window.scrollTo(0, document.body.scrollHeight);
@@ -69,11 +68,6 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
     const updateMessageList = (newMessageInfo: IMessageBody) => {
         const isSentFromMaster = (newMessageInfo.writer === MASTER);
         const message = newMessageInfo.message;
-        if (isSentFromMaster && (message === REJECTED || message === DISBANDED)) {
-            toast.error(message === REJECTED ? 'You cannot enter this room!' : 'This room has just been disbanded!', toastConfig);
-            stomp.disconnect(() => router.push('/chat/list'), {});
-            return;
-        };
         const target = Number(message);
         if (isSentFromMaster && !window.isNaN(target)) {
             setMessages(messages => {
@@ -121,12 +115,7 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
     }
     const shootChatMessage = (target: string, message: IMessageBody) => {
         if (socket && stomp) {
-            try {
-                stomp.send(`/pub/chat/${target}`, JSON.stringify(message));
-            } catch (e) {
-                toast.error('This room does not exist or exceeds capacity!');
-                stomp.disconnect(() => router.push('/chat/list'), {});
-            }
+            stomp.send(`/pub/chat/${target}`, JSON.stringify(message));
         }
     }
     useEffect(() => {
@@ -138,6 +127,7 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
         });
         stomp.debug = () => null;
         return () => {
+            stomp.disconnect(() => null, {});
             randomUserId = '';
             previousShowCnt = 0;
         }

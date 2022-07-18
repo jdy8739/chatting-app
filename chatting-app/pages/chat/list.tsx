@@ -96,6 +96,9 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
             subscribeRoomParticipants();
         });
         stomp.debug = () => null;
+        return () => {
+            stomp.disconnect(() => null, {});
+        }
     }, [])
     return (
         <>
