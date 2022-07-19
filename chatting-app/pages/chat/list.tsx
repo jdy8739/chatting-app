@@ -80,25 +80,27 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     }
     const subscribeAndUpdateRoomParticipants = () => {
         stomp.subscribe('/sub/chat/room/list', ({ body }: { body: string }) => {
+            console.log(body);
             const info: { roomId: number, isEnter: boolean } = JSON.parse(body);
             setRoomList(roomList => {
-                const copied = {...roomList};
                 let targetKey = '';
                 let targetIndex = -1;
-                Object.keys(copied).forEach(key => {
+                Object.keys(roomList).some(key => {
                     targetIndex = roomList[key].list.findIndex(room => room.roomId === info.roomId);
-                    if (targetIndex !== -1) targetKey = key;
-                    return;
+                    if (targetIndex !== -1) {
+                        targetKey = key;
+                        return true;
+                    }
                 })
-                if (targetIndex === -1) return copied;
-                if (targetKey && (targetIndex !== -1)) {
-                    const target = {...copied[targetKey].list[targetIndex]};
+                if (targetIndex === -1) return roomList;
+                if (targetKey) {
+                    const target = {...roomList[targetKey].list[targetIndex]};
                     if (target.nowParticipants !== undefined) {
                         target.nowParticipants = info.isEnter ? target.nowParticipants + 1 : target.nowParticipants - 1;
                     }
-                    copied[targetKey].list.splice(targetIndex, 1, target);
+                    roomList[targetKey].list.splice(targetIndex, 1, target);
                 }
-                return {...copied, [targetKey]: { list: [...copied[targetKey].list]}};
+                return {...roomList, [targetKey]: {list: [...roomList[targetKey].list]}};
             })
         })
     };
@@ -147,7 +149,8 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     )
 };
 
-export async function getServerSideProps() {
+export async function getServerSideProps(context: any) {
+    console.log(context.req.headers.referer);
     const rooms: IRoom[] = (await axios.get<IRoom[]>(`${process.env.NEXT_PUBLIC_API_URL}/room/list`)).data;
     rooms.forEach(room => {if (room.password) delete room.password });
     return {
