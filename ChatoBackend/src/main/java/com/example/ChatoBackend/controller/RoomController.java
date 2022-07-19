@@ -28,8 +28,6 @@ public class RoomController {
 
     private final String ROOM_ID = "roomId";
 
-    private final String NEW_SUBJECT = "newSubject";
-
     @Autowired
     private final SimpMessagingTemplate messagingTemplate;
     @Autowired
@@ -52,7 +50,9 @@ public class RoomController {
 
     @PutMapping("/change_subject")
     public ResponseEntity<Void> changeSubject(@RequestBody Map<String, String> map) {
-        chatRoomService.changeSubject(Long.parseLong(map.get(ROOM_ID)), map.get(NEW_SUBJECT));
+        log.info("" + map);
+        chatRoomService.changeSubject(Long.parseLong(map.get("targetRoomId")), map.get("destinationId"));
+        messagingTemplate.convertAndSend("/sub/chat/room/list", map);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
@@ -93,7 +93,6 @@ public class RoomController {
 
     @DeleteMapping("/delete/{roomId}")
     public ResponseEntity<Void> deleteRoom(@PathVariable(ROOM_ID) Long roomId) {
-
         chatRoomService.deleteRoom(roomId);
         messageService.deleteRoom(roomId);
         Map<String, Integer> map = new HashMap<>();

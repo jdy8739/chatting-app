@@ -11,6 +11,14 @@ interface IClassifiedRoom {
     [key: string]: { isPinned?: boolean, list: IRoom[] }
 }
 
+interface IRoomMoved {
+    sourceId: string,
+    destinationId: string, 
+    sourceIndex: number, 
+    destinationIndex: number,
+    targetRoomId: number,
+}
+
 let socket: WebSocket;
 let stomp: any;
 
@@ -32,21 +40,28 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                 deleteRoom(source.droppableId, source.index);
                 return;
             }
-            const target = roomList[source.droppableId].list[source.index];
-            let isChangeAvail = false;
-            if (source.droppableId !== destination.droppableId) {
-                if (!changeToNewSubject(target.roomId, destination.droppableId)) return;
-                isChangeAvail = true;
-            } else isChangeAvail = true;
-            if (isChangeAvail) {
-                setRoomList(roomList => {
-                    const copied = {...roomList};
-                    copied[source.droppableId].list.splice(source.index, 1);
-                    copied[destination.droppableId].list.splice(destination.index, 0, target);
-                    return copied;
-                })
+            const roomMovedInfo: IRoomMoved = {
+                targetRoomId: roomList[source.droppableId].list[source.index].roomId,
+                sourceId: source.droppableId,
+                destinationId: destination.droppableId, 
+                sourceIndex: source.index, 
+                destinationIndex: destination.index,
             }
+            if (source.droppableId !== destination.droppableId) changeToNewSubject(roomMovedInfo);
+            else updateRoomMoved(roomMovedInfo);
         }
+    }
+    const updateRoomMoved = ({ sourceId, sourceIndex, destinationId, destinationIndex }: IRoomMoved) => {
+        setRoomList(roomList => {
+            const target = roomList[sourceId].list[sourceIndex];
+            roomList[sourceId].list.splice(sourceIndex, 1);
+            roomList[destinationId].list.splice(destinationIndex, 0, target);
+            return { 
+                ...roomList,
+                [sourceId]: { list: [...roomList[sourceId].list] },
+                [destinationId]: { list: [...roomList[destinationId].list] }
+            };
+        })
     }
     const deleteRoom = (sourceId: string, index: number) => {
         const targetRoomId = roomList[sourceId].list[index].roomId;
@@ -64,24 +79,17 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         })
     }
     const sendRoomDeleteMessage = (message: IMessageBody) => {
-        if (socket && stomp) {
-            stomp.send('/pub/chat/delete', JSON.stringify(message));
-        }
+        if (socket && stomp) stomp.send('/pub/chat/delete', JSON.stringify(message));
     }
-    const changeToNewSubject = async (roomId: number, newSubject?: string) => {
-        const { status } = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/room/change_subject`, {
-            newSubject: newSubject,
-            roomId: String(roomId)
-        });
-        if (status === 200) {
-            return true;
-        } else return false;
+    const changeToNewSubject = (roomMovedInfo: IRoomMoved) => {
+        axios.put(`${process.env.NEXT_PUBLIC_API_URL}/room/change_subject`, roomMovedInfo);
     }
     const subscribeRoomParticipants = () => {
         stomp.subscribe('/sub/chat/room/list', ({ body }: { body: string }) => {
             const messageObj = JSON.parse(body);
             if (Object.hasOwn(messageObj, 'isEnter')) updateRoomParticipants(messageObj);
             else if (Object.hasOwn(messageObj, 'isDeleted')) updateRoomDeleted(messageObj);
+            else if (Object.hasOwn(messageObj, 'destinationId')) updateRoomMoved(messageObj);
             else updateRoomCreated(messageObj);
         });
     };
@@ -114,9 +122,6 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
             targetRoomList.splice(+targetIndex, 1);
             return {...roomList, [targetKey]: { list: [...targetRoomList] }};
         })
-    }
-    const updateRoomMoved = () => {
-        
     }
     const findSubjectAndRoomIndexByRoomId = (roomId: number, roomList: IClassifiedRoom) => {
         let targetKey = '';
