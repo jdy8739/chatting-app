@@ -28,11 +28,15 @@ function NavBar() {
             </div>
             <style>{`
                 .bar-bg {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
                     width: 100vw;
-                    height: 55px;
+                    height: 65px;
                     background-color: white;
                     box-shadow: 0px 5px 30px rgba(0, 0, 0, 0.15);
                     padding: 0px 25px;
+                    z-index: 100;
                 }
                 .bar-inner {
                     width: 100%;
@@ -43,11 +47,9 @@ function NavBar() {
                     align-items: center;
                     margin: auto;
                 }
-
                 .clicked {
                     color: orange;
                 }
-
                 h1 {
                     color: orange;
                     font-weight: bold;

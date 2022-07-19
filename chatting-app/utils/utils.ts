@@ -31,5 +31,4 @@ export const toastConfig = {
 };
 
 export const MASTER = 'MASTER';
-export const REJECTED = 'rejected';
 export const DISBANDED = 'disbanded';

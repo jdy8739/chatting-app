@@ -1,5 +1,5 @@
 import { ToastContainer } from "react-toastify";
-import NavBar from "./NavBar";
+import NavBar from "./commons/NavBar";
 import 'react-toastify/dist/ReactToastify.css';
 
 function Layout({ children }: any) {

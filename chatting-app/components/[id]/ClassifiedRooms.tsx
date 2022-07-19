@@ -1,6 +1,6 @@
 import React from "react";
 import { Droppable } from "react-beautiful-dnd";
-import { IRoom } from "../types/types";
+import { IRoom } from "../../types/types";
 import Room from "./Room";
 
 
@@ -14,7 +14,7 @@ function ClassifiedRooms({ rooms, subject }: { rooms: IRoom[], subject: string }
                 </h3>
                 <Droppable droppableId={subject}>
                     {(provided, snapshot) => (
-                        <div 
+                        <div
                             className={`body 
                             ${snapshot.draggingFromThisWith ? 'draggingFromThisWith' : ''} 
                             ${snapshot.draggingOverWith ? 'isDraggingOver' : ''}`}  

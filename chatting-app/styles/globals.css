@@ -112,3 +112,27 @@ h5 {
   bottom: 50px;
   right: 50px;
 }
+
+.user-container {
+  width: 300px;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.4);
+  position: fixed;
+  top: 0px;
+  left: -235px;
+  transition: all 1s;
+  opacity: 0.5;
+  z-index: 10;
+}
+
+.user-container > h4 {
+  position: absolute;
+  right: 10px;
+  top: 65px;
+  color: white;
+}
+
+.user-container:hover {
+  transform: translateX(235px);
+  opacity: 1;
+}

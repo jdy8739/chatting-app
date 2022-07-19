@@ -3,9 +3,10 @@ import { useRouter } from "next/router";
 import React, { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import webstomp from "webstomp-client";
-import Seo from "../../components/Seo";
+import Seo from "../../components/commons/Seo";
+import UserContainer from "../../components/[id]/UserContainer";
 import { IMessageBody } from "../../types/types";
-import { DISBANDED, generateRandonUserId, MASTER, REJECTED, setPreviousRoomId, toastConfig } from "../../utils/utils";
+import { DISBANDED, generateRandonUserId, MASTER, setPreviousRoomId, toastConfig } from "../../utils/utils";
 
 interface IChatRoomProps {
     id: number,
@@ -151,6 +152,7 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
                     <h4>show previous</h4>
                 </div>
             }
+            <UserContainer />
             <div className="container">
                 {
                     messages.map((msg, i) => 
@@ -238,7 +240,7 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
                         height: 100px;
                         background-color: gray;
                         position: absolute;
-                        top: 55px;
+                        top: 65px;
                         opacity: 0.3;
                         cursor: pointer;
                         display: flex;

@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import Seo from "../../components/Seo";
+import Seo from "../../components/commons/Seo";
 import { clearPreviousRoomId } from "../../utils/utils";
 
 function SingUp() {

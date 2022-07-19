@@ -1,11 +1,10 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
-import ClassifiedRooms from "../../components/ClassifiedRooms";
+import ClassifiedRooms from "../../components/[id]/ClassifiedRooms";
 import { IMessageBody, IRoom } from "../../types/types";
 import webstomp from "webstomp-client";
 import { DISBANDED, getPreviousRoomId, MASTER } from "../../utils/utils";
-import { useRouter } from "next/router";
 
 interface IClassifiedRoom {
     [key: string]: { isPinned?: boolean, list: IRoom[] }
