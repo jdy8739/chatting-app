@@ -21,6 +21,7 @@ public class ChatController {
     private final String WRITER = "writer";
     private final String MESSAGE = "message";
     private final String TIME = "time";
+    @Autowired
     private final SimpMessagingTemplate template;
     @Autowired
     MessageServiceImpl messageService;

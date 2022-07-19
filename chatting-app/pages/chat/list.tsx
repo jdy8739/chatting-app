@@ -18,16 +18,17 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     const [roomList, setRoomList] = useState<IClassifiedRoom>({});
     const arrangeRoomList = async () => {
         const defaultRoomListObject: IClassifiedRoom = {};
-        rooms.forEach(room => {
-            const subject = room.subject;
-            if (!Object.hasOwn(defaultRoomListObject, subject)) {
-                defaultRoomListObject[subject] = { list: [room] };
-            } else {
-                defaultRoomListObject[subject]['list'].push(room);
-            }
-        })
+        rooms.forEach(room => arrangeEachRoom(room, defaultRoomListObject));
         setRoomList(defaultRoomListObject);
     }
+    const arrangeEachRoom = (room: IRoom, roomList: IClassifiedRoom) => {
+        const subject = room.subject;
+        if (!Object.hasOwn(roomList, subject)) {
+            roomList[subject] = { list: [room] };
+        } else {
+            roomList[subject]['list'].push(room);
+        }
+    } 
     const onDragEnd = ({ destination, source }: DropResult) => {
         if (destination) {
             if (destination.droppableId === 'trash-can') {
@@ -80,29 +81,54 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         } else return false;
     }
     const subscribeRoomParticipants = () => {
-        stomp.subscribe('/sub/chat/room/list', ({ body }: { body: string }) => updateRoomParticipants(JSON.parse(body)));
+        stomp.subscribe('/sub/chat/room/list', ({ body }: { body: string }) => {
+            const messageObj = JSON.parse(body);
+            if (Object.hasOwn(messageObj, 'isEnter')) updateRoomParticipants(messageObj);
+            else if (Object.hasOwn(messageObj, 'isDeleted')) updateRoomDeleted(messageObj);
+            else updateRoomCreated(messageObj);
+        });
     };
     const updateRoomParticipants = (info: { roomId: number, isEnter: boolean }) => {
         setRoomList(roomList => {
-            let targetKey = '';
-            let targetIndex = -1;
-            Object.keys(roomList).some(key => {
-                targetIndex = roomList[key].list.findIndex(room => room.roomId === info.roomId);
-                if (targetIndex !== -1) {
-                    targetKey = key;
-                    return true;
-                }
-            })
+            const [targetKey, targetIndex] = findSubjectAndRoomIndexByRoomId(info.roomId, roomList);
             if (targetIndex === -1) return roomList;
             if (targetKey) {
-                const target = {...roomList[targetKey].list[targetIndex]};
+                const target = {...roomList[targetKey].list[+targetIndex]};
                 if (target.nowParticipants !== undefined) {
                     target.nowParticipants = info.isEnter ? target.nowParticipants + 1 : target.nowParticipants - 1;
                 }
-                roomList[targetKey].list.splice(targetIndex, 1, target);
+                roomList[targetKey].list.splice(+targetIndex, 1, target);
             }
             return {...roomList, [targetKey]: {list: [...roomList[targetKey].list]}};
         })
+    }
+    const updateRoomCreated = (room: IRoom) => {
+        setRoomList(roomList => {
+            arrangeEachRoom(room, roomList);
+            const targetRoomList = roomList[room.subject].list;
+            return {...roomList, [room.subject]: { list: [...targetRoomList] }};
+        })
+    }
+    const updateRoomDeleted = (info: { roomId: number, isDeleted: number }) => {
+        setRoomList(roomList => {
+            const [targetKey, targetIndex] = findSubjectAndRoomIndexByRoomId(info.roomId, roomList);
+            if (targetIndex === -1) return roomList;
+            const targetRoomList = roomList[targetKey].list;
+            targetRoomList.splice(+targetIndex, 1);
+            return {...roomList, [targetKey]: { list: [...targetRoomList] }};
+        })
+    }
+    const findSubjectAndRoomIndexByRoomId = (roomId: number, roomList: IClassifiedRoom) => {
+        let targetKey = '';
+        let targetIndex = -1;
+        Object.keys(roomList).some(key => {
+            targetIndex = roomList[key].list.findIndex(room => room.roomId === roomId);
+            if (targetIndex !== -1) {
+                targetKey = key;
+                return true;
+            }
+        })
+        return [targetKey, targetIndex];
     }
     useEffect(() => {
         arrangeRoomList();
