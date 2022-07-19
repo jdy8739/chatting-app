@@ -23,12 +23,9 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     }
     const arrangeEachRoom = (room: IRoom, roomList: IClassifiedRoom) => {
         const subject = room.subject;
-        if (!Object.hasOwn(roomList, subject)) {
-            roomList[subject] = { list: [room] };
-        } else {
-            roomList[subject]['list'].push(room);
-        }
-    } 
+        if (!Object.hasOwn(roomList, subject)) roomList[subject] = { list: [room] };
+        else roomList[subject]['list'].push(room);
+    }
     const onDragEnd = ({ destination, source }: DropResult) => {
         if (destination) {
             if (destination.droppableId === 'trash-can') {
@@ -72,11 +69,11 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         }
     }
     const changeToNewSubject = async (roomId: number, newSubject?: string) => {
-        const result = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/room/change_subject`, {
+        const { status } = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/room/change_subject`, {
             newSubject: newSubject,
             roomId: String(roomId)
         });
-        if (result.status === 200) {
+        if (status === 200) {
             return true;
         } else return false;
     }
@@ -117,6 +114,9 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
             targetRoomList.splice(+targetIndex, 1);
             return {...roomList, [targetKey]: { list: [...targetRoomList] }};
         })
+    }
+    const updateRoomMoved = () => {
+        
     }
     const findSubjectAndRoomIndexByRoomId = (roomId: number, roomList: IClassifiedRoom) => {
         let targetKey = '';
