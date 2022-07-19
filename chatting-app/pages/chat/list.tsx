@@ -4,7 +4,8 @@ import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import ClassifiedRooms from "../../components/ClassifiedRooms";
 import { IMessageBody, IRoom } from "../../types/types";
 import webstomp from "webstomp-client";
-import { DISBANDED, MASTER } from "../../utils/utils";
+import { DISBANDED, getPreviousRoomId, MASTER } from "../../utils/utils";
+import { useRouter } from "next/router";
 
 interface IClassifiedRoom {
     [key: string]: { isPinned?: boolean, list: IRoom[] }
@@ -78,40 +79,43 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
             return true;
         } else return false;
     }
-    const subscribeAndUpdateRoomParticipants = () => {
-        stomp.subscribe('/sub/chat/room/list', ({ body }: { body: string }) => {
-            console.log(body);
-            const info: { roomId: number, isEnter: boolean } = JSON.parse(body);
-            setRoomList(roomList => {
-                let targetKey = '';
-                let targetIndex = -1;
-                Object.keys(roomList).some(key => {
-                    targetIndex = roomList[key].list.findIndex(room => room.roomId === info.roomId);
-                    if (targetIndex !== -1) {
-                        targetKey = key;
-                        return true;
-                    }
-                })
-                if (targetIndex === -1) return roomList;
-                if (targetKey) {
-                    const target = {...roomList[targetKey].list[targetIndex]};
-                    if (target.nowParticipants !== undefined) {
-                        target.nowParticipants = info.isEnter ? target.nowParticipants + 1 : target.nowParticipants - 1;
-                    }
-                    roomList[targetKey].list.splice(targetIndex, 1, target);
-                }
-                return {...roomList, [targetKey]: {list: [...roomList[targetKey].list]}};
-            })
-        })
+    const subscribeRoomParticipants = () => {
+        stomp.subscribe('/sub/chat/room/list', ({ body }: { body: string }) => updateRoomParticipants(JSON.parse(body)));
     };
+    const updateRoomParticipants = (info: { roomId: number, isEnter: boolean }) => {
+        setRoomList(roomList => {
+            let targetKey = '';
+            let targetIndex = -1;
+            Object.keys(roomList).some(key => {
+                targetIndex = roomList[key].list.findIndex(room => room.roomId === info.roomId);
+                if (targetIndex !== -1) {
+                    targetKey = key;
+                    return true;
+                }
+            })
+            if (targetIndex === -1) return roomList;
+            if (targetKey) {
+                const target = {...roomList[targetKey].list[targetIndex]};
+                if (target.nowParticipants !== undefined) {
+                    target.nowParticipants = info.isEnter ? target.nowParticipants + 1 : target.nowParticipants - 1;
+                }
+                roomList[targetKey].list.splice(targetIndex, 1, target);
+            }
+            return {...roomList, [targetKey]: {list: [...roomList[targetKey].list]}};
+        })
+    }
     useEffect(() => {
         arrangeRoomList();
         socket = new WebSocket('ws://localhost:5000/stomp/chat');
         stomp = webstomp.over(socket);
         stomp.connect({}, () => {
-            subscribeAndUpdateRoomParticipants();
+            subscribeRoomParticipants();
         });
         stomp.debug = () => null;
+        const previousRoomId = getPreviousRoomId();
+        if (previousRoomId) {
+            updateRoomParticipants({ roomId: +previousRoomId, isEnter: false });
+        }
         return () => {
             stomp.disconnect(() => null, {});
         }
@@ -149,8 +153,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     )
 };
 
-export async function getServerSideProps(context: any) {
-    console.log(context.req.headers.referer);
+export async function getServerSideProps() {
     const rooms: IRoom[] = (await axios.get<IRoom[]>(`${process.env.NEXT_PUBLIC_API_URL}/room/list`)).data;
     rooms.forEach(room => {if (room.password) delete room.password });
     return {

@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import webstomp from "webstomp-client";
 import Seo from "../../components/Seo";
 import { IMessageBody } from "../../types/types";
-import { DISBANDED, generateRandonUserId, MASTER, REJECTED, toastConfig } from "../../utils/utils";
+import { DISBANDED, generateRandonUserId, MASTER, REJECTED, setPreviousRoomId, toastConfig } from "../../utils/utils";
 
 interface IChatRoomProps {
     id: number,
@@ -132,6 +132,7 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
             subscribeNewMessage();
         });
         stomp.debug = () => null;
+        setPreviousRoomId(id);
         return () => {
             stomp.disconnect(() => null, {});
             randomUserId = '';

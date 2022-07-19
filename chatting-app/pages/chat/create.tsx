@@ -2,7 +2,7 @@ import axios from "axios";
 import { useRouter } from "next/router";
 import React, { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { toastConfig } from "../../utils/utils";
+import { clearPreviousRoomId, toastConfig } from "../../utils/utils";
 
 const roomSubjectOptions = [
     'life', 'sports', 'study', 'jobs', 'leisure', 'dish', 'tour', 'economy', 'world', 'art', 'music', 'else'
@@ -66,6 +66,7 @@ function CreateChat() {
     };
     useEffect(() => {
         setIsRendered(true);
+        clearPreviousRoomId();
     }, []);
     return (
         <div className="all">
