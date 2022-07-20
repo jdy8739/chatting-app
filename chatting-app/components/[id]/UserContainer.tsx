@@ -4,10 +4,12 @@ import { useState } from "react";
 interface IUserContainer { 
     roomId: number,
     participants: string[],
-    setParticipants: (participants: string[]) => void
+    setParticipants: (participants: string[]) => void,
+    myId: string,
+    isMyOwnRoom: boolean,
 }
 
-function UserContainer({ roomId, participants, setParticipants }: IUserContainer) {
+function UserContainer({ roomId, participants, setParticipants, myId, isMyOwnRoom }: IUserContainer) {
     const showNowUsers = async () => {
         if (participants.length === 0) {
             const results: string[] = await (await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/room/participants/${roomId}`)).data;
@@ -27,12 +29,16 @@ function UserContainer({ roomId, participants, setParticipants }: IUserContainer
                             <div key={i} className="profile">
                                 <div className="profile-img"></div>
                                 {participant.slice(0, 9)}
-                                <img
-                                    width="20px"
-                                    height="20px"
-                                    src='/out.png'
-                                    className="out-icon"
-                                />
+                                <span style={{color: 'red'}}>{(participant === myId) ? '(me)' : ''}</span>
+                                {
+                                    (participant !== myId) && isMyOwnRoom &&
+                                    <img
+                                        width="20px"
+                                        height="20px"
+                                        src='/out.png'
+                                        className="out-icon"
+                                    />
+                                }
                             </div>
                         )
                     })}

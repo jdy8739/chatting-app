@@ -29,14 +29,12 @@ import java.util.Set;
 public class RoomController {
 
     private final String ROOM_ID = "roomId";
-
     @Autowired
     private final SimpMessagingTemplate messagingTemplate;
     @Autowired
     ChatRoomServiceImpl chatRoomService;
     @Autowired
     MessageServiceImpl messageService;
-
     @Autowired
     ConnectedUserAndRoomInfoStore connectedUserAndRoomInfoStore;
 
@@ -70,21 +68,27 @@ public class RoomController {
     }
 
     @PostMapping("/message/{id}")
-    public ResponseEntity<List<MessageDTO>> getMessage(
+    public ResponseEntity<Map<String, Object>> getMessage(
             @PathVariable("id") Long roomId,
             @RequestParam(value = "offset") String offset,
             @RequestBody Map<String, String> map) {
-
+        String roomOwner = "";
         List<MessageDTO> messageDTOList = null;
         if (Integer.valueOf(offset) == 0) {
             if (!chatRoomService.checkRoomStatusOK(roomId)) {
                 return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
             }
+            roomOwner = chatRoomService.findRoomOwnerByRoomId(roomId);
         }
         messageDTOList = messageService.getMessages(roomId, map.get("password"), Integer.valueOf(offset));
         if (messageDTOList == null)
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-        else return new ResponseEntity<>(messageDTOList, HttpStatus.OK);
+        else {
+            Map<String, Object> responseMap = new HashMap<>();
+            responseMap.put("owner", roomOwner);
+            responseMap.put("messageList", messageDTOList);
+            return new ResponseEntity<>(responseMap, HttpStatus.OK);
+        }
     }
 
     @DeleteMapping("/del_message/{id}")

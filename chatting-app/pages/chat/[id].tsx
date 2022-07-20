@@ -12,7 +12,13 @@ interface IChatRoomProps {
     id: number,
     roomName: string,
     previousChat: IMessageBody[],
-    password?: string
+    password?: string,
+    roomOwner: string
+}
+
+interface IChatRoomInfo {
+    owner: string,
+    messageList: IMessageBody[] | undefined
 }
 
 let socket: WebSocket;
@@ -20,13 +26,13 @@ let stomp: any;
 let randomUserId: string = '';
 let previousShowCnt = 0;
 
-const fetchPreviousChat = async (id: number, count: number, password?: string) => {
-    const previousChat = await (await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/message/${id}?offset=${count}`, { password })).data;
-    previousChat?.reverse();
-    return previousChat;
+const fetchRoomOwnerAndPreviousChat = async (id: number, count: number, password?: string) => {
+    const { owner, messageList }: IChatRoomInfo = await (await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/message/${id}?offset=${count}`, { password })).data;
+    messageList?.reverse();
+    return { owner, messageList };
 }
 
-function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) {
+function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChatRoomProps) {
     let newMessage: string;
     const router = useRouter();
     const [messages, setMessages] = useState<IMessageBody[]>(previousChat);
@@ -94,13 +100,13 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
     const showPreviousChat = async () => {
         setTargetChatNumber(-1);
         previousShowCnt += 1;
-        const previousChat = await fetchPreviousChat(id, previousShowCnt, password);
-        if (previousChat) {
-            if (previousChat.length < 10) {
+        const { messageList } = await fetchRoomOwnerAndPreviousChat(id, previousShowCnt, password);
+        if (messageList) {
+            if (messageList.length < 10) {
                 setIsAllChatShown(true);
             }
             setMessages(messages => {
-                const copied = [...previousChat, ...messages];
+                const copied = [...messageList, ...messages];
                 return copied;
             })
         }
@@ -157,6 +163,8 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
                 roomId={id}
                 participants={participants}
                 setParticipants={setParticipants}
+                myId={randomUserId}
+                isMyOwnRoom={randomUserId === roomOwner}
             />
             <div className="container">
                 {
@@ -246,12 +254,13 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
                         background-color: gray;
                         position: absolute;
                         top: 65px;
-                        opacity: 0.3;
+                        opacity: 0.4;
                         cursor: pointer;
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                        color: white;
+                        color: #c0c0c0;
+                        z-index: 10;
                     }
                 `}</style>
             </div>
@@ -265,9 +274,12 @@ interface IServerProps {
 }
 
 export async function getServerSideProps({ params: { id }, query: { roomName, password }}: IServerProps) {
+    let owner: string;
     let previousChat: IMessageBody[] | undefined;
     try {
-        previousChat = await fetchPreviousChat(id, previousShowCnt, password);
+        const results = await fetchRoomOwnerAndPreviousChat(id, previousShowCnt, password);
+        owner = results.owner;
+        previousChat = results.messageList;
         previousChat?.forEach(chat => {if (chat.isDeleted) chat.message = ''});
     } catch (e) {
         console.log(`Failed to fetch previous chat of room id ${id}.`);
@@ -284,7 +296,8 @@ export async function getServerSideProps({ params: { id }, query: { roomName, pa
             id,
             roomName: roomName || '',
             previousChat: previousChat ? previousChat : [],
-            password: password || null
+            password: password || null,
+            roomOwner: owner,
         }
     };
 }

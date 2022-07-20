@@ -21,4 +21,6 @@ public interface ChatRoomService {
     public boolean checkPwValidation(Long roomId, String password);
 
     public void deleteRoom(Long roomId);
+
+    public String findRoomOwnerByRoomId(Long roomId);
 }

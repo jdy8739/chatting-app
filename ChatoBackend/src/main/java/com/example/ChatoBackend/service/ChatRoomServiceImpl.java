@@ -73,4 +73,9 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     public void deleteRoom(Long roomId) {
         chatRoomRepository.deleteByRoomId(roomId);
     }
+
+    @Override
+    public String findRoomOwnerByRoomId(Long roomId) {
+        return chatRoomRepository.findByRoomId(roomId).get().getOwner();
+    }
 }
