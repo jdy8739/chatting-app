@@ -42,10 +42,10 @@ public class StompSubscribeEvent implements ApplicationListener<SessionSubscribe
         messagingTemplate.convertAndSend(
                 "/sub/chat/room/" + roomId,
                 new MessageDTO(
-                        null,
+                        Long.valueOf(0),
                         roomId,
                         MASTER,
-                        userId.substring(0, 9) + " has just joined the room.",
+                        userId,
                         null,
                         false));
 

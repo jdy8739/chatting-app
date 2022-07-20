@@ -116,4 +116,20 @@ public class RoomController {
             @PathVariable("roomId") Long roomId) {
         return new ResponseEntity<>(connectedUserAndRoomInfoStore.participantsUserMap.get(roomId), HttpStatus.OK);
     }
+
+    @DeleteMapping("/ban/{roomId}")
+    public ResponseEntity<Void> banParticipant(
+            @PathVariable(ROOM_ID) Long roomId,
+            @RequestParam("id") String participantId) {
+        MessageDTO messageDTO = new MessageDTO(
+                Long.valueOf(2),
+                "",
+                "MASTER",
+                participantId,
+                "",
+                false);
+        messagingTemplate.convertAndSend("/sub/chat/room/" + roomId, messageDTO);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
 }

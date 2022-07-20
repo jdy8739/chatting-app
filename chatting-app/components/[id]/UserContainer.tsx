@@ -16,6 +16,9 @@ function UserContainer({ roomId, participants, setParticipants, myId, isMyOwnRoo
             setParticipants(results);
         } else return;
     }
+    const banThisParticipant = (participantId: string) => {
+        axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/room/ban/${roomId}?id=${participantId}`);
+    }
     return (
         <>
             <div
@@ -31,12 +34,14 @@ function UserContainer({ roomId, participants, setParticipants, myId, isMyOwnRoo
                                 {participant.slice(0, 9)}
                                 <span style={{color: 'red'}}>{(participant === myId) ? '(me)' : ''}</span>
                                 {
-                                    (participant !== myId) && isMyOwnRoom &&
+                                    // (participant !== myId) && isMyOwnRoom &&
+                                    true &&
                                     <img
                                         width="20px"
                                         height="20px"
                                         src='/out.png'
                                         className="out-icon"
+                                        onClick={() => banThisParticipant(participant)}
                                     />
                                 }
                             </div>

@@ -40,10 +40,10 @@ public class StompDisconnectEvent implements ApplicationListener<SessionDisconne
             messagingTemplate.convertAndSend(
                     "/sub/chat/room/" + roomId,
                     new MessageDTO(
-                            null,
+                            Long.valueOf(1),
                             roomId,
                             MASTER,
-                            userId.substring(0, 9) + " has just left the room.",
+                            userId,
                             null,
                             false));
 

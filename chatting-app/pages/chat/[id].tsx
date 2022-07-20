@@ -18,7 +18,7 @@ interface IChatRoomProps {
 
 interface IChatRoomInfo {
     owner: string,
-    messageList: IMessageBody[] | undefined
+    messageList?: IMessageBody[] | undefined,
 }
 
 let socket: WebSocket;
@@ -69,21 +69,28 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
     const subscribeNewMessage = () => {
         stomp.subscribe(`/sub/chat/room/${id}`, ({ body }: { body: string }) => {
             const newMessage: IMessageBody = JSON.parse(body);
-            if (newMessage.writer === MASTER && newMessage.message === DISBANDED) {
-                toast.error('This room is disbanded.', toastConfig);
-                stomp.disconnect(() => null, {});
-                router.push('/chat/list');
+            const isSentFromMaster = (newMessage.writer === MASTER);
+            const msgNo = newMessage.msgNo;
+            if (isSentFromMaster && newMessage.message === DISBANDED) {
+                expelUser('This room is disbanded.');
                 return;
+            }
+            if (isSentFromMaster && (msgNo >= 0 && msgNo <= 2)) {
+                const targetId = newMessage.message;
+                if (msgNo === 2) {
+                    if (targetId === randomUserId) expelUser('You are banned!');
+                    newMessage.message = `${targetId.slice(0, 9)} has been banned.`;
+                } else newMessage.message = `${targetId.slice(0, 9)} has just ${msgNo ? 'left' : 'joined'} the room.`;
+                if (targetId !== randomUserId) updateParticipantsList(targetId, Boolean(msgNo));
             }
             updateMessageList(newMessage);
             window.scrollTo(0, document.body.scrollHeight);
         }, { roomId: id, userId: randomUserId })
     };
     const updateMessageList = (newMessageInfo: IMessageBody) => {
-        const isSentFromMaster = (newMessageInfo.writer === MASTER);
         const message = newMessageInfo.message;
         const target = Number(message);
-        if (isSentFromMaster && !window.isNaN(target)) {
+        if ((newMessageInfo.writer === MASTER) && !window.isNaN(target)) {
             setMessages(messages => {
                 const copied = [...messages];
                 const targetIndex = copied.findIndex(chat => chat.msgNo === target);
@@ -91,12 +98,24 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                 return copied;
             })
             return;
-        } else setMessages(messages => {
-            const copied = [...messages];
-            copied.push(newMessageInfo);
-            return copied;
-        });
+        } else {
+            setMessages(messages => {
+                const copied = [...messages];
+                copied.push(newMessageInfo);
+                return copied;
+            });
+        }
     };
+    const updateParticipantsList = (targetUserId: string, isUserOut: boolean) => {
+        setParticipants(participants => {
+            if (isUserOut) {
+                const targetIndex = participants.findIndex(participant => participant === targetUserId);
+                if (targetIndex === -1) return participants;
+                participants.splice(targetIndex, 1);
+            } else participants.push(targetUserId);
+            return [...participants];
+        })
+    }
     const showPreviousChat = async () => {
         setTargetChatNumber(-1);
         previousShowCnt += 1;
@@ -131,6 +150,10 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
         if (socket && stomp) {
             stomp.send(`/pub/chat/${target}`, JSON.stringify(message));
         }
+    }
+    const expelUser = (sentence: string) => {
+        toast.error(sentence, toastConfig);
+        router.push('/chat/list');
     }
     useEffect(() => {
         randomUserId = generateRandonUserId();
