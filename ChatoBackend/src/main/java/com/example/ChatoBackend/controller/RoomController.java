@@ -4,6 +4,7 @@ import com.example.ChatoBackend.DTO.MessageDTO;
 import com.example.ChatoBackend.entity.ChatRoom;
 import com.example.ChatoBackend.service.ChatRoomServiceImpl;
 import com.example.ChatoBackend.service.MessageServiceImpl;
+import com.example.ChatoBackend.store.ConnectedUserAndRoomInfoStore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 @Controller
@@ -34,6 +36,9 @@ public class RoomController {
     ChatRoomServiceImpl chatRoomService;
     @Autowired
     MessageServiceImpl messageService;
+
+    @Autowired
+    ConnectedUserAndRoomInfoStore connectedUserAndRoomInfoStore;
 
     @PostMapping("/create")
     public ResponseEntity<Void> createRoom(@Validated @RequestBody ChatRoom chatRoom) throws SQLException {
@@ -100,5 +105,11 @@ public class RoomController {
         map.put("roomId", Math.toIntExact(roomId));
         messagingTemplate.convertAndSend("/sub/chat/room/list", map);
         return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @GetMapping("/participants/{roomId}")
+    public ResponseEntity<Set<String>> getParticipantsByRoomId(
+            @PathVariable("roomId") Long roomId) {
+        return new ResponseEntity<>(connectedUserAndRoomInfoStore.participantsUserMap.get(roomId), HttpStatus.OK);
     }
 }

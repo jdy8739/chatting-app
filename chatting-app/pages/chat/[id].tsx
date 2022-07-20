@@ -32,6 +32,7 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
     const [messages, setMessages] = useState<IMessageBody[]>(previousChat);
     const [isAllChatShown, setIsAllChatShown] = useState(previousChat.length < 10);
     const [targetChatNumber, setTargetChatNumber] = useState(-1);
+    const [participants, setParticipants] = useState<string[]>([]);
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
     const handleChatSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -152,7 +153,11 @@ function ChattingRoom({ id, roomName, password, previousChat }: IChatRoomProps) 
                     <h4>show previous</h4>
                 </div>
             }
-            <UserContainer />
+            <UserContainer
+                roomId={id}
+                participants={participants}
+                setParticipants={setParticipants}
+            />
             <div className="container">
                 {
                     messages.map((msg, i) => 

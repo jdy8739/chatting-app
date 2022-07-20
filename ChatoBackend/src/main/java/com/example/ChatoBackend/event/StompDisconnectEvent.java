@@ -12,7 +12,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 @Component
@@ -34,6 +36,7 @@ public class StompDisconnectEvent implements ApplicationListener<SessionDisconne
             String userId = connectedUserAndRoomInfoStore.connectedUserMap.get(sessionId)[1];
             chatRoomService.minusParticipantsCount(Long.valueOf(roomId));
             connectedUserAndRoomInfoStore.connectedUserMap.remove(sessionId);
+            removeUserIdIntoUserIdSetByRoomId(roomId, userId);
             messagingTemplate.convertAndSend(
                     "/sub/chat/room/" + roomId,
                     new MessageDTO(
@@ -48,6 +51,18 @@ public class StompDisconnectEvent implements ApplicationListener<SessionDisconne
                     "/sub/chat/room/list", new RoomParticipantsInfo(Integer.valueOf(roomId), false));
         } catch (NullPointerException e) {
             return;
+        }
+    }
+
+    private void removeUserIdIntoUserIdSetByRoomId(String roomId, String userId) {
+        Set<String> participantsUserSet = connectedUserAndRoomInfoStore.participantsUserMap.get(Long.valueOf(roomId));
+        if (participantsUserSet == null) {
+            return;
+        } else {
+            participantsUserSet.remove(userId);
+            if (participantsUserSet.size() == 0) {
+                connectedUserAndRoomInfoStore.participantsUserMap.remove(roomId);
+            }
         }
     }
 }

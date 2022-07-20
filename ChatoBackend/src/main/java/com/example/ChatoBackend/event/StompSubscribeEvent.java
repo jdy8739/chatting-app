@@ -38,6 +38,7 @@ public class StompSubscribeEvent implements ApplicationListener<SessionSubscribe
         if (userId.equals(NULL) || roomId.equals(NULL)) return;
         String[] values = {roomId, userId};
         connectedUserAndRoomInfoStore.connectedUserMap.put(sessionId, values);
+        putUserIdIntoUserIdSetByRoomId(roomId, userId);
         messagingTemplate.convertAndSend(
                 "/sub/chat/room/" + roomId,
                 new MessageDTO(
@@ -50,6 +51,17 @@ public class StompSubscribeEvent implements ApplicationListener<SessionSubscribe
 
         messagingTemplate.convertAndSend(
                 "/sub/chat/room/list", new RoomParticipantsInfo(Integer.valueOf(roomId), true));
+    }
+
+    private void putUserIdIntoUserIdSetByRoomId(String roomId, String userId) {
+        Set<String> participantsUserSet = connectedUserAndRoomInfoStore.participantsUserMap.get(Long.valueOf(roomId));
+        if (participantsUserSet == null) {
+            Set<String> newUserIdSet = new HashSet<>();
+            newUserIdSet.add(userId);
+            connectedUserAndRoomInfoStore.participantsUserMap.put(Long.valueOf(roomId), newUserIdSet);
+        } else {
+            participantsUserSet.add(userId);
+        }
     }
 
     private String extractId(String id) {
