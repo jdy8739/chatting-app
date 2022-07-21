@@ -33,8 +33,7 @@ function UserContainer({ roomId, participants, setParticipants, myId, isMyOwnRoo
                                 {participant.slice(0, 9)}
                                 <span style={{color: 'red'}}>{(participant === myId) ? '(me)' : ''}</span>
                                 {
-                                    // (participant !== myId) && isMyOwnRoom &&
-                                    true &&
+                                    (participant !== myId) && // isMyOwnRoom &&
                                     <img
                                         width="20px"
                                         height="20px"

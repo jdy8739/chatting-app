@@ -167,6 +167,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                             ref={provided.innerRef} 
                             {...provided.droppableProps}
                             {...snapshot}
+                            className={`trash-can ${snapshot.isDraggingOver ? 'bigger' : ''}`}
                         />
                         </div>
                     )}
@@ -177,6 +178,12 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                     display: grid;
                     grid-template-columns: repeat(auto-fill, 335px);
                     justify-content: center;
+                }
+                .trash-can {
+                    transition: all 0.5s;
+                }
+                .bigger {
+                    transform: scale(1.2);
                 }
             `}</style>
         </>

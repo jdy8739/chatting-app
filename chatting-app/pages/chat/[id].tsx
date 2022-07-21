@@ -38,7 +38,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
     const [messages, setMessages] = useState<IMessageBody[]>(previousChat);
     const [isAllChatShown, setIsAllChatShown] = useState(previousChat.length < 10);
     const [targetChatNumber, setTargetChatNumber] = useState(-1);
-    const [participants, setParticipants] = useState<string[]>([randomUserId]);
+    const [participants, setParticipants] = useState<string[]>([]);
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
     const handleChatSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -163,8 +163,9 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
             subscribeNewMessage();
         });
         stomp.debug = () => null;
-        randomUserId = generateRandonUserId();
         setPreviousRoomId(id);
+        randomUserId = generateRandonUserId();
+        setParticipants([randomUserId])
         return () => {
             stomp.disconnect(() => null, {});
             randomUserId = '';
@@ -222,7 +223,8 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                                         {!msg.isDeleted && targetChatNumber === i &&
                                         <span
                                             onClick={() => deleteChat(id, msg.msgNo)}
-                                            className="delete-btn">x
+                                            className="delete-btn">
+                                            x
                                         </span>}
                                         {msg.isDeleted ? 'deleted message' : msg.message}
                                     </span>
