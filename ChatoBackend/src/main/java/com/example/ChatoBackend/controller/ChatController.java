@@ -21,6 +21,8 @@ public class ChatController {
     private final String WRITER = "writer";
     private final String MESSAGE = "message";
     private final String TIME = "time";
+
+    private final int BAN_PROTOCOL_NUMBER = 2;
     @Autowired
     private final SimpMessagingTemplate template;
     @Autowired
@@ -29,7 +31,7 @@ public class ChatController {
     JSONParser jsonParser = new JSONParser();
 
     @MessageMapping(value = "/chat/message")
-    public void handleMessage(String messageString) throws ParseException {
+    public void handleMessageSend(String messageString) throws ParseException {
         JSONObject jsonObject = (JSONObject) jsonParser.parse(messageString);
         MessageDTO messageDTO = new MessageDTO(
                 null,
@@ -45,10 +47,11 @@ public class ChatController {
     }
 
     @MessageMapping(value = "/chat/delete")
-    public void deleteMessage(String messageString) throws ParseException {
+    public void deleteMessageOrParticipant(String messageString) throws ParseException {
         JSONObject jsonObject = (JSONObject) jsonParser.parse(messageString);
+        Long msgNo = (Long) jsonObject.get("msgNo");
         MessageDTO messageDTO = new MessageDTO(
-                null,
+                msgNo == Long.valueOf(BAN_PROTOCOL_NUMBER) ? msgNo : null,
                 jsonObject.get(ROOM_ID).toString(),
                 jsonObject.get(WRITER).toString(),
                 jsonObject.get(MESSAGE).toString(),

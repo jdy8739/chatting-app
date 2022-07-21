@@ -1,14 +1,17 @@
 import axios from "axios";
+import { IMessageBody } from "../../types/types";
+import { BAN_PROTOCOL_NUMBER, MASTER } from "../../utils/utils";
 
 interface IUserContainer { 
     roomId: number,
     participants: string[],
-    setParticipants: (participants: string[]) => void,
     myId: string,
     isMyOwnRoom: boolean,
+    setParticipants: (participants: string[]) => void,
+    shootChatMessage: (target: string, message: IMessageBody) => void,
 }
 
-function UserContainer({ roomId, participants, setParticipants, myId, isMyOwnRoom }: IUserContainer) {
+function UserContainer({ roomId, participants, myId, isMyOwnRoom, setParticipants, shootChatMessage }: IUserContainer) {
     const showNowUsers = async () => {
         if (participants.length === 1) {
             const results: string[] = await (await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/room/participants/${roomId}`)).data;
@@ -16,7 +19,12 @@ function UserContainer({ roomId, participants, setParticipants, myId, isMyOwnRoo
         } else return;
     }
     const banThisParticipant = (participantId: string) => {
-        axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/room/ban/${roomId}?id=${participantId}`);
+        shootChatMessage('delete', {
+            msgNo: BAN_PROTOCOL_NUMBER,
+            roomId: String(roomId),
+            writer: MASTER,
+            message: participantId,
+        });
     }
     return (
         <>

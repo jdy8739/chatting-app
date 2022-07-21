@@ -42,24 +42,32 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
             const roomMovedInfo: IRoomMoved = {
                 targetRoomId: roomList[source.droppableId].list[source.index].roomId,
                 sourceId: source.droppableId,
-                destinationId: destination.droppableId, 
+                destinationId: destination.droppableId,
                 sourceIndex: source.index, 
                 destinationIndex: destination.index,
             }
             if (source.droppableId !== destination.droppableId) changeToNewSubject(roomMovedInfo);
             else updateRoomMoved(roomMovedInfo);
         }
-    }
+    } //
     const updateRoomMoved = ({ sourceId, sourceIndex, destinationId, destinationIndex }: IRoomMoved) => {
         setRoomList(roomList => {
             const target = roomList[sourceId].list[sourceIndex];
             roomList[sourceId].list.splice(sourceIndex, 1);
-            roomList[destinationId].list.splice(destinationIndex, 0, target);
-            return { 
-                ...roomList,
-                [sourceId]: { list: [...roomList[sourceId].list] },
-                [destinationId]: { list: [...roomList[destinationId].list] }
-            };
+            if (!Object.hasOwn(roomList, destinationId)) {
+                return {
+                    ...roomList,
+                    [sourceId]: { list: [...roomList[sourceId].list] },
+                    [destinationId]: { list: [target] }
+                };
+            } else {
+                roomList[destinationId].list.splice(destinationIndex, 0, target);
+                return { 
+                    ...roomList,
+                    [sourceId]: { list: [...roomList[sourceId].list] },
+                    [destinationId]: { list: [...roomList[destinationId].list] }
+                };
+            }
         })
     }
     const deleteRoom = (sourceId: string, index: number) => {

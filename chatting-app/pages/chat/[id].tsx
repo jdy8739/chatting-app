@@ -6,7 +6,7 @@ import webstomp from "webstomp-client";
 import Seo from "../../components/commons/Seo";
 import UserContainer from "../../components/[id]/UserContainer";
 import { IMessageBody } from "../../types/types";
-import { DISBANDED, generateRandonUserId, MASTER, setPreviousRoomId, toastConfig } from "../../utils/utils";
+import { BAN_PROTOCOL_NUMBER, DISBANDED, generateRandonUserId, MASTER, setPreviousRoomId, SUBSCRIBE_PROTOCOL_NUMBER, toastConfig } from "../../utils/utils";
 
 interface IChatRoomProps {
     id: number,
@@ -75,9 +75,10 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                 expelUser('This room is disbanded.');
                 return;
             }
-            if (isSentFromMaster && (msgNo !== null && msgNo >= 0 && msgNo <= 2)) {
+            const participantsListChanged = (msgNo !== null && msgNo >= SUBSCRIBE_PROTOCOL_NUMBER && msgNo <= BAN_PROTOCOL_NUMBER);
+            if (isSentFromMaster && participantsListChanged) {
                 const targetId = newMessage.message;
-                if (msgNo === 2) {
+                if (msgNo === BAN_PROTOCOL_NUMBER) {
                     if (targetId === randomUserId) expelUser('You are banned!');
                     newMessage.message = `${targetId.slice(0, 9)} has been banned.`;
                 } else newMessage.message = `${targetId.slice(0, 9)} has just ${msgNo ? 'left' : 'joined'} the room.`;
@@ -187,9 +188,10 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
             <UserContainer
                 roomId={id}
                 participants={participants}
-                setParticipants={setParticipants}
                 myId={randomUserId}
                 isMyOwnRoom={randomUserId === roomOwner}
+                setParticipants={setParticipants}
+                shootChatMessage={shootChatMessage}
             />
             <div className="container">
                 {

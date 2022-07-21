@@ -29,6 +29,8 @@ public class StompSubscribeEvent implements ApplicationListener<SessionSubscribe
     private final String MASTER = "MASTER";
     private final String NULL = "null";
 
+    private final int SUBSCRIBE_PROTOCOL_NUMBER= 0;
+
     public void onApplicationEvent(SessionSubscribeEvent event) {
         map = (Map<String, Object>) event.getMessage().getHeaders();
         Map<String, String> nativeHeaders = (Map<String, String>) map.get("nativeHeaders");
@@ -42,7 +44,7 @@ public class StompSubscribeEvent implements ApplicationListener<SessionSubscribe
         messagingTemplate.convertAndSend(
                 "/sub/chat/room/" + roomId,
                 new MessageDTO(
-                        Long.valueOf(0),
+                        Long.valueOf(SUBSCRIBE_PROTOCOL_NUMBER),
                         roomId,
                         MASTER,
                         userId,

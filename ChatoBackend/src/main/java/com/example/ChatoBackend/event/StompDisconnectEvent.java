@@ -29,6 +29,8 @@ public class StompDisconnectEvent implements ApplicationListener<SessionDisconne
 
     private final String MASTER = "MASTER";
 
+    private final int DISCONNECT_PROTOCOL_NUMBER= 1;
+
     public void onApplicationEvent(SessionDisconnectEvent event) {
         try {
             String sessionId = event.getSessionId();
@@ -40,7 +42,7 @@ public class StompDisconnectEvent implements ApplicationListener<SessionDisconne
             messagingTemplate.convertAndSend(
                     "/sub/chat/room/" + roomId,
                     new MessageDTO(
-                            Long.valueOf(1),
+                            Long.valueOf(DISCONNECT_PROTOCOL_NUMBER),
                             roomId,
                             MASTER,
                             userId,
