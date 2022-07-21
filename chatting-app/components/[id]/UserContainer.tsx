@@ -11,7 +11,7 @@ interface IUserContainer {
 
 function UserContainer({ roomId, participants, setParticipants, myId, isMyOwnRoom }: IUserContainer) {
     const showNowUsers = async () => {
-        if (participants.length === 0) {
+        if (participants.length === 1) {
             const results: string[] = await (await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/room/participants/${roomId}`)).data;
             setParticipants(results);
         } else return;

@@ -38,7 +38,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
     const [messages, setMessages] = useState<IMessageBody[]>(previousChat);
     const [isAllChatShown, setIsAllChatShown] = useState(previousChat.length < 10);
     const [targetChatNumber, setTargetChatNumber] = useState(-1);
-    const [participants, setParticipants] = useState<string[]>([]);
+    const [participants, setParticipants] = useState<string[]>([generateRandonUserId()]);
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
     const handleChatSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -75,7 +75,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                 expelUser('This room is disbanded.');
                 return;
             }
-            if (isSentFromMaster && (msgNo >= 0 && msgNo <= 2)) {
+            if (isSentFromMaster && (msgNo !== null && msgNo >= 0 && msgNo <= 2)) {
                 const targetId = newMessage.message;
                 if (msgNo === 2) {
                     if (targetId === randomUserId) expelUser('You are banned!');
@@ -156,7 +156,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
         router.push('/chat/list');
     }
     useEffect(() => {
-        randomUserId = generateRandonUserId();
+        randomUserId = participants[0];
         socket = new WebSocket('ws://localhost:5000/stomp/chat');
         stomp = webstomp.over(socket);
         stomp.connect({}, () => {
