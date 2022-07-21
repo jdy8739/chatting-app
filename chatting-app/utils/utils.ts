@@ -1,5 +1,9 @@
 import { toast } from "react-toastify";
 
+export const MASTER = 'MASTER';
+
+export const DISBANDED = 'disbanded';
+
 export const generateRandonUserId = () => {
     let a = new Uint32Array(3);
     window.crypto.getRandomValues(a);
@@ -29,6 +33,3 @@ export const toastConfig = {
 	progress: undefined,
 	theme: 'colored',
 };
-
-export const MASTER = 'MASTER';
-export const DISBANDED = 'disbanded';
