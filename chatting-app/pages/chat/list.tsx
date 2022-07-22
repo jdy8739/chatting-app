@@ -15,7 +15,7 @@ interface IRoomMoved {
     destinationId: string, 
     sourceIndex: number, 
     destinationIndex: number,
-    targetRoomId: number,
+    targetRoomId?: number,
 }
 
 let socket: WebSocket;
@@ -39,29 +39,33 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                 deleteRoom(source.droppableId, source.index);
                 return;
             }
+            const isSameSubjectMove = (source.droppableId === destination.droppableId);
             const roomMovedInfo: IRoomMoved = {
-                targetRoomId: roomList[source.droppableId].list[source.index].roomId,
                 sourceId: source.droppableId,
                 destinationId: destination.droppableId,
                 sourceIndex: source.index, 
                 destinationIndex: destination.index,
+                targetRoomId: isSameSubjectMove ? undefined : roomList[source.droppableId].list[source.index].roomId,
             }
-            if (source.droppableId !== destination.droppableId) changeToNewSubject(roomMovedInfo);
+            if (!isSameSubjectMove) changeToNewSubject(roomMovedInfo);
             else updateRoomMoved(roomMovedInfo);
         }
-    } //
-    const updateRoomMoved = ({ sourceId, sourceIndex, destinationId, destinationIndex }: IRoomMoved) => {
+    }
+    const updateRoomMoved = ({ sourceId, sourceIndex, destinationId, destinationIndex, targetRoomId }: IRoomMoved) => {
         setRoomList(roomList => {
-            const target = roomList[sourceId].list[sourceIndex];
-            roomList[sourceId].list.splice(sourceIndex, 1);
+            const targetRoomIndex = targetRoomId ? roomList[sourceId].list.findIndex(room => {
+                return room.roomId === Number(targetRoomId);
+            }) : sourceIndex;
+            const targetRoom = roomList[sourceId].list[targetRoomIndex];
+            roomList[sourceId].list.splice(targetRoomIndex, 1);
             if (!Object.hasOwn(roomList, destinationId)) {
                 return {
                     ...roomList,
                     [sourceId]: { list: [...roomList[sourceId].list] },
-                    [destinationId]: { list: [target] }
+                    [destinationId]: { list: [targetRoom] }
                 };
             } else {
-                roomList[destinationId].list.splice(destinationIndex, 0, target);
+                if (targetRoom) roomList[destinationId].list.splice(destinationIndex, 0, targetRoom);
                 return { 
                     ...roomList,
                     [sourceId]: { list: [...roomList[sourceId].list] },
