@@ -8,7 +8,7 @@ public interface MessageService {
 
     public long saveMessage(MessageDTO messageDTO);
 
-    public List<MessageDTO> getMessages(Long roomId, String password, Integer offset);
+    public List<MessageDTO> getMessages(Long roomId, Integer offset);
 
     public void deleteMessage(Long roomId, Long msgNo);
 

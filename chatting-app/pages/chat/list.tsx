@@ -110,8 +110,9 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
             if (targetIndex === -1) return roomList;
             if (targetKey) {
                 const target = {...roomList[targetKey].list[+targetIndex]};
-                if (target.nowParticipants !== undefined) {
-                    target.nowParticipants = info.isEnter ? target.nowParticipants + 1 : target.nowParticipants - 1;
+                const nowParticipants = target.nowParticipants;
+                if (nowParticipants !== undefined) {
+                    target.nowParticipants = info.isEnter ? nowParticipants + 1 : nowParticipants - 1;
                 }
                 roomList[targetKey].list.splice(+targetIndex, 1, target);
             }

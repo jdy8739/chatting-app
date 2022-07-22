@@ -75,20 +75,18 @@ public class RoomController {
         String roomOwner = "";
         List<MessageDTO> messageDTOList = null;
         if (Integer.valueOf(offset) == 0) {
-            if (!chatRoomService.checkRoomStatusOK(roomId)) {
+            if (!chatRoomService.checkPwCorrect(roomId, map.get("password"))) {
+                return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            } else if (!chatRoomService.checkRoomStatusOK(roomId)) {
                 return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
             }
             roomOwner = chatRoomService.findRoomOwnerByRoomId(roomId);
         }
-        messageDTOList = messageService.getMessages(roomId, map.get("password"), Integer.valueOf(offset));
-        if (messageDTOList == null)
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-        else {
-            Map<String, Object> responseMap = new HashMap<>();
-            responseMap.put("owner", roomOwner);
-            responseMap.put("messageList", messageDTOList);
-            return new ResponseEntity<>(responseMap, HttpStatus.OK);
-        }
+        messageDTOList = messageService.getMessages(roomId, Integer.valueOf(offset));
+        Map<String, Object> responseMap = new HashMap<>();
+        responseMap.put("owner", roomOwner);
+        responseMap.put("messageList", messageDTOList);
+        return new ResponseEntity<>(responseMap, HttpStatus.OK);
     }
 
     @DeleteMapping("/del_message/{id}")

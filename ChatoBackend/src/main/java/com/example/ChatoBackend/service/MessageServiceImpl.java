@@ -34,22 +34,12 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
-    public List<MessageDTO> getMessages(Long roomId, String password, Integer offset) {
-        Optional<ChatRoom> optChatRoom = chatRoomRepository.findByRoomId(roomId);
-        boolean isAccessEligible = false;
-        if (optChatRoom.isPresent()) {
-            if (optChatRoom.get().isPwRequired()) {
-                if (password != null && password.equals(optChatRoom.get().getPassword()))
-                    isAccessEligible = true;
-            } else isAccessEligible = true;
+    public List<MessageDTO> getMessages(Long roomId, Integer offset) {
+        try {
+            return messageRepository.getMessages(roomId, offset);
+        } catch (SQLException e) {
+            throw new RuntimeException();
         }
-        if (isAccessEligible) {
-            try {
-                return messageRepository.getMessages(roomId, offset);
-            } catch (SQLException e) {
-                throw new RuntimeException();
-            }
-        } else return null;
     }
 
     @Override
