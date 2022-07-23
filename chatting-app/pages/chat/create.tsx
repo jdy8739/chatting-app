@@ -147,6 +147,31 @@ function CreateChat() {
                 onClick={submitRoomForm}
             >submit</button>
             <style>{`
+                input[type=range]{
+                    -webkit-appearance: none;
+                }
+                input[type=range]::-webkit-slider-runnable-track {
+                    width: 300px;
+                    height: 5px;
+                    background: #ddd;
+                    border: none;
+                    border-radius: 3px;
+                }
+                input[type=range]::-webkit-slider-thumb {
+                    -webkit-appearance: none;
+                    border: none;
+                    height: 16px;
+                    width: 16px;
+                    border-radius: 50%;
+                    background: goldenrod;
+                    margin-top: -5px;
+                }
+                input[type=range]:focus {
+                    outline: none;
+                }
+                input[type=range]:focus::-webkit-slider-runnable-track {
+                    background: #ccc;
+                }
                 .all {
                     transition: all 1s;
                     opacity: ${ isRendered ? '1' : '0' };
