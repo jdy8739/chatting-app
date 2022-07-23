@@ -24,7 +24,7 @@ button {
 }
 
 button:hover {
-  background-color: rgb(0, 219, 146);;
+  background-color: rgb(0, 219, 146);
   color: white;
 }
 
@@ -85,7 +85,7 @@ h5 {
   width: 70%;
   max-width: 2250px;
   min-width: 450px;
-  margin: 100px auto;
+  margin: 150px auto;
   position: relative;
 }
 
@@ -102,15 +102,6 @@ h5 {
   justify-content: center;
   font-weight: 900;
   cursor: pointer;
-}
-
-.footer {
-  width: 100vw;
-  height: 100px;    
-  text-align: right;
-  position: fixed;
-  bottom: 50px;
-  right: 50px;
 }
 
 .user-container {
@@ -172,3 +163,57 @@ h5 {
   top: 35%;
 }
 
+.submit-form {
+  width: 500px;
+  height: 390px;
+  margin: 150px auto 20px auto;
+  text-align: center;
+  background-color: white;
+  border-radius: 20px;
+  box-shadow: 0px 5px 30px rgba(0, 0, 0, 0.05);
+  padding: 2px;
+}
+
+.input-box {
+  padding: 12px;
+  border: 1px solid orange;
+  border-radius: 20px;
+  margin: 12px 0;
+}
+
+input[type=checkbox] {
+  width: 20px;
+  height: 20px;
+  margin: 15px;
+  padding-top: 15px;
+}
+
+.item {
+  color: gray;
+  font-size: 13px;
+}
+
+.title {
+  color: orange;
+}
+
+label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.form-body {
+  width: 80%;
+  margin: auto;
+  margin-top: 20px;
+}
+
+.submit-btn {
+  width: 500px;
+  height: 60px;
+  font-size: 23px;
+  display: block;
+  margin: auto;
+  border: 1px solid rgb(0, 219, 146);
+}

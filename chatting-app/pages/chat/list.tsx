@@ -172,7 +172,6 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                 </div>
                 <Droppable droppableId="trash-can">
                     {(provided, snapshot) => (
-                        <div className="footer">
                         <img
                             width={'75px'}
                             height={'75px'}
@@ -182,7 +181,6 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                             {...snapshot}
                             className={`trash-can ${snapshot.isDraggingOver ? 'bigger' : ''}`}
                         />
-                        </div>
                     )}
                 </Droppable>
             </DragDropContext>
@@ -194,6 +192,9 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                 }
                 .trash-can {
                     transition: all 0.5s;
+                    position: absolute;
+                    right: 30px;
+                    bottom: 30px;
                 }
                 .bigger {
                     transform: scale(1.2);

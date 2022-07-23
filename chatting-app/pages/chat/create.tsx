@@ -39,7 +39,7 @@ function CreateChat() {
         const roomName = roomNameInputRef.current?.value;
         const subject = isSubjectInputDisabled ? subjectSelectRef.current?.value : subjectInputRef.current?.value;
         const password = pwInputRef.current?.value
-        if (!checkFormValidation(roomName, password)) return;
+        if (!checkFormValidation(roomName, subject, password)) return;
         const { status } = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/create`, {
             roomName: roomName,
             subject: subject,
@@ -53,12 +53,14 @@ function CreateChat() {
             router.push('/chat/list');
         } else toast.error('There might be an error in the server. Please try later. :(', toastConfig);
     }
-    const checkFormValidation = (roomName?: string, password?: string) :boolean => {
+    const checkFormValidation = (roomName?: string, subject?: string, password?: string) :boolean => {
         if (!roomName) {
             toast.error('We need your new chat room name.', toastConfig);
             return false;
-        }
-        else if (isPwRequired && !password) {
+        } else if (!subject) {
+            toast.error('Subject is required. :(', toastConfig);
+            return false;
+        } else if (isPwRequired && !password) {
             toast.error('Password is required. :(', toastConfig);
             return false;
         }
@@ -70,61 +72,74 @@ function CreateChat() {
     }, []);
     return (
         <div className="all">
-            <form>
-                <h4>Make your own chat room :)</h4>
-                <input 
-                    placeholder="name of chat room."
-                    style={{ width: '380px' }}
-                    ref={roomNameInputRef}
-                />
-                <div>
+            <form className="submit-form">
+                <h4 className="title">Make your own chat room :)</h4>
+                <div className="form-body">
                     <label>
-                        <span>Make a custom suject?</span>
-                        <input 
-                            type="checkbox"
-                            onClick={handleChkBoxValue}
+                        <input
+                            className="input-box"
+                            placeholder="name of chat room."
+                            style={{ width: '100%' }}
+                            ref={roomNameInputRef}
                         />
                     </label>
-                </div>
-                <div className="box">
-                    <select 
-                        disabled={isSubjectSelectDisabled}
-                        ref={subjectSelectRef}
-                    >
-                        {roomSubjectOptions.map(sbj => 
-                            <option key={sbj}>{sbj}</option>)}
-                    </select>
-                    &emsp;
-                    <input
-                        placeholder="Other kind of subject?"
-                        style={{ width: '240px' }}
-                        disabled={isSubjectInputDisabled}
-                        ref={subjectInputRef}
-                    />
-                </div>
-                <label>
-                    <span>participants limit {limit}</span>
-                    <input 
-                        type="range"
-                        min={2}
-                        max={30}
-                        onChange={handleLimitOnChange}
-                        value={limit}
-                    />
-                </label>
-                <div className="box">
-                    <span>password required?</span>
-                    <input 
-                        type="checkbox"
-                        onClick={handlePwRequiredOnChange}
-                    />
-                    <input
-                        placeholder="password"
-                        style={{ width: '220px' }}
-                        disabled={!isPwRequired}
-                        ref={pwInputRef}
-                        type="password"
-                    />
+                    <div>
+                        <label>
+                            <div>
+                                <span 
+                                    className="item">Make a custom suject?</span>
+                                <input
+                                    className="input-box"
+                                    type="checkbox"
+                                    onClick={handleChkBoxValue}
+                                />
+                            </div>
+                        </label>
+                    </div>
+                    <label>
+                        <select
+                            className="input-box"
+                            disabled={isSubjectSelectDisabled}
+                            ref={subjectSelectRef}
+                        >
+                            {roomSubjectOptions.map(sbj => 
+                                <option key={sbj}>{sbj}</option>)}
+                        </select>
+                        &emsp;
+                        <input
+                            className="input-box"
+                            placeholder="Other kind of subject?"
+                            style={{ width: '240px' }}
+                            disabled={isSubjectInputDisabled}
+                            ref={subjectInputRef}
+                        />
+                    </label>
+                    <label>
+                        <span className="item">participants limit {limit}</span>
+                        <input
+                            className="input-box"
+                            type="range"
+                            min={2}
+                            max={30}
+                            onChange={handleLimitOnChange}
+                            value={limit}
+                        />
+                    </label>
+                    <label>
+                        <span className="item">password required?</span>
+                        <input 
+                            type="checkbox"
+                            onClick={handlePwRequiredOnChange}
+                        />
+                        <input
+                            placeholder="password"
+                            className="input-box"
+                            style={{ width: '220px' }}
+                            disabled={!isPwRequired}
+                            ref={pwInputRef}
+                            type="password"
+                        />
+                    </label>
                 </div>
             </form>
             <button 
@@ -132,44 +147,10 @@ function CreateChat() {
                 onClick={submitRoomForm}
             >submit</button>
             <style>{`
-                form {
-                    width: 500px;
-                    height: 390px;
-                    margin: 100px auto 20px auto;
-                    text-align: center;
-                    background-color: white;
-                    border-radius: 20px;
-                    box-shadow: 0px 5px 30px rgba(0, 0, 0, 0.05);
-                    padding: 2px;
-                }
-                input, select {
-                    padding: 12px;
-                    border: 1px solid orange;
-                    border-radius: 20px;
-                    margin: 12px; 0;
-                }
-                input[type=checkbox] {
-                    width: 20px;
-                    height: 20px;
-                }
-                span {
-                    color: gray;
-                    font-size: 13px;
-                }
-                h4 {
-                    color: orange;
-                }
-                .submit-btn {
-                    width: 500px;
-                    height: 60px;
-                    font-size: 23px;
-                    display: block;
-                    margin: auto;
-                }
                 .all {
                     transition: all 1s;
                     opacity: ${ isRendered ? '1' : '0' };
-                    transform: translateY(${ isRendered ? '0px' : '100px' });
+                    transform: translateY(${ isRendered ? '0px' : '80px' });
                 }
             `}</style>
         </div>

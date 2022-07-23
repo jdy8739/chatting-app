@@ -164,8 +164,8 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
             subscribeNewMessage();
         });
         stomp.debug = () => null;
-        setPreviousRoomId(id);
         randomUserId = generateRandonUserId();
+        setPreviousRoomId(id);
         setParticipants([randomUserId])
         return () => {
             stomp.disconnect(() => null, {});
