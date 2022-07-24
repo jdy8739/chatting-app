@@ -186,6 +186,7 @@ input[type=checkbox] {
   height: 20px;
   margin: 15px;
   padding-top: 15px;
+  accent-color: orange;
 }
 
 .item {

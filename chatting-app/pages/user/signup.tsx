@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from "react";
+import axios from "axios";
+import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "react-toastify";
 import Seo from "../../components/commons/Seo";
-import { clearPreviousRoomId } from "../../utils/utils";
+import { clearPreviousRoomId, toastConfig } from "../../utils/utils";
 
 interface ISignUpForm {
 	id: string,
@@ -14,15 +16,19 @@ const ID_REGEX = /^[a-zA-Z0-9]/;
 
 const PW_REGEX = /^(?=.*[~`!@#$%^&*()--+={}\[\]|\\:;"'<>,.?/_₹])/;
 
+let userProfilePic: File | undefined;
+
 function SingUp() {
     const [isRendered, setIsRendered] = useState(false);
+    const [picBlobString, setPicBlobString] = useState('');
+    const imageInputRef = useRef<HTMLInputElement>(null);
     const {
 		register,
 		handleSubmit,
 		formState: { errors },
 		setError,
 	} = useForm<ISignUpForm>();
-    const handleSignUpFormSubmit = (data: ISignUpForm) => {
+    const handleSignUpFormSubmit = async (data: ISignUpForm) => {
         if (data.password !== data.passwordCheck) {
 			setError(
                 'passwordCheck',
@@ -30,20 +36,46 @@ function SingUp() {
 				{ shouldFocus: true },
 			);
         } else {
-            
+            const formData = new FormData();
+            for (let key in data) formData.append(key, data[key]);
+            if (userProfilePic && imageInputRef.current?.value) {
+                formData.append('userProfilePic', userProfilePic);
+            }
+            await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/signup`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                }
+            })
         }
-        
+    }
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.currentTarget.files;
+        if (!files) return;
+        userProfilePic = files[0];
+        if (files[0].type.includes('image') === false) {
+            toast.error('You need to upload a image file only.', toastConfig);
+            return;
+        }
+        setPicBlobString(URL.createObjectURL(files[0]));
+    }
+    const removeProfilePic = () => {
+        if (imageInputRef.current) imageInputRef.current.value = '';
+        setPicBlobString('');
     }
     useEffect(() => {
         setIsRendered(true);
         clearPreviousRoomId();
+        userProfilePic = undefined;
     }, [])
     return (
         <div className="all">
             <Seo title="Chato SignUp"></Seo>
             <form
                 className="submit-form"
-                style={{ height: '422px' }}
+                style={{ 
+                    height: '652px',
+                    marginBottom: '150px'
+                }}
                 onSubmit={handleSubmit(handleSignUpFormSubmit)}
             >
                 <h4 className="title">Welcome to Chato :)</h4>
@@ -138,15 +170,61 @@ function SingUp() {
                         />
                     </label>
                     <div className="error-message">{errors.passwordCheck?.message}</div>
+                    <label style={{ marginTop: '22px' }}>
+                        <span className="item">profile pic</span>
+                        <input
+                            type="file"
+                            style={{ textAlign: 'right' }}
+                            onChange={handleFileChange}
+                            ref={imageInputRef}
+                        />
+                    </label>
                 </div>
-                <div style={{ marginTop: '45px' }}></div>
+                {picBlobString && 
+                <div className="profile-image-box">
+                    <img style={{backgroundImage: `url(${picBlobString})`}} />
+                    <span
+                        className="del-btn"
+                        onClick={removeProfilePic}
+                    >delete</span>
+                </div>}
                 <button 
-                    className="submit-btn"
+                    className="submit-btn submit"
                 >submit</button>
             </form>
             <style>{`
+                .submit {
+                    position: absolute;
+                    bottom: -80px;
+                }
+                .profile-image-box {
+                    width: 150px;
+                    height: 150px;
+                    margin: auto;
+                    margin-top: 35px;
+                    position: relative;
+                }
+                img {
+                    width: 100%;
+                    height: 100%;
+                    background-size: cover;
+                    background-position: center center;
+                    border-radius: 50%;
+                    border: 1px solid orange;
+                }
+                .del-btn {
+                    position: absolute;
+                    top: 40%;
+                    margin: 5px 20px;
+                    cursor: pointer;
+                    font-size: 12px;
+                }
                 input {
                     width: 250px;
+                }
+                input[type=file] {
+                    font-size: 10px;
+                    text-align: right;
                 }
                 .error-message {
                     height: 18px;

@@ -104,14 +104,14 @@ public class RoomController {
         messageService.deleteRoom(roomId);
         Map<String, Integer> map = new HashMap<>();
         map.put("isDeleted", 1);
-        map.put("roomId", Math.toIntExact(roomId));
+        map.put(ROOM_ID, Math.toIntExact(roomId));
         messagingTemplate.convertAndSend("/sub/chat/room/list", map);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @GetMapping("/participants/{roomId}")
     public ResponseEntity<Set<String>> getParticipantsByRoomId(
-            @PathVariable("roomId") Long roomId) {
+            @PathVariable(ROOM_ID) Long roomId) {
         return new ResponseEntity<>(connectedUserAndRoomInfoStore.participantsUserMap.get(roomId), HttpStatus.OK);
     }
 }
