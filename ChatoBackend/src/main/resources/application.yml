@@ -14,6 +14,9 @@ spring:
       minimum-idle: 5
       max-lifetime: 240000
       maximum-pool-size: 20
+  security:
+    user:
+      password: 5eaf3981-61ac-4925-af99-1b3ebfa6f1c8
 
   jpa:
     open-in-view: false

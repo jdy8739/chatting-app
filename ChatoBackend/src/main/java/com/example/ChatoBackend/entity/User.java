@@ -18,7 +18,7 @@ public class User {
     @Column(name = "user_no")
     private Long userNo;
 
-    @Column(length = 20, nullable = false)
+    @Column(length = 20, nullable = false, unique = true)
     private String id;
 
     @Column(length = 20, nullable = false)
@@ -30,13 +30,13 @@ public class User {
     @Column(columnDefinition = "Boolean default false")
     private Boolean isPicRegistered;
 
-    @Column(columnDefinition = "TEXT(65535)")
-    private byte[] userPic;
+    @Column(length = 50)
+    private String profilePicUrl;
 
-    public User(String id, String nickName, String password, byte[] bytes) {
+    public User(String id, String nickName, String password, String url) {
         this.id = id;
         this.nickName = nickName;
         this.password = password;
-        this.userPic = bytes;
+        this.profilePicUrl = url;
     }
 }

@@ -30,7 +30,7 @@ public class UserController {
             @RequestParam String password,
             @RequestParam MultipartFile userProfilePic) throws IOException {
         log.info("" + userProfilePic);
-        userService.saveUser(new User(id, nickName, password, userProfilePic.getBytes()));
+        userService.saveUser(new User(id, nickName, password, null));
         return new ResponseEntity<>(HttpStatus.OK);
     }
 }
