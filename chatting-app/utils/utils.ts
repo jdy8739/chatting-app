@@ -1,5 +1,29 @@
 import axios, { Axios, AxiosError } from "axios";
 import { toast } from "react-toastify";
+import { Cookies } from 'react-cookie';
+
+const cookies = new Cookies();
+
+interface ICookieOpt {
+	path: string;
+	expires?: Date;
+	secure?: boolean;
+	httpOnly?: boolean;
+}
+
+export const setCookie = (name: string, value: string, options: ICookieOpt) => {
+	return cookies.set(name, value, options);
+};
+
+export const getCookie = (name: string) => {
+	return cookies.get(name);
+};
+
+export const removeCookie = (name: string, options: ICookieOpt) => {
+	return cookies.remove(name, options);
+};
+
+export const CHATO_USERINFO = "CHATO_USERINFO";
 
 export const ID_REGEX = /^[a-zA-Z0-9]/;
 
@@ -66,7 +90,11 @@ const handleErrors = ({ request }: AxiosError) => {
 export const signinAxios = axios.create();
 
 signinAxios.interceptors.response.use(
-    response => response,
+    response => {
+		console.log(response);
+		toast.success('Hello!', toastConfig);
+		return response;
+	},
     (error: AxiosError) => {
         const status = error.response?.status;
         if (status === 404)

@@ -3,22 +3,32 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { useRef } from "react";
 import { toast } from "react-toastify";
-import { signinAxios, toastConfig } from "../../utils/utils";
+import { CHATO_USERINFO, setCookie, signinAxios, toastConfig } from "../../utils/utils";
 
 function Signin() {
     const router = useRouter();
     const idInputRef = useRef<HTMLInputElement>(null);
     const pwInputRef = useRef<HTMLInputElement>(null);
-    const handleSigninSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSigninSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const id = idInputRef.current?.value;
         const password = pwInputRef.current?.value;
         if (id && password) {
             try {
-                signinAxios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/signin`, {id, password})
+                const { status, data: token } = await signinAxios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/signin`, {id, password});
+                const now = new Date();
+                setCookie(
+                    CHATO_USERINFO,
+                    JSON.stringify([idInputRef.current?.value, token]),
+                    {
+                        path: '/',
+                        expires: new Date(now.setMinutes(now.getMinutes() + 180)),
+                        secure: false,
+                        httpOnly: false,
+                    },
+                );
+                if (status === 200) router.push('/chat/list');
             } catch (e) {}
-            toast.success('Hello!', toastConfig);
-            router.push('/chat/list');
         }
     }
     return (
