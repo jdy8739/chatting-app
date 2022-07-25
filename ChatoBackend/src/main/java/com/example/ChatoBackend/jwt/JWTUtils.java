@@ -1,13 +1,15 @@
-package com.example.ChatoBackend;
+package com.example.ChatoBackend.jwt;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.util.Date;
 
+@Component
 public class JWTUtils {
 
     private final String SECRET_KEY = "secret_key";
@@ -33,7 +35,7 @@ public class JWTUtils {
         return authorizationHeader.substring(BEARER.length());
     }
 
-    public String makeJWT(String id, String auth) {
+    public String makeJWT(String id) {
         Date now = new Date();
         String jwt = Jwts.builder()
                 .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
@@ -41,7 +43,6 @@ public class JWTUtils {
                 .setIssuedAt(now)
                 .setExpiration(new Date(now.getTime() + Duration.ofMinutes(180).toMillis()))
                 .claim("id", id)
-                .claim("auth", auth)
                 .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
                 .compact();
         return jwt;

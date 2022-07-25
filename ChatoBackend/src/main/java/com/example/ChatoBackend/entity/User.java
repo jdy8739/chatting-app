@@ -32,9 +32,7 @@ public class User {
     @Column(length = 50)
     private String profilePicUrl;
 
-    public User() {
-
-    }
+    public User() {}
 
     public User(String id, String nickName, String password, String url) {
         this.id = id;

@@ -1,12 +1,14 @@
 package com.example.ChatoBackend.controller;
 
 import com.example.ChatoBackend.entity.User;
+import com.example.ChatoBackend.jwt.JWTUtils;
 import com.example.ChatoBackend.service.UserServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.apache.tomcat.util.http.fileupload.impl.FileSizeLimitExceededException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -31,6 +33,8 @@ public class UserController {
 
     @Autowired
     UserServiceImpl userService;
+    @Autowired
+    JWTUtils jwtUtils;
 
     @PostMapping("/signup")
     public ResponseEntity<Void> singup(
@@ -69,7 +73,7 @@ public class UserController {
     }
 
     @PostMapping("signin")
-    public ResponseEntity<Void> signin(@RequestBody Map<String, String> siginMap) {
+    public ResponseEntity<String> signin(@RequestBody Map<String, String> siginMap) {
         try {
             userService.signin(siginMap.get("id"), siginMap.get("password"));
         } catch (NoSuchElementException e) {
@@ -77,6 +81,7 @@ public class UserController {
         } catch (BadCredentialsException e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ResponseEntity.ok()
+                .body(jwtUtils.makeJWT(siginMap.get("id")));
     }
 }
