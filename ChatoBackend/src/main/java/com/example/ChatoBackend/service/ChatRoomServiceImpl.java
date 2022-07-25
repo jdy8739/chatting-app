@@ -28,7 +28,7 @@ public class ChatRoomServiceImpl implements ChatRoomService {
                 messageRepository.createDynamicTable(chatRoom.getRoomId());
             }
         } catch (SQLException sqlException) {
-            // 나중에 로직 넣어준다.
+            sqlException.printStackTrace();
         }
     }
 

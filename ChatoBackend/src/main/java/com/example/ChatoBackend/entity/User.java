@@ -3,12 +3,14 @@ package com.example.ChatoBackend.entity;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
 
 @Getter
 @Setter
 @Entity
+@DynamicInsert
 @AllArgsConstructor
 @Table(name = "user")
 public class User {
@@ -27,11 +29,12 @@ public class User {
     @Column(length = 100, nullable = false)
     private String password;
 
-    @Column(columnDefinition = "Boolean default false")
-    private Boolean isPicRegistered;
-
     @Column(length = 50)
     private String profilePicUrl;
+
+    public User() {
+
+    }
 
     public User(String id, String nickName, String password, String url) {
         this.id = id;

@@ -1,9 +1,10 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
+import { useRouter } from "next/router";
 import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import Seo from "../../components/commons/Seo";
-import { clearPreviousRoomId, toastConfig } from "../../utils/utils";
+import { clearPreviousRoomId, ID_REGEX, PW_REGEX, signupAxios, toastConfig } from "../../utils/utils";
 
 interface ISignUpForm {
 	id: string,
@@ -12,13 +13,10 @@ interface ISignUpForm {
 	passwordCheck: string,
 }
 
-const ID_REGEX = /^[a-zA-Z0-9]/;
-
-const PW_REGEX = /^(?=.*[~`!@#$%^&*()--+={}\[\]|\\:;"'<>,.?/_₹])/;
-
 let userProfilePic: File | undefined;
 
 function SingUp() {
+    const router = useRouter();
     const [isRendered, setIsRendered] = useState(false);
     const [picBlobString, setPicBlobString] = useState('');
     const imageInputRef = useRef<HTMLInputElement>(null);
@@ -41,11 +39,13 @@ function SingUp() {
             if (userProfilePic && imageInputRef.current?.value) {
                 formData.append('userProfilePic', userProfilePic);
             }
-            await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/signup`, formData, {
+            await signupAxios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/signup`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 }
             })
+            toast.success('Welcome to Chato! :)', toastConfig);
+            router.push('/chat/list');
         }
     }
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

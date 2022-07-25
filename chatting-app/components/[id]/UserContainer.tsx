@@ -37,7 +37,14 @@ function UserContainer({ roomId, participants, myId, isMyOwnRoom, setParticipant
                     {participants.map((participant, i) => {
                         return (
                             <div key={i} className="profile">
-                                <div className="profile-img"></div>
+                                <div className="profile-img">
+                                    <img
+                                        width="100%"
+                                        height="100%"
+                                        src={`${process.env.NEXT_PUBLIC_API_URL}/user/profile-pic/`} 
+                                        alt="/"
+                                        />
+                                </div>
                                 {participant.slice(0, 9)}
                                 <span style={{color: 'red'}}>{(participant === myId) ? '(me)' : ''}</span>
                                 {

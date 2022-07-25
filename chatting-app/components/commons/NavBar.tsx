@@ -20,7 +20,9 @@ function NavBar() {
                     <Link href="/user/signup">
                         <button className={router.pathname === '/user/signup' ? 'clicked' : ''}>sign up</button>
                     </Link>
-                    <button>sign in</button>
+                    <Link href="/user/signin">
+                        <button className={router.pathname === '/user/signin' ? 'clicked' : ''}>sign in</button>
+                    </Link>
                     <Link href="#">
                         <button>portfolio</button>
                     </Link>

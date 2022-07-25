@@ -1,4 +1,9 @@
+import axios, { Axios, AxiosError } from "axios";
 import { toast } from "react-toastify";
+
+export const ID_REGEX = /^[a-zA-Z0-9]/;
+
+export const PW_REGEX = /^(?=.*[~`!@#$%^&*()--+={}\[\]|\\:;"'<>,.?/_₹])/;
 
 export const MASTER = 'MASTER';
 
@@ -37,3 +42,37 @@ export const toastConfig = {
 	progress: undefined,
 	theme: 'colored',
 };
+
+export const signupAxios = axios.create();
+
+signupAxios.interceptors.response.use(
+    response => response, 
+    error => {
+		handleErrors(error);
+        return Promise.reject(error);
+})
+
+const handleErrors = ({ request }: AxiosError) => {
+	const status = request.status;
+	if (status === 500) {
+		toast.error('Please upload your pic in smaller sizes.', toastConfig);
+	} else if (status === 400) {
+		toast.error('There might be some errors on the server. Please try later. :(', toastConfig);
+	} else if (status === 409) {
+		toast.error('Id is duplicate. Please try another id.', toastConfig);
+	}
+}
+
+export const signinAxios = axios.create();
+
+signinAxios.interceptors.response.use(
+    response => response,
+    (error: AxiosError) => {
+        const status = error.response?.status;
+        if (status === 404)
+            toast.error('No such Id in our history.', toastConfig);
+        else if (status === 400)
+            toast.error('Password does not matches!.', toastConfig);
+        return Promise.resolve();
+    }
+)
