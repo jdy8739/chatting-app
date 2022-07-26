@@ -11,9 +11,7 @@ import java.util.Date;
 
 @Component
 public class JWTUtils {
-
     private final String SECRET_KEY = "secret_key";
-
     private final String BEARER = "Bearer ";
 
     public Claims parseJwtToken(String authorizationHeader) {
@@ -51,5 +49,9 @@ public class JWTUtils {
     public Claims filterInternal(String token) {
         Claims claims = parseJwtToken(token);
         return claims;
+    }
+    public String getUserId(String authHeader) throws IllegalArgumentException {
+        if (authHeader == null || authHeader.equals("Bearer")) return null;
+        else return (String) filterInternal(authHeader).get("id");
     }
 }

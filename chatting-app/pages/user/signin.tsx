@@ -1,17 +1,20 @@
-import axios, { AxiosError } from "axios";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { useRef } from "react";
-import { toast } from "react-toastify";
-import { CHATO_USERINFO, setCookie, signinAxios, toastConfig } from "../../utils/utils";
+import { useDispatch } from "react-redux";
+import { signIn } from "../../lib/store/modules/signInReducer";
+import { CHATO_USERINFO, setCookie, signinAxios } from "../../utils/utils";
 
 function Signin() {
     const router = useRouter();
+    const dispatch = useDispatch();
     const idInputRef = useRef<HTMLInputElement>(null);
     const pwInputRef = useRef<HTMLInputElement>(null);
+    const changeUserId = (id: string) => dispatch(signIn(id));
     const handleSigninSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const id = idInputRef.current?.value;
+        const userId = idInputRef.current?.value;
+        const id = userId;
         const password = pwInputRef.current?.value;
         if (id && password) {
             try {
@@ -19,7 +22,7 @@ function Signin() {
                 const now = new Date();
                 setCookie(
                     CHATO_USERINFO,
-                    JSON.stringify([idInputRef.current?.value, token]),
+                    JSON.stringify(token),
                     {
                         path: '/',
                         expires: new Date(now.setMinutes(now.getMinutes() + 180)),
@@ -27,6 +30,7 @@ function Signin() {
                         httpOnly: false,
                     },
                 );
+                changeUserId(userId);
                 if (status === 200) router.push('/chat/list');
             } catch (e) {}
         }
@@ -78,7 +82,7 @@ function Signin() {
                     text-align: right;
                     margin: 15px 30px 0 0;
                     cursor: pointer;
-                }
+                
             `}</style>
         </>
     )

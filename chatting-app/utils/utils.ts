@@ -15,7 +15,7 @@ export const setCookie = (name: string, value: string, options: ICookieOpt) => {
 	return cookies.set(name, value, options);
 };
 
-export const getCookie = (name: string) => {
+export const getCookie = (name: string) :string => {
 	return cookies.get(name);
 };
 
@@ -91,16 +91,15 @@ export const signinAxios = axios.create();
 
 signinAxios.interceptors.response.use(
     response => {
-		console.log(response);
-		toast.success('Hello!', toastConfig);
+		toast.success('Hello! Welcome To Chato', toastConfig);
 		return response;
 	},
     (error: AxiosError) => {
         const status = error.response?.status;
         if (status === 404)
-            toast.error('No such Id in our history.', toastConfig);
+            toast.error('No such Id in our record.', toastConfig);
         else if (status === 400)
             toast.error('Password does not matches!.', toastConfig);
-        return Promise.resolve();
+        return Promise.reject();
     }
 )

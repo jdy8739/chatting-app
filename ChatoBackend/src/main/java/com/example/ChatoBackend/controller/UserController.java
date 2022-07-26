@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.security.auth.login.CredentialException;
+import javax.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -64,11 +65,15 @@ public class UserController {
             String path = "./images/users/" + id;
             File file = new File(path + "/" + id + ".jpg");
             imageByteArray = Files.readAllBytes(file.toPath());
+            log.info("1");
         } catch (NoSuchFileException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            log.info("2");
+            return new ResponseEntity<>(null, HttpStatus.OK);
         } catch (IOException e) {
+            log.info("3");
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+        log.info("4");
         return new ResponseEntity<>(imageByteArray, HttpStatus.OK);
     }
 
@@ -83,5 +88,11 @@ public class UserController {
         }
         return ResponseEntity.ok()
                 .body(jwtUtils.makeJWT(siginMap.get("id")));
+    }
+
+    @PostMapping("get-userId")
+    public ResponseEntity<String> getUserId(HttpServletRequest req) {
+        String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
+        return new ResponseEntity<>(jwtUtils.getUserId(token), HttpStatus.OK);
     }
 }
