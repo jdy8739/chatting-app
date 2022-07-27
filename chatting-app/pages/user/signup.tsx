@@ -1,4 +1,3 @@
-import axios, { AxiosError } from "axios";
 import { useRouter } from "next/router";
 import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -11,6 +10,7 @@ interface ISignUpForm {
     nickName: string,
 	password: string,
 	passwordCheck: string,
+    userProfilePic?: File | null
 }
 
 let userProfilePic: File | undefined;
@@ -19,12 +19,13 @@ function SingUp() {
     const router = useRouter();
     const [isRendered, setIsRendered] = useState(false);
     const [picBlobString, setPicBlobString] = useState('');
-    const imageInputRef = useRef<HTMLInputElement>(null);
     const {
 		register,
 		handleSubmit,
 		formState: { errors },
 		setError,
+        setValue,
+        getValues
 	} = useForm<ISignUpForm>();
     const handleSignUpFormSubmit = async (data: ISignUpForm) => {
         if (data.password !== data.passwordCheck) {
@@ -36,13 +37,11 @@ function SingUp() {
         } else {
             const formData = new FormData();
             for (let key in data) formData.append(key, data[key]);
-            if (userProfilePic && imageInputRef.current?.value) {
+            if (userProfilePic && getValues().userProfilePic) {
                 formData.append('userProfilePic', userProfilePic);
             }
             await signupAxios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/signup`, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                }
+                headers: { 'Content-Type': 'multipart/form-data' }
             })
             toast.success('Welcome to Chato! :)', toastConfig);
             router.push('/chat/list');
@@ -59,7 +58,7 @@ function SingUp() {
         setPicBlobString(URL.createObjectURL(files[0]));
     }
     const removeProfilePic = () => {
-        if (imageInputRef.current) imageInputRef.current.value = '';
+        setValue('userProfilePic', null);
         setPicBlobString('');
     }
     useEffect(() => {
@@ -181,8 +180,9 @@ function SingUp() {
                         <input
                             type="file"
                             style={{ textAlign: 'right' }}
-                            onChange={handleFileChange}
-                            ref={imageInputRef}
+                            {...register('userProfilePic', {
+                                onChange: handleFileChange,
+                            })}
                         />
                     </label>
                 </div>
@@ -219,11 +219,6 @@ function SingUp() {
                 }
                 input {
                     width: 250px;
-                }
-                .error-message {
-                    height: 18px;
-                    color: orange;
-                    font-size: 13px;
                 }
                 .del-btn {
                     position: absolute;

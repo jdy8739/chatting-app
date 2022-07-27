@@ -232,3 +232,9 @@ label {
   margin: auto;
   border: 1px solid rgb(0, 219, 146);
 }
+
+.error-message {
+  height: 18px;
+  color: orange;
+  font-size: 13px;
+}

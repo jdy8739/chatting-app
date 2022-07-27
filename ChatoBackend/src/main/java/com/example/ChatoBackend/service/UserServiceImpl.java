@@ -68,4 +68,38 @@ public class UserServiceImpl implements UserService {
             throw new NoSuchElementException();
         }
     }
+
+    private void deletePrevFile(String prevId) {
+        boolean isPrevFileSaved = (userRepository.findById(prevId).get().getProfilePicUrl() != null);
+        if (!isPrevFileSaved) {
+            return;
+        }
+        else {
+            String path = "./images/users/" + prevId;
+            File newUserFolder = new File(path);
+            if (newUserFolder.exists()) {
+                String picUrl = path + "/" + prevId + ".jpg";
+                File picFile = new File(picUrl);
+                if (picFile.exists()) picFile.delete();
+                newUserFolder.delete();
+                log.info(newUserFolder.getName());
+            }
+        }
+    }
+
+    @Override
+    public void updateUser(String id, String prevId, String nickName, String newProfilePicUrl) {
+        deletePrevFile(prevId);
+        Optional<User> optionalUser = userRepository.findById(prevId);
+        if (optionalUser.isEmpty()) throw new NoSuchElementException();
+        User user = optionalUser.get();
+        user.setId(id);
+        user.setNickName(nickName);
+        user.setProfilePicUrl(newProfilePicUrl);
+        try {
+            userRepository.save(user);
+        } catch (Exception e) {
+            throw new RuntimeException();
+        }
+    }
 }

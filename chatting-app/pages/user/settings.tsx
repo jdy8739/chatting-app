@@ -1,10 +1,11 @@
 import axios from "axios";
 import { useRouter } from "next/router";
 import React, { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
-import { signOut } from "../../lib/store/modules/signInReducer";
-import { CHATO_USERINFO, clearPreviousRoomId, getCookie, removeCookie, toastConfig } from "../../utils/utils";
+import { signIn, signOut } from "../../lib/store/modules/signInReducer";
+import { CHATO_USERINFO, clearPreviousRoomId, getCookie, ID_REGEX, removeCookie, setCookie, signupAxios, toastConfig } from "../../utils/utils";
 
 interface IUserInfo {
     id: string,
@@ -19,9 +20,12 @@ function Settings() {
     const dispatch = useDispatch();
     const [userInfo, setUserInfo] = useState<IUserInfo>();
     const [picBlobString, setPicBlobString] = useState('');
-    const idInputRef = useRef<HTMLInputElement>(null);
-    const nickNameInputRef = useRef<HTMLInputElement>(null);
-    const imageInputRef = useRef<HTMLInputElement>(null);
+    const handleSignIn = (id: string) => dispatch(signIn(id));
+    const { 
+        register, 
+        formState: { errors }, 
+        setValue, 
+        handleSubmit } = useForm<IUserInfo>();
     const fetchUserInfo = async (token: string) => {
         try {
             const { data: userInfo }: { data: IUserInfo } = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/info`, {} , {
@@ -37,8 +41,8 @@ function Settings() {
         }
     }
     const setInputRefValue = ({ id, nickName }: IUserInfo) => {
-        if (idInputRef.current) idInputRef.current.value = id;
-        if (nickNameInputRef.current) nickNameInputRef.current.value = nickName;
+        setValue('id', id);
+        setValue('nickName', nickName);
     }
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         removeProfilePicUrl();
@@ -54,12 +58,41 @@ function Settings() {
     const removeProfilePic = () => {
         removeProfilePicUrl();
         setPicBlobString('');
-        if (imageInputRef.current) imageInputRef.current.value = '';
+        setValue('profilePicUrl', '');
     }
     const removeProfilePicUrl = () => {
         if (userInfo?.profilePicUrl) setUserInfo(userInfo => {
             if (userInfo) return {...userInfo, profilePicUrl: ''};
         })
+    }
+    const handleUserSettingsSubmit = async (data: IUserInfo) => {
+        const updatedUserIndo = {...data, userProfilePic: data.profilePicUrl[0]};
+        const formData = new FormData();
+        for (let key in updatedUserIndo) formData.append(key, updatedUserIndo[key]);
+        try {
+            const { status, data: token } = await signupAxios.put(`${process.env.NEXT_PUBLIC_API_URL}/user/alter`, formData, {
+                headers: { 
+                    'Content-Type': 'multipart/form-data',
+                    'authorization': `Bearer ${getCookie(CHATO_USERINFO)}`,
+                }
+            });
+            if (status === 200) {
+                toast.success('Your info has altered successfully!', toastConfig);
+                const now = new Date();
+                setCookie(
+                    CHATO_USERINFO,
+                    JSON.stringify(token),
+                    {
+                        path: '/',
+                        expires: new Date(now.setMinutes(now.getMinutes() + 180)),
+                        secure: false,
+                        httpOnly: false,
+                    },
+                );
+                handleSignIn(data.id);
+                router.push('/chat/list');
+            }
+        } catch (e) {}
     }
     useEffect(() => {
         clearPreviousRoomId();
@@ -73,8 +106,9 @@ function Settings() {
     return (
         <>
             <form
+                onSubmit={handleSubmit(handleUserSettingsSubmit)}
                 className="submit-form"
-                style={{ padding: '0.5px 50px' }}
+                style={{ height: '440px' }}
             >
                 <h4 className="title">User Information Settings</h4>
                 <div className="profile-image-box">
@@ -102,28 +136,48 @@ function Settings() {
                         id="pic"
                         type="file"
                         style={{ paddingLeft: '60px' }}
-                        onChange={handleFileChange}
-                        ref={imageInputRef}
+                        {...register('profilePicUrl', {
+                            onChange: handleFileChange
+                        })}
                     />
                 </div>
                 <label className="item">
                     <span>ID</span>
                     <input
-                        id="id"
                         className="input-box"
-                        required
-                        ref={idInputRef}
+                        placeholder="id"
+                        {...register('id', {
+                            required: 'ID is essential!',
+                            pattern: {
+                                value: ID_REGEX,
+                                message: 'Id must include english and numbers only.'
+                            },
+                            minLength: {
+                                value: 8,
+                                message: 'Id must be longer than 8.',
+                            },
+                            maxLength: {
+                                value: 15,
+                                message: 'Id must be shorter than 15.',
+                            },
+                        })}
                     />
                 </label>
+                <div className="error-message">{errors.id?.message}</div>
                 <label className="item">
                     <span>NickName</span>
                     <input
-                        id="id"
                         className="input-box"
-                        required
-                        ref={nickNameInputRef}
+                        {...register('nickName', {
+                            required: 'NickName is required!',
+                        })}
                     />
                 </label>
+                <div className="error-message">{errors.nickName?.message}</div>
+                <button
+                    className="submit-btn"
+                    style={{ margin: '40px 0' }}
+                >submit</button>
             </form>
             <style>{`
                 img {
@@ -138,6 +192,9 @@ function Settings() {
                     position: absolute;
                     margin-right: -220px;
                     margin-top: 10px;
+                }
+                label {
+                    padding: 0 25px;
                 }
             `}</style>
         </>

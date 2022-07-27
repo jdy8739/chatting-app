@@ -15,4 +15,6 @@ public interface UserService {
     public void signin(String id, String password);
 
     public User findUserInfoById(String id);
+
+    public void updateUser(String id, String prevId, String nickName, String newProfilePicUrl);
 }

@@ -105,4 +105,30 @@ public class UserController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
+
+    @PutMapping("/alter")
+    public ResponseEntity<String> alter(
+            @RequestParam String id,
+            @RequestParam String nickName,
+            @RequestParam (required = false) MultipartFile userProfilePic,
+            HttpServletRequest req) {
+        String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
+        if (token == null) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        String userId;
+        try {
+            userId = jwtUtils.getUserId(token);
+            String newProfilePicUrl = null;
+            if (userProfilePic != null) newProfilePicUrl = userService.saveProfilePic(id, userProfilePic);
+            userService.updateUser(id, userId, nickName, newProfilePicUrl);
+        } catch (MalformedJwtException e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } catch (FileSizeLimitExceededException e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        } catch (IOException e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
+        return new ResponseEntity<>(jwtUtils.makeJWT(id), HttpStatus.OK);
+    }
 }
