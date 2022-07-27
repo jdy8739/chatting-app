@@ -84,6 +84,8 @@ const handleErrors = ({ request }: AxiosError) => {
 		toast.error('There might be some errors on the server. Please try later. :(', toastConfig);
 	} else if (status === 409) {
 		toast.error('Id is duplicate. Please try another id.', toastConfig);
+	} else if (status === 401) {
+		toast.error('Unauthorized. Please sign in again.', toastConfig);
 	}
 }
 

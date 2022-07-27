@@ -3,6 +3,7 @@ package com.example.ChatoBackend.service;
 import com.example.ChatoBackend.entity.User;
 import com.example.ChatoBackend.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.tomcat.util.http.fileupload.impl.FileSizeLimitExceededException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -12,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.naming.AuthenticationException;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOError;
 import java.io.IOException;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -71,9 +73,7 @@ public class UserServiceImpl implements UserService {
 
     private void deletePrevFile(String prevId) {
         boolean isPrevFileSaved = (userRepository.findById(prevId).get().getProfilePicUrl() != null);
-        if (!isPrevFileSaved) {
-            return;
-        }
+        if (!isPrevFileSaved) return;
         else {
             String path = "./images/users/" + prevId;
             File newUserFolder = new File(path);
@@ -82,14 +82,13 @@ public class UserServiceImpl implements UserService {
                 File picFile = new File(picUrl);
                 if (picFile.exists()) picFile.delete();
                 newUserFolder.delete();
-                log.info(newUserFolder.getName());
             }
         }
     }
 
     @Override
     public void updateUser(String id, String prevId, String nickName, String newProfilePicUrl) {
-        deletePrevFile(prevId);
+        if (!prevId.equals(id) || newProfilePicUrl == null) deletePrevFile(prevId);
         Optional<User> optionalUser = userRepository.findById(prevId);
         if (optionalUser.isEmpty()) throw new NoSuchElementException();
         User user = optionalUser.get();
