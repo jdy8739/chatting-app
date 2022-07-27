@@ -24,6 +24,7 @@ function NavBar() {
     const removeUserId = () => {
         removeCookie(CHATO_USERINFO, { path: '/' });
         handleSignOut();
+        router.push('/chat/list');
     }
     useEffect(() => {
         setUserId();
@@ -49,8 +50,7 @@ function NavBar() {
                                 <img
                                     width="100%"
                                     height="100%"
-                                    src={`${process.env.NEXT_PUBLIC_API_URL}/user/profile-pic/${userId}`} 
-                                    alt="/"
+                                    src={`${process.env.NEXT_PUBLIC_API_URL}/user/profile-pic/${userId}`}
                                 />
                             </div>
                             <div id="user-id" onClick={() => router.push('/user/settings')}>{userId}</div>

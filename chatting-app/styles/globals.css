@@ -145,6 +145,13 @@ h5 {
   position: relative;
 }
 
+.profile-img {
+  background-size: cover;
+  background-position: center center;
+  border-radius: 50%;
+  border: 1px solid orange;
+}
+
 .profile:hover {
   background-color: orange;
 }
@@ -154,7 +161,7 @@ h5 {
   height: 30px;
   border-radius: 50%;
   background-color: #eee;
-  margin: 10px;
+  margin: auto 10px;
   overflow: hidden;
   border: 2px solid orange;
 }
@@ -189,6 +196,11 @@ input[type=checkbox] {
   margin: 15px;
   padding-top: 15px;
   accent-color: orange;
+}
+
+input[type=file] {
+  font-size: 10px;
+  text-align: right;
 }
 
 .item {

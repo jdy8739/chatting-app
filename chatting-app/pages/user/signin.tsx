@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
+import { toast } from "react-toastify";
 import { signIn } from "../../lib/store/modules/signInReducer";
-import { CHATO_USERINFO, setCookie, signinAxios } from "../../utils/utils";
+import { CHATO_USERINFO, clearPreviousRoomId, getCookie, setCookie, signinAxios, toastConfig } from "../../utils/utils";
 
 function Signin() {
     const router = useRouter();
@@ -35,6 +36,13 @@ function Signin() {
             } catch (e) {}
         }
     }
+    useEffect(() => {
+        clearPreviousRoomId();
+        if (getCookie(CHATO_USERINFO)) {
+            toast.error('You are already singed in.', toastConfig);
+            router.push('/chat/list');
+        }
+    }, [])
     return (
         <>
             <form

@@ -13,4 +13,6 @@ public interface UserService {
     public String saveProfilePic(String id, MultipartFile profilePicBinary) throws IOException;
 
     public void signin(String id, String password);
+
+    public User findUserInfoById(String id);
 }

@@ -3,6 +3,7 @@ package com.example.ChatoBackend.controller;
 import com.example.ChatoBackend.entity.User;
 import com.example.ChatoBackend.jwt.JWTUtils;
 import com.example.ChatoBackend.service.UserServiceImpl;
+import io.jsonwebtoken.MalformedJwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
@@ -65,19 +66,15 @@ public class UserController {
             String path = "./images/users/" + id;
             File file = new File(path + "/" + id + ".jpg");
             imageByteArray = Files.readAllBytes(file.toPath());
-            log.info("1");
         } catch (NoSuchFileException e) {
-            log.info("2");
             return new ResponseEntity<>(null, HttpStatus.OK);
         } catch (IOException e) {
-            log.info("3");
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        log.info("4");
         return new ResponseEntity<>(imageByteArray, HttpStatus.OK);
     }
 
-    @PostMapping("signin")
+    @PostMapping("/signin")
     public ResponseEntity<String> signin(@RequestBody Map<String, String> siginMap) {
         try {
             userService.signin(siginMap.get("id"), siginMap.get("password"));
@@ -90,9 +87,22 @@ public class UserController {
                 .body(jwtUtils.makeJWT(siginMap.get("id")));
     }
 
-    @PostMapping("get-userId")
+    @PostMapping("/get-userId")
     public ResponseEntity<String> getUserId(HttpServletRequest req) {
         String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
         return new ResponseEntity<>(jwtUtils.getUserId(token), HttpStatus.OK);
+    }
+
+    @PostMapping("/info")
+    public ResponseEntity<User> getUserInfo(HttpServletRequest req) {
+        String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
+        try {
+            User user = userService.findUserInfoById(jwtUtils.getUserId(token));
+            return new ResponseEntity<>(user, HttpStatus.OK);
+        } catch (MalformedJwtException e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } catch (NoSuchElementException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 }

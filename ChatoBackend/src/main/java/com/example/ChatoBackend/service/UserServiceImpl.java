@@ -57,4 +57,15 @@ public class UserServiceImpl implements UserService {
             throw new BadCredentialsException("Password not matches.");
         }
     }
+
+    @Override
+    public User findUserInfoById(String id) {
+        try {
+            User user = userRepository.findById(id).get();
+            user.setPassword(null);
+            return user;
+        } catch (NoSuchElementException e) {
+            throw new NoSuchElementException();
+        }
+    }
 }

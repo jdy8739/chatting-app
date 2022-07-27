@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import Seo from "../../components/commons/Seo";
-import { clearPreviousRoomId, ID_REGEX, PW_REGEX, signupAxios, toastConfig } from "../../utils/utils";
+import { CHATO_USERINFO, clearPreviousRoomId, getCookie, ID_REGEX, PW_REGEX, signupAxios, toastConfig } from "../../utils/utils";
 
 interface ISignUpForm {
 	id: string,
@@ -65,7 +65,13 @@ function SingUp() {
     useEffect(() => {
         setIsRendered(true);
         clearPreviousRoomId();
-        userProfilePic = undefined;
+        if (getCookie(CHATO_USERINFO)) {
+            toast.error('Please sign out ahead of sign up.', toastConfig);
+            router.push('/chat/list');
+        }
+        return () => {
+            userProfilePic = undefined;
+        }
     }, [])
     return (
         <div className="all">
@@ -182,7 +188,14 @@ function SingUp() {
                 </div>
                 {picBlobString && 
                 <div className="profile-image-box">
-                    <img style={{backgroundImage: `url(${picBlobString})`}} />
+                    <img 
+                        className="profile-img"
+                        style={{
+                            backgroundImage: `url(${picBlobString})`,
+                            width: '150px',
+                            height: '150px',
+                        }} 
+                    />
                     <span
                         className="del-btn"
                         onClick={removeProfilePic}
@@ -201,35 +214,23 @@ function SingUp() {
                     width: 150px;
                     height: 150px;
                     margin: auto;
-                    margin-top: 35px;
+                    margin-top: 25px;
                     position: relative;
-                }
-                img {
-                    width: 100%;
-                    height: 100%;
-                    background-size: cover;
-                    background-position: center center;
-                    border-radius: 50%;
-                    border: 1px solid orange;
-                }
-                .del-btn {
-                    position: absolute;
-                    top: 40%;
-                    margin: 5px 20px;
-                    cursor: pointer;
-                    font-size: 12px;
                 }
                 input {
                     width: 250px;
-                }
-                input[type=file] {
-                    font-size: 10px;
-                    text-align: right;
                 }
                 .error-message {
                     height: 18px;
                     color: orange;
                     font-size: 13px;
+                }
+                .del-btn {
+                    position: absolute;
+                    top: 50%;
+                    margin: 5px 110px;
+                    cursor: pointer;
+                    font-size: 12px;
                 }
                 .all {
                     transition: all 1s;
