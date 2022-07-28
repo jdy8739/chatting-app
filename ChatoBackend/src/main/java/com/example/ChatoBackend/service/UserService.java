@@ -16,5 +16,6 @@ public interface UserService {
 
     public User findUserInfoById(String id);
 
-    public void updateUser(String id, String prevId, String nickName, String newProfilePicUrl);
+    public void updateUser(
+            String id, String prevId, String nickName, String newProfilePicUrl, boolean isUserPicRemains) throws IOException;
 }

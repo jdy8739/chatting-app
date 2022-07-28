@@ -110,8 +110,10 @@ public class UserController {
     public ResponseEntity<String> alter(
             @RequestParam String id,
             @RequestParam String nickName,
+            @RequestParam String isUseProfilePic,
             @RequestParam (required = false) MultipartFile userProfilePic,
             HttpServletRequest req) {
+        boolean isUserPicRemains = Boolean.parseBoolean(isUseProfilePic);
         String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
         if (token == null) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         String userId;
@@ -119,7 +121,7 @@ public class UserController {
             userId = jwtUtils.getUserId(token);
             String newProfilePicUrl = null;
             if (userProfilePic != null) newProfilePicUrl = userService.saveProfilePic(id, userProfilePic);
-            userService.updateUser(id, userId, nickName, newProfilePicUrl);
+            userService.updateUser(id, userId, nickName, newProfilePicUrl, isUserPicRemains);
         } catch (MalformedJwtException e) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         } catch (FileSizeLimitExceededException e) {

@@ -41,12 +41,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String saveProfilePic(String id, MultipartFile profilePicBinary) throws IOException {
-        String path = "./images/users/" + id;
-        File newUserFolder = new File(path);
-        if (!newUserFolder.exists()) newUserFolder.mkdir();
-        FileOutputStream writer = new FileOutputStream(path + "/" + id + ".jpg");
-        writer.write(profilePicBinary.getBytes());
-        writer.close();
+        if (profilePicBinary != null) {
+            String path = "./images/users/" + id;
+            File newUserFolder = new File(path);
+            if (!newUserFolder.exists()) newUserFolder.mkdir();
+            FileOutputStream writer = new FileOutputStream(path + "/" + id + ".jpg");
+            writer.write(profilePicBinary.getBytes());
+            writer.close();
+        }
         return "http://localhost:5000/user/profile-pic/" + id;
     }
 
@@ -86,9 +88,35 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    private void changePrevFileName(String id, String prevId) {
+        boolean isPrevFileSaved = (userRepository.findById(prevId).get().getProfilePicUrl() != null);
+        if (!isPrevFileSaved) return;
+        else {
+            String path = "./images/users/" + prevId;
+            File newUserFolder = new File(path);
+            if (newUserFolder.exists()) {
+                String picUrl = path + "/" + prevId + ".jpg";
+                File picFile = new File(picUrl);
+                if (picFile.exists()) picFile.renameTo(new File(path + "/" + id + ".jpg"));
+                newUserFolder.renameTo(new File("./images/users/" + id));
+            }
+        }
+    }
+
     @Override
-    public void updateUser(String id, String prevId, String nickName, String newProfilePicUrl) {
-        if (!prevId.equals(id) || newProfilePicUrl == null) deletePrevFile(prevId);
+    public void updateUser(String id,
+                           String prevId,
+                           String nickName,
+                           String newProfilePicUrl,
+                           boolean isUserPicRemains) throws IOException {
+        if (!isUserPicRemains) deletePrevFile(prevId);
+        else {
+            if (newProfilePicUrl != null) deletePrevFile(prevId);
+            else if (!prevId.equals(id)) {
+                changePrevFileName(id, prevId);
+                newProfilePicUrl = saveProfilePic(id, null);
+            }
+        }
         Optional<User> optionalUser = userRepository.findById(prevId);
         if (optionalUser.isEmpty()) throw new NoSuchElementException();
         User user = optionalUser.get();

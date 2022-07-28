@@ -10,10 +10,12 @@ import { CHATO_USERINFO, clearPreviousRoomId, getCookie, ID_REGEX, removeCookie,
 interface IUserInfo {
     id: string,
     nickName: string,
-    profilePicUrl: string,
+    profilePicUrl?: string,
 }
 
 let userProfilePic: File | undefined;
+
+let tmpPicUrl = '';
 
 function Settings() {
     const router = useRouter();
@@ -33,6 +35,7 @@ function Settings() {
             });
             setInputRefValue(userInfo);
             setUserInfo(userInfo);
+            tmpPicUrl = userInfo.profilePicUrl || '';
         } catch (e) {
             toast.error('This is not an available user info.', toastConfig);
             removeCookie(CHATO_USERINFO, {path: '/'});
@@ -45,7 +48,6 @@ function Settings() {
         setValue('nickName', nickName);
     }
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        removeProfilePicUrl();
         const files = e.currentTarget.files;
         if (!files) return;
         userProfilePic = files[0];
@@ -54,20 +56,27 @@ function Settings() {
             return;
         }
         setPicBlobString(URL.createObjectURL(files[0]));
+        if (userInfo?.profilePicUrl) {
+            setUserInfo(userInfo => {
+                if (userInfo?.id && userInfo.nickName) return {...userInfo, profilePicUrl: ''};
+            });
+        }
     }
-    const removeProfilePic = () => {
-        removeProfilePicUrl();
-        setPicBlobString('');
-        setValue('profilePicUrl', '');
-    }
-    const removeProfilePicUrl = () => {
-        if (userInfo?.profilePicUrl) setUserInfo(userInfo => {
-            if (userInfo) return {...userInfo, profilePicUrl: ''};
+    const toggleProfilePic = () => {
+        if (picBlobString) {
+            setPicBlobString('');
+            setValue('profilePicUrl', '');
+            return;
+        }
+        setUserInfo(userInfo => {
+            if (userInfo) return {...userInfo, profilePicUrl: (userInfo?.profilePicUrl) ? '' : tmpPicUrl};
         })
     }
     const handleUserSettingsSubmit = async (data: IUserInfo) => {
-        const updatedUserIndo = {...data, userProfilePic: data.profilePicUrl[0]};
+        const updatedUserIndo = {...data, userProfilePic: data.profilePicUrl ? data.profilePicUrl[0] : null};
+        delete updatedUserIndo.profilePicUrl;
         const formData = new FormData();
+        formData.append('isUseProfilePic', checkIsPicChosen());
         for (let key in updatedUserIndo) formData.append(key, updatedUserIndo[key]);
         try {
             const { status, data: token } = await signupAxios.put(`${process.env.NEXT_PUBLIC_API_URL}/user/alter`, formData, {
@@ -94,6 +103,12 @@ function Settings() {
             }
         } catch (e) {}
     }
+    const checkIsPicChosen = () => {
+        let isUseProfilePic: boolean;
+        if (picBlobString || userInfo?.profilePicUrl) isUseProfilePic = true;
+        else isUseProfilePic = false;
+        return String(isUseProfilePic);
+    }
     useEffect(() => {
         clearPreviousRoomId();
         const token = getCookie(CHATO_USERINFO);
@@ -101,6 +116,7 @@ function Settings() {
         else fetchUserInfo(token);
         return () => {
             userProfilePic = undefined;
+            tmpPicUrl = '';
         }
     }, [])
     return (
@@ -118,7 +134,7 @@ function Settings() {
                         <img
                             className="profile-img"
                             style={{ 
-                                backgroundImage: `url(${userInfo?.profilePicUrl ? userInfo?.profilePicUrl : picBlobString})`,
+                                backgroundImage: `url(${picBlobString ? picBlobString : userInfo?.profilePicUrl})`,
                                 width: '150px',
                                 height: '150px',
                             }}
@@ -126,8 +142,8 @@ function Settings() {
                         <button
                             className="del-btn"
                             type="button"
-                            onClick={removeProfilePic}
-                        >delete</button>
+                            onClick={toggleProfilePic}
+                        >{`use ${(userInfo?.profilePicUrl || picBlobString) ? '' : 'no'} profile pic`}</button>
                     </label>
                 </div>
                 <br></br>
@@ -190,7 +206,7 @@ function Settings() {
                 .del-btn {
                     color: gray;
                     position: absolute;
-                    margin-right: -220px;
+                    margin-right: -280px;
                     margin-top: 10px;
                 }
                 label {
