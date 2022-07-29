@@ -4,10 +4,11 @@ import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
+import Modal from "../../components/commons/Modal";
 import { signIn, signOut } from "../../lib/store/modules/signInReducer";
 import { CHATO_USERINFO, clearPreviousRoomId, getCookie, ID_REGEX, removeCookie, setCookie, signupAxios, toastConfig } from "../../utils/utils";
 
-interface IUserInfo {
+export interface IUserInfo {
     id: string,
     nickName: string,
     profilePicUrl?: string,
@@ -22,11 +23,13 @@ function Settings() {
     const dispatch = useDispatch();
     const [userInfo, setUserInfo] = useState<IUserInfo>();
     const [picBlobString, setPicBlobString] = useState('');
+    const [protocol, setProtocol] = useState(0);
     const handleSignIn = (id: string) => dispatch(signIn(id));
     const { 
         register, 
         formState: { errors }, 
         setValue, 
+        getValues,
         handleSubmit } = useForm<IUserInfo>();
     const fetchUserInfo = async (token: string) => {
         try {
@@ -72,11 +75,12 @@ function Settings() {
             if (userInfo) return {...userInfo, profilePicUrl: (userInfo?.profilePicUrl) ? '' : tmpPicUrl};
         })
     }
-    const handleUserSettingsSubmit = async (data: IUserInfo) => {
+    const handleUserSettingsSubmit = async (data: IUserInfo, inputPassword: string) => {
         const updatedUserIndo = {...data, userProfilePic: data.profilePicUrl ? data.profilePicUrl[0] : null};
         delete updatedUserIndo.profilePicUrl;
         const formData = new FormData();
         formData.append('isUseProfilePic', checkIsPicChosen());
+        formData.append('inputPassword', inputPassword);
         for (let key in updatedUserIndo) formData.append(key, updatedUserIndo[key]);
         try {
             const { status, data: token } = await signupAxios.put(`${process.env.NEXT_PUBLIC_API_URL}/user/alter`, formData, {
@@ -86,7 +90,7 @@ function Settings() {
                 }
             });
             if (status === 200) {
-                toast.success('Your info has altered successfully!', toastConfig);
+                toast.success('Your info has been altered successfully!', toastConfig);
                 const now = new Date();
                 setCookie(
                     CHATO_USERINFO,
@@ -101,13 +105,27 @@ function Settings() {
                 handleSignIn(data.id);
                 router.push('/chat/list');
             }
-        } catch (e) {}
+        } catch (e) { return false; };
     }
     const checkIsPicChosen = () => {
-        let isUseProfilePic: boolean;
-        if (picBlobString || userInfo?.profilePicUrl) isUseProfilePic = true;
-        else isUseProfilePic = false;
-        return String(isUseProfilePic);
+        let isUserProfilePic: boolean;
+        if (picBlobString || userInfo?.profilePicUrl) isUserProfilePic = true;
+        else isUserProfilePic = false;
+        return String(isUserProfilePic);
+    }
+    const handleUserWithdraw = async (inputPassword: string) => {
+        try {
+            const { status } = await signupAxios.put(`${process.env.NEXT_PUBLIC_API_URL}/user/withdraw`, { inputPassword }, { headers: {
+                'authorization': `Bearer ${getCookie(CHATO_USERINFO)}`,
+            }});
+            if (status === 200) {
+                toast.success('Your id has been removed.', toastConfig);
+                removeCookie(CHATO_USERINFO, {path: '/'});
+                handleSignIn('');
+                router.push('/chat/list');
+                return true;
+            }
+        } catch (e) { return false; };
     }
     useEffect(() => {
         clearPreviousRoomId();
@@ -122,9 +140,9 @@ function Settings() {
     return (
         <>
             <form
-                onSubmit={handleSubmit(handleUserSettingsSubmit)}
+                onSubmit={handleSubmit(() => setProtocol(1))}
                 className="submit-form"
-                style={{ height: '440px' }}
+                style={{ height: '480px' }}
             >
                 <h4 className="title">User Information Settings</h4>
                 <div className="profile-image-box">
@@ -190,11 +208,30 @@ function Settings() {
                     />
                 </label>
                 <div className="error-message">{errors.nickName?.message}</div>
+                <label className="item">
+                    <div></div>
+                    <span
+                        className="withdraw"
+                        onClick={() => setProtocol(2)}
+                    >withdrawal</span>
+                </label>
                 <button
                     className="submit-btn"
                     style={{ margin: '40px 0' }}
                 >submit</button>
             </form>
+            {protocol > 0 && 
+            <Modal
+                alteredUserInfo={{ 
+                    id: getValues('id'), 
+                    nickName: getValues('nickName'), 
+                    profilePicUrl: getValues('profilePicUrl') 
+                }}
+                handleUserSettingsSubmit={handleUserSettingsSubmit}
+                handleUserWithdraw={handleUserWithdraw}
+                setProtocol={setProtocol}
+                protocol={protocol}
+            />}
             <style>{`
                 img {
                     border-radius: 50%;
@@ -211,6 +248,13 @@ function Settings() {
                 }
                 label {
                     padding: 0 25px;
+                }
+                .withdraw {
+                    color: orange;
+                    transition: all 1s;
+                }
+                .withdraw:hover {
+                    color: red;
                 }
             `}</style>
         </>

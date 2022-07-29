@@ -18,4 +18,8 @@ public interface UserService {
 
     public void updateUser(
             String id, String prevId, String nickName, String newProfilePicUrl, boolean isUserPicRemains) throws IOException;
+
+    public boolean checkPasswordMatches(String id, String inputPassword);
+
+    public void withdraw(String id);
 }

@@ -43,9 +43,14 @@ public class UserServiceImpl implements UserService {
     public String saveProfilePic(String id, MultipartFile profilePicBinary) throws IOException {
         if (profilePicBinary != null) {
             String path = "./images/users/" + id;
+            String picUrlPath = path + "/" + id + ".jpg";
             File newUserFolder = new File(path);
             if (!newUserFolder.exists()) newUserFolder.mkdir();
-            FileOutputStream writer = new FileOutputStream(path + "/" + id + ".jpg");
+            else if (newUserFolder.exists()) {
+                File picFile = new File(picUrlPath);
+                if (picFile.exists()) picFile.delete();
+            }
+            FileOutputStream writer = new FileOutputStream(picUrlPath);
             writer.write(profilePicBinary.getBytes());
             writer.close();
         }
@@ -97,7 +102,7 @@ public class UserServiceImpl implements UserService {
             if (newUserFolder.exists()) {
                 String picUrl = path + "/" + prevId + ".jpg";
                 File picFile = new File(picUrl);
-                if (picFile.exists()) picFile.renameTo(new File(path + "/" + id + ".jpg"));
+                if (picFile.exists()) picFile.renameTo(new File("./images/users/" + prevId + "/" + id + ".jpg"));
                 newUserFolder.renameTo(new File("./images/users/" + id));
             }
         }
@@ -111,11 +116,13 @@ public class UserServiceImpl implements UserService {
                            boolean isUserPicRemains) throws IOException {
         if (!isUserPicRemains) deletePrevFile(prevId);
         else {
-            if (newProfilePicUrl != null) deletePrevFile(prevId);
-            else if (!prevId.equals(id)) {
-                changePrevFileName(id, prevId);
-                newProfilePicUrl = saveProfilePic(id, null);
-            }
+            if (!prevId.equals(id)) {
+                if (newProfilePicUrl == null) {
+                    changePrevFileName(id, prevId);
+                    newProfilePicUrl = saveProfilePic(id, null);
+                }
+                deletePrevFile(prevId);
+            } else newProfilePicUrl = saveProfilePic(id, null);
         }
         Optional<User> optionalUser = userRepository.findById(prevId);
         if (optionalUser.isEmpty()) throw new NoSuchElementException();
@@ -128,5 +135,20 @@ public class UserServiceImpl implements UserService {
         } catch (Exception e) {
             throw new RuntimeException();
         }
+    }
+
+    @Override
+    public boolean checkPasswordMatches(String id, String inputPassword) {
+        Optional<User> optionalUser = userRepository.findById(id);
+        if (optionalUser.isEmpty()) throw new NoSuchElementException();
+        if (passwordEncoder.matches(inputPassword, optionalUser.get().getPassword())) {
+            return true;
+        } else return false;
+    }
+
+    @Override
+    public void withdraw(String id) {
+        deletePrevFile(id);
+        userRepository.deleteById(id);
     }
 }

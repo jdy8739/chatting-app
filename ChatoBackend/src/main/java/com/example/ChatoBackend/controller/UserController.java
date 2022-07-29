@@ -112,13 +112,19 @@ public class UserController {
             @RequestParam String nickName,
             @RequestParam String isUseProfilePic,
             @RequestParam (required = false) MultipartFile userProfilePic,
+            @RequestParam String inputPassword,
             HttpServletRequest req) {
-        boolean isUserPicRemains = Boolean.parseBoolean(isUseProfilePic);
+
         String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
         if (token == null) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+
+        boolean isUserPicRemains = Boolean.parseBoolean(isUseProfilePic);
         String userId;
         try {
             userId = jwtUtils.getUserId(token);
+            if (!userService.checkPasswordMatches(userId, inputPassword)) {
+                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            }
             String newProfilePicUrl = null;
             if (userProfilePic != null) newProfilePicUrl = userService.saveProfilePic(id, userProfilePic);
             userService.updateUser(id, userId, nickName, newProfilePicUrl, isUserPicRemains);
@@ -132,5 +138,24 @@ public class UserController {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
         return new ResponseEntity<>(jwtUtils.makeJWT(id), HttpStatus.OK);
+    }
+
+    @PutMapping("/withdraw")
+    public ResponseEntity<String> withdraw(
+            @RequestBody Map<String, String> map,
+            HttpServletRequest req) {
+        String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
+        if (token == null) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        String userId;
+        try {
+            userId = jwtUtils.getUserId(token);
+            if (!userService.checkPasswordMatches(userId, map.get("inputPassword"))) {
+                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            }
+            userService.withdraw(userId);
+        } catch (MalformedJwtException e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }
