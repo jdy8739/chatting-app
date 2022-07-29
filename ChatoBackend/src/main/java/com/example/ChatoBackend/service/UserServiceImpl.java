@@ -114,16 +114,7 @@ public class UserServiceImpl implements UserService {
                            String nickName,
                            String newProfilePicUrl,
                            boolean isUserPicRemains) throws IOException {
-        if (!isUserPicRemains) deletePrevFile(prevId);
-        else {
-            if (!prevId.equals(id)) {
-                if (newProfilePicUrl == null) {
-                    changePrevFileName(id, prevId);
-                    newProfilePicUrl = saveProfilePic(id, null);
-                }
-                deletePrevFile(prevId);
-            } else newProfilePicUrl = saveProfilePic(id, null);
-        }
+        newProfilePicUrl = changeProfilePicAndDirectoryName(id, prevId, newProfilePicUrl, isUserPicRemains);
         Optional<User> optionalUser = userRepository.findById(prevId);
         if (optionalUser.isEmpty()) throw new NoSuchElementException();
         User user = optionalUser.get();
@@ -135,6 +126,23 @@ public class UserServiceImpl implements UserService {
         } catch (Exception e) {
             throw new RuntimeException();
         }
+    }
+
+    private String changeProfilePicAndDirectoryName(String id,
+                                             String prevId,
+                                             String newProfilePicUrl,
+                                             boolean isUserPicRemains) throws IOException {
+        if (!isUserPicRemains) deletePrevFile(prevId);
+        else {
+            if (!prevId.equals(id)) {
+                if (newProfilePicUrl == null) {
+                    changePrevFileName(id, prevId);
+                    newProfilePicUrl = saveProfilePic(id, null);
+                }
+                deletePrevFile(prevId);
+            } else newProfilePicUrl = saveProfilePic(id, null);
+        }
+        return newProfilePicUrl;
     }
 
     @Override

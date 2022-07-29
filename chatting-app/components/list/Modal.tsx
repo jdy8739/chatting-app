@@ -1,24 +1,13 @@
 import axios from "axios";
 import { AnimatePresence, motion } from "framer-motion";
 import React, { useRef } from "react";
+import { modalBgVariant } from "../../utils/utils";
 
 interface IModal {
     roomId: number,
     query: string, 
     hideModal: () => void, 
     pushToChatRoom: (password?: string) => void
-}
-
-const modalBgVariant = {
-    initial: {
-        opacity: 0
-    },
-    animate: {
-        opacity: 1
-    },
-    exit: {
-        opacity: 0
-    }
 }
 
 function Modal({ roomId, query, hideModal, pushToChatRoom }: IModal) {
@@ -43,32 +32,28 @@ function Modal({ roomId, query, hideModal, pushToChatRoom }: IModal) {
         }
     }
     return (
-        <>
-            <motion.div
-                className="modal-bg"
-                onClick={hideModal}
-                variants={modalBgVariant}
-                initial="initial"
-                animate="animate"
-                exit="exit"
+        <motion.div
+            className="modal-bg"
+            onClick={hideModal}
+            variants={modalBgVariant}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+        >
+            <div
+                className="modal"
+                onClick={stopPropagation}
+                ref={modalRef}
             >
-                <AnimatePresence>
-                    <motion.div
-                        className="modal"
-                        onClick={stopPropagation}
-                        ref={modalRef}
-                    >
-                        <p>{query}</p>
-                        <input
-                            className="modal-input"
-                            placeholder="Input room password."
-                            onKeyUp={submitPassword}
-                            ref={inputRef}
-                        />
-                    </motion.div>
-                </AnimatePresence>
-            </motion.div>
-        </>
+                <p>{query}</p>
+                <input
+                    className="modal-input"
+                    placeholder="Input room password."
+                    onKeyUp={submitPassword}
+                    ref={inputRef}
+                />
+            </div>
+        </motion.div>
     )
 }
 

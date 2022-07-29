@@ -1,4 +1,5 @@
 import axios from "axios";
+import { AnimatePresence } from "framer-motion";
 import { useRouter } from "next/router";
 import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -220,18 +221,20 @@ function Settings() {
                     style={{ margin: '40px 0' }}
                 >submit</button>
             </form>
-            {protocol > 0 && 
-            <Modal
-                alteredUserInfo={{ 
-                    id: getValues('id'), 
-                    nickName: getValues('nickName'), 
-                    profilePicUrl: getValues('profilePicUrl') 
-                }}
-                handleUserSettingsSubmit={handleUserSettingsSubmit}
-                handleUserWithdraw={handleUserWithdraw}
-                setProtocol={setProtocol}
-                protocol={protocol}
-            />}
+            <AnimatePresence>
+                {protocol > 0 && 
+                <Modal
+                    alteredUserInfo={{ 
+                        id: getValues('id'), 
+                        nickName: getValues('nickName'), 
+                        profilePicUrl: getValues('profilePicUrl') 
+                    }}
+                    handleUserSettingsSubmit={handleUserSettingsSubmit}
+                    handleUserWithdraw={handleUserWithdraw}
+                    setProtocol={setProtocol}
+                    protocol={protocol}
+                />}
+            </AnimatePresence>
             <style>{`
                 img {
                     border-radius: 50%;

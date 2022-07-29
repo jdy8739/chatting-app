@@ -1,8 +1,7 @@
-import axios from "axios";
 import React, { useRef } from "react";
-import { toast } from "react-toastify";
 import { IUserInfo } from "../../pages/user/settings";
-import { toastConfig } from "../../utils/utils";
+import { AnimatePresence, motion } from "framer-motion";
+import { modalBgVariant } from "../../utils/utils";
 
 interface IModal {
     alteredUserInfo: IUserInfo
@@ -10,7 +9,6 @@ interface IModal {
     handleUserWithdraw: (inputPassword: string) => Promise<boolean | undefined>,
     setProtocol: (value: number) => void,
     protocol: number,
-
 }
 
 const EXECUTE_ALTER_USER_INFO = 1;
@@ -23,31 +21,31 @@ function Modal({ handleUserSettingsSubmit, handleUserWithdraw, setProtocol, prot
     const handleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.keyCode === 13) {
             const inputPassword = e.currentTarget.value;
-            try {
-                let response: boolean = false;
-                if (protocol === EXECUTE_ALTER_USER_INFO) {
-                    const result = await handleUserSettingsSubmit(alteredUserInfo, inputPassword);
-                    if (result !== undefined) response = result;
-                } else if (protocol === EXECUTE_WITHDRAW) {
-                    const result = await handleUserWithdraw(inputPassword);
-                    if (result !== undefined) response = result;
+            let response: boolean = false;
+            if (protocol === EXECUTE_ALTER_USER_INFO) {
+                const result = await handleUserSettingsSubmit(alteredUserInfo, inputPassword);
+                if (result !== undefined) response = result;
+            } else if (protocol === EXECUTE_WITHDRAW) {
+                const result = await handleUserWithdraw(inputPassword);
+                if (result !== undefined) response = result;
+            }
+            if (!response) {
+                const targetRef = modalRef.current;
+                if (targetRef) {
+                    targetRef.classList.add('wrong-pw');
+                    setTimeout(() => targetRef.classList.remove('wrong-pw'), 300);
                 }
-                if (!response) {
-                    const targetRef = modalRef.current;
-                    if (targetRef) {
-                        targetRef.classList.add('wrong-pw');
-                        setTimeout(() => targetRef.classList.remove('wrong-pw'), 300);
-                    }
-                }
-            } catch (e) {
-                toast.error('Please check your sign in status.', toastConfig);
-            };
+            }
         }
     }
     return (
-        <div
+        <motion.div
             className="modal-bg"
             onClick={() => setProtocol(0)}
+            variants={modalBgVariant}
+            initial="initial"
+            animate="animate"
+            exit="exit"
         >
             <div
                 className="modal"
@@ -61,7 +59,7 @@ function Modal({ handleUserSettingsSubmit, handleUserWithdraw, setProtocol, prot
                     onKeyDown={handleKeyDown}
                 />
             </div>
-        </div>
+        </motion.div>
     )
 }
 

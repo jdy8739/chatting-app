@@ -105,3 +105,15 @@ signinAxios.interceptors.response.use(
         return Promise.reject();
     }
 )
+
+export const modalBgVariant = {
+    initial: {
+        opacity: 0
+    },
+    animate: {
+        opacity: 1
+    },
+    exit: {
+        opacity: 0
+    }
+}
