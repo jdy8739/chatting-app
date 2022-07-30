@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useRouter } from "next/router";
 import React, { useEffect, useRef, useState } from "react";
+import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { clearPreviousRoomId, toastConfig } from "../../utils/utils";
 
@@ -19,6 +20,7 @@ function CreateChat() {
     const subjectInputRef = useRef<HTMLInputElement>(null);
     const subjectSelectRef = useRef<HTMLSelectElement>(null);
     const pwInputRef = useRef<HTMLInputElement>(null);
+    const userId = useSelector(({ signInReducer: {id} }: { signInReducer: {id: string} }) => id);
     const handleChkBoxValue = (e: React.MouseEvent<HTMLInputElement>) => {
         const checked = e.currentTarget?.checked;
         if (checked) {
@@ -46,7 +48,7 @@ function CreateChat() {
             limitation: limit,
             pwRequired: isPwRequired,
             password: isPwRequired ? pwInputRef.current?.value : null,
-            owner: null,
+            owner: userId ? userId : null,
         })
         if (status === 200) {
             toast.success('The room has been created!', toastConfig);

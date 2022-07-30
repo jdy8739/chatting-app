@@ -155,10 +155,11 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
             subscribeRoomParticipants();
         });
         stomp.debug = () => null;
-        const previousRoomId = getPreviousRoomId();
+        /* const previousRoomId = getPreviousRoomId();
         if (previousRoomId) {
+            console.log(previousRoomId);
             updateRoomParticipants({ roomId: +previousRoomId, isEnter: false });
-        }
+        } */
         return () => {
             stomp.disconnect(() => null, {});
         }

@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useRouter } from "next/router";
 import React, { useEffect, useRef, useState } from "react";
+import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import webstomp from "webstomp-client";
 import Seo from "../../components/commons/Seo";
@@ -39,6 +40,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
     const [isAllChatShown, setIsAllChatShown] = useState(previousChat.length < 10);
     const [targetChatNumber, setTargetChatNumber] = useState(-1);
     const [participants, setParticipants] = useState<string[]>([]);
+    const userId = useSelector(({ signInReducer: {id} }: { signInReducer: {id: string} }) => id);
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
     const handleChatSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -157,15 +159,15 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
         router.push('/chat/list');
     }
     useEffect(() => {
-        randomUserId = participants[0];
+        // randomUserId = participants[0];
+        randomUserId = userId ? userId : generateRandonUserId();
         socket = new WebSocket('ws://localhost:5000/stomp/chat');
         stomp = webstomp.over(socket);
         stomp.connect({}, () => {
             subscribeNewMessage();
         });
         stomp.debug = () => null;
-        randomUserId = generateRandonUserId();
-        setPreviousRoomId(id);
+        // setPreviousRoomId(id);
         setParticipants([randomUserId])
         return () => {
             stomp.disconnect(() => null, {});
@@ -190,6 +192,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                 participants={participants}
                 myId={randomUserId}
                 isMyOwnRoom={randomUserId === roomOwner}
+                roomOwner={roomOwner}
                 setParticipants={setParticipants}
                 shootChatMessage={shootChatMessage}
             />
@@ -202,14 +205,17 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                             {
                                 i === 0 ? <NameOfTheChatUser msg={msg}/> :
                                 messages[i - 1].writer !== msg.writer && 
-                                <NameOfTheChatUser msg={msg}/>
+                                <NameOfTheChatUser 
+                                    msg={msg}
+                                    isRoomOwner={msg.writer === roomOwner}
+                                />
                             }
                             {
                                 msg.writer === MASTER ?
                                 <span className="master-chat">{msg.message}</span> :
                                 <>
                                     {i !== 0 && 
-                                    messages[i - 1].time !== msg.time && 
+                                    messages[i - 1].time !== msg.time &&
                                     msg.writer === randomUserId &&
                                     <ChatTimeComponent 
                                         time={msg.time || ''}
@@ -228,14 +234,17 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                                             className="delete-btn">
                                             x
                                         </span>}
-                                        {msg.isDeleted ? 'deleted message' : msg.message}
+                                        <MessageContent 
+                                            isDeleted={msg.isDeleted}
+                                            content={msg.message}
+                                        />
                                     </span>
                                     {i !== 0 && 
                                     messages[i - 1].time !== msg.time && 
                                     msg.writer !== randomUserId &&
                                     <ChatTimeComponent 
                                         time={msg.time || ''}
-                                        isMyMessage={msg.writer === randomUserId} 
+                                        isMyMessage={msg.writer === randomUserId}
                                     />}
                                 </>
                             }
@@ -330,8 +339,19 @@ export async function getServerSideProps({ params: { id }, query: { roomName, pa
     };
 }
 
-function NameOfTheChatUser({ msg }: { msg: IMessageBody }) {
-    return msg.writer !== MASTER ? <h5>{msg.writer.slice(0, 9)}</h5> : null;
+function NameOfTheChatUser({ msg, isRoomOwner }: { msg: IMessageBody, isRoomOwner?: boolean }) {
+    return (
+        msg.writer === MASTER ? null :
+        <span>
+            {isRoomOwner && 
+            <img
+                src="/crown.png"
+                width="30px"
+                height="25px"
+            />}
+            <h5>{msg.writer.slice(0, 9)}</h5>
+        </span>
+    );
 }
 
 function ChatTimeComponent({ time, isMyMessage }: { time: string, isMyMessage: boolean }) {
@@ -341,6 +361,12 @@ function ChatTimeComponent({ time, isMyMessage }: { time: string, isMyMessage: b
             <span className="time">{time}</span>
             { isMyMessage && <>&ensp;</> }
         </span>
+    )
+}
+
+function MessageContent({ isDeleted, content }: { isDeleted?: boolean, content: string }) {
+    return (
+        <span>{isDeleted ? 'deleted message' : content}</span>
     )
 }
 

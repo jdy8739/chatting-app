@@ -1,6 +1,7 @@
 package com.example.ChatoBackend.service;
 
 import com.example.ChatoBackend.entity.User;
+import com.example.ChatoBackend.repository.ChatRoomRepository;
 import com.example.ChatoBackend.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.http.fileupload.impl.FileSizeLimitExceededException;
@@ -24,6 +25,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     UserRepository userRepository;
+
+    @Autowired
+    ChatRoomRepository chatRoomRepository;
 
     @Autowired
     PasswordEncoder passwordEncoder;
@@ -122,6 +126,7 @@ public class UserServiceImpl implements UserService {
         user.setNickName(nickName);
         user.setProfilePicUrl(newProfilePicUrl);
         try {
+            chatRoomRepository.changeRoomOwnerToNewId(id, prevId);
             userRepository.save(user);
         } catch (Exception e) {
             throw new RuntimeException();
