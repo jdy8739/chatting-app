@@ -191,7 +191,6 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                 roomId={id}
                 participants={participants}
                 myId={randomUserId}
-                isMyOwnRoom={randomUserId === roomOwner}
                 roomOwner={roomOwner}
                 setParticipants={setParticipants}
                 shootChatMessage={shootChatMessage}

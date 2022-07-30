@@ -6,13 +6,12 @@ interface IUserContainer {
     roomId: number,
     participants: string[],
     myId: string,
-    isMyOwnRoom: boolean,
     roomOwner: string | null,
     setParticipants: (participants: string[]) => void,
     shootChatMessage: (target: string, message: IMessageBody) => void,
 }
 
-function UserContainer({ roomId, participants, myId, isMyOwnRoom, roomOwner, setParticipants, shootChatMessage }: IUserContainer) {
+function UserContainer({ roomId, participants, myId, roomOwner, setParticipants, shootChatMessage }: IUserContainer) {
     const showNowUsers = async () => {
         if (participants.length === 1) {
             const results: string[] = await (await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/room/participants/${roomId}`)).data;
@@ -48,25 +47,21 @@ function UserContainer({ roomId, participants, myId, isMyOwnRoom, roomOwner, set
                                 </div>
                                 {participant.slice(0, 9)}
                                 <span style={{color: 'red'}}>{(participant === myId) ? '(me)' : ''}</span>
-                                {
-                                    (participant !== myId) && isMyOwnRoom &&
-                                    <img
-                                        width="20px"
-                                        height="20px"
-                                        src='/out.png'
-                                        className="out-icon"
-                                        onClick={() => banThisParticipant(participant)}
-                                    />
-                                }
+                                {(participant !== myId) && (myId === roomOwner) &&
+                                <img
+                                    width="20px"
+                                    height="20px"
+                                    src='/out.png'
+                                    className="out-icon"
+                                    onClick={() => banThisParticipant(participant)}
+                                />}
                                 &emsp;
-                                {
-                                    (participant === roomOwner) &&
-                                    <img
-                                        src="/crown.png"
-                                        width="30px"
-                                        height="25px"
-                                    />
-                                }
+                                {(participant === roomOwner) &&
+                                <img
+                                    src="/crown.png"
+                                    width="30px"
+                                    height="25px"
+                                />}
                             </div>
                         )
                     })}
