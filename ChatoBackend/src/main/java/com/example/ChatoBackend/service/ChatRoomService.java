@@ -1,8 +1,10 @@
 package com.example.ChatoBackend.service;
 
+import com.example.ChatoBackend.DTO.ParticipantDTO;
 import com.example.ChatoBackend.entity.ChatRoom;
 import org.springframework.stereotype.Service;
 
+import java.sql.ParameterMetaData;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -18,11 +20,15 @@ public interface ChatRoomService {
 
     public boolean checkRoomStatusOK(Long roomId);
 
-    public void minusParticipantsCount(Long roomId);
+    public void increaseParticipantsCount(Long roomId);
+
+    public void decreaseParticipantsCount(Long roomId);
 
     public boolean checkPwValidation(Long roomId, String password);
 
     public void deleteRoom(Long roomId);
 
     public String findRoomOwnerByRoomId(Long roomId);
+
+    public List<ParticipantDTO> getParticipantListByRoomId(Long roomId);
 }

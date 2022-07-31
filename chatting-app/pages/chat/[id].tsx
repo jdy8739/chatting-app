@@ -6,8 +6,8 @@ import { toast } from "react-toastify";
 import webstomp from "webstomp-client";
 import Seo from "../../components/commons/Seo";
 import UserContainer from "../../components/[id]/UserContainer";
-import { IMessageBody } from "../../types/types";
-import { BAN_PROTOCOL_NUMBER, DISBANDED, generateRandonUserId, MASTER, setPreviousRoomId, SUBSCRIBE_PROTOCOL_NUMBER, toastConfig } from "../../utils/utils";
+import { IMessageBody, IParticipants } from "../../types/types";
+import { BAN_PROTOCOL_NUMBER, DISBANDED, generateRandonUserId, MASTER, SUBSCRIBE_PROTOCOL_NUMBER, toastConfig } from "../../utils/utils";
 
 interface IChatRoomProps {
     id: number,
@@ -27,6 +27,10 @@ let stomp: any;
 let randomUserId: string = '';
 let previousShowCnt = 0;
 
+const CHAT_REMAIN_NUMBER_LIMIT = 10;
+
+let isUserContainerWindowOpened: boolean = false;
+
 const fetchRoomOwnerAndPreviousChat = async (id: number, count: number, password?: string) => {
     const { owner, messageList }: IChatRoomInfo = await (await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/message/${id}?offset=${count}`, { password })).data;
     messageList?.reverse();
@@ -37,9 +41,9 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
     let newMessage: string;
     const router = useRouter();
     const [messages, setMessages] = useState<IMessageBody[]>(previousChat);
-    const [isAllChatShown, setIsAllChatShown] = useState(previousChat.length < 10);
+    const [isAllChatShown, setIsAllChatShown] = useState(previousChat.length < CHAT_REMAIN_NUMBER_LIMIT);
     const [targetChatNumber, setTargetChatNumber] = useState(-1);
-    const [participants, setParticipants] = useState<string[]>([]);
+    const [participants, setParticipants] = useState<IParticipants[]>([]);
     const userId = useSelector(({ signInReducer: {id} }: { signInReducer: {id: string} }) => id);
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
     const handleChatSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -79,12 +83,15 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
             }
             const participantsListChanged = (msgNo !== null && msgNo >= SUBSCRIBE_PROTOCOL_NUMBER && msgNo <= BAN_PROTOCOL_NUMBER);
             if (isSentFromMaster && participantsListChanged) {
-                const targetId = newMessage.message;
+                const [targetId, targetNickName] = newMessage.message.split('/');
                 if (msgNo === BAN_PROTOCOL_NUMBER) {
                     if (targetId === randomUserId) expelUser('You are banned!');
                     newMessage.message = `${targetId.slice(0, 9)} has been banned.`;
                 } else newMessage.message = `${targetId.slice(0, 9)} has just ${msgNo ? 'left' : 'joined'} the room.`;
-                if (targetId !== randomUserId) updateParticipantsList(targetId, Boolean(msgNo));
+                if ((targetId !== randomUserId) && isUserContainerWindowOpened) updateParticipantsList({
+                    id: targetId,
+                    nickName: targetNickName,
+                }, Boolean(msgNo));
             }
             updateMessageList(newMessage);
             window.scrollTo(0, document.body.scrollHeight);
@@ -109,13 +116,14 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
             });
         }
     };
-    const updateParticipantsList = (targetUserId: string, isUserOut: boolean) => {
+    const updateParticipantsList = (targetUser: IParticipants, isUserOut: boolean) => {
+        console.log("tq")
         setParticipants(participants => {
             if (isUserOut) {
-                const targetIndex = participants.findIndex(participant => participant === targetUserId);
+                const targetIndex = participants.findIndex(participant => participant.id === targetUser.id);
                 if (targetIndex === -1) return participants;
                 participants.splice(targetIndex, 1);
-            } else participants.push(targetUserId);
+            } else participants.push(targetUser);
             return [...participants];
         })
     }
@@ -124,9 +132,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
         previousShowCnt += 1;
         const { messageList } = await fetchRoomOwnerAndPreviousChat(id, previousShowCnt, password);
         if (messageList) {
-            if (messageList.length < 10) {
-                setIsAllChatShown(true);
-            }
+            if (messageList.length < CHAT_REMAIN_NUMBER_LIMIT) setIsAllChatShown(true);
             setMessages(messages => {
                 const copied = [...messageList, ...messages];
                 return copied;
@@ -168,11 +174,12 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
         });
         stomp.debug = () => null;
         // setPreviousRoomId(id);
-        setParticipants([randomUserId])
+        // setParticipants([{ id: randomUserId, nickName: '' }])
         return () => {
             stomp.disconnect(() => null, {});
             randomUserId = '';
             previousShowCnt = 0;
+            isUserContainerWindowOpened = false;
         }
     }, []);
     return (
@@ -192,6 +199,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                 participants={participants}
                 myId={randomUserId}
                 roomOwner={roomOwner}
+                isUserContainerWindowOpened={isUserContainerWindowOpened}
                 setParticipants={setParticipants}
                 shootChatMessage={shootChatMessage}
             />

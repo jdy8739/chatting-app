@@ -164,4 +164,13 @@ public class UserServiceImpl implements UserService {
         deletePrevFile(id);
         userRepository.deleteById(id);
     }
+
+    @Override
+    public String findNickNameById(String id) {
+        try {
+            return userRepository.findNickNameById(id);
+        } catch (NoSuchElementException e) {
+            return null;
+        }
+    }
 }

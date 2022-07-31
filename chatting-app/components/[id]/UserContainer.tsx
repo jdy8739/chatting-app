@@ -1,24 +1,31 @@
 import axios from "axios";
-import { IMessageBody } from "../../types/types";
+import { IMessageBody, IParticipants } from "../../types/types";
 import { BAN_PROTOCOL_NUMBER, MASTER } from "../../utils/utils";
 
 interface IUserContainer { 
     roomId: number,
-    participants: string[],
+    participants: IParticipants[],
     myId: string,
     roomOwner: string | null,
-    setParticipants: (participants: string[]) => void,
+    isUserContainerWindowOpened: boolean,
+    setParticipants: (participants: IParticipants[]) => void,
     shootChatMessage: (target: string, message: IMessageBody) => void,
 }
 
-function UserContainer({ roomId, participants, myId, roomOwner, setParticipants, shootChatMessage }: IUserContainer) {
+function UserContainer({ 
+    roomId,
+    participants,
+    myId,
+    roomOwner,
+    isUserContainerWindowOpened,
+    setParticipants,
+    shootChatMessage }: IUserContainer) {
     const showNowUsers = async () => {
-        if (participants.length === 1) {
-            const results: string[] = await (await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/room/participants/${roomId}`)).data;
-            setParticipants(results);
-        } else return;
+        const results: IParticipants[] = await (await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/room/participants/${roomId}`)).data;
+        setParticipants(results);
+        isUserContainerWindowOpened = true;
     }
-    const banThisParticipant = (participantId: string) => {
+    const banThisParticipant = (participantId: string) => { 
         shootChatMessage('delete', {
             msgNo: BAN_PROTOCOL_NUMBER,
             roomId: String(roomId),
@@ -30,7 +37,7 @@ function UserContainer({ roomId, participants, myId, roomOwner, setParticipants,
         <>
             <div
                 className="user-container"
-                onMouseOver={showNowUsers}
+                onMouseEnter={showNowUsers}
             >
                 <h4>users</h4>
                 <div className="name-box">
@@ -41,22 +48,22 @@ function UserContainer({ roomId, participants, myId, roomOwner, setParticipants,
                                     <img
                                         width="100%"
                                         height="100%"
-                                        src={`${process.env.NEXT_PUBLIC_API_URL}/user/profile-pic/${participant}`} 
+                                        src={`${process.env.NEXT_PUBLIC_API_URL}/user/profile-pic/${participant.id}`} 
                                         alt="/"
                                     />
                                 </div>
-                                {participant.slice(0, 9)}
-                                <span style={{color: 'red'}}>{(participant === myId) ? '(me)' : ''}</span>
-                                {(participant !== myId) && (myId === roomOwner) &&
+                                {participant.nickName ? participant.nickName : participant.id.slice(0, 9)}
+                                <span style={{color: 'red'}}>{(participant.id === myId) ? '(me)' : ''}</span>
+                                {(participant.id !== myId) && (myId === roomOwner) &&
                                 <img
                                     width="20px"
                                     height="20px"
                                     src='/out.png'
                                     className="out-icon"
-                                    onClick={() => banThisParticipant(participant)}
+                                    onClick={() => banThisParticipant(participant.id)}
                                 />}
                                 &emsp;
-                                {(participant === roomOwner) &&
+                                {(participant.id === roomOwner) &&
                                 <img
                                     src="/crown.png"
                                     width="30px"

@@ -1,7 +1,10 @@
 package com.example.ChatoBackend.event;
 
 import com.example.ChatoBackend.DTO.MessageDTO;
+import com.example.ChatoBackend.DTO.ParticipantDTO;
 import com.example.ChatoBackend.service.ChatRoomServiceImpl;
+import com.example.ChatoBackend.service.UserService;
+import com.example.ChatoBackend.service.UserServiceImpl;
 import com.example.ChatoBackend.store.ConnectedUserAndRoomInfoStore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,6 +25,8 @@ public class StompSubscribeEvent implements ApplicationListener<SessionSubscribe
     @Autowired
     ChatRoomServiceImpl chatRoomService;
     @Autowired
+    UserServiceImpl userService;
+    @Autowired
     ConnectedUserAndRoomInfoStore connectedUserAndRoomInfoStore;
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
@@ -29,7 +34,7 @@ public class StompSubscribeEvent implements ApplicationListener<SessionSubscribe
     private final String MASTER = "MASTER";
     private final String NULL = "null";
 
-    private final int SUBSCRIBE_PROTOCOL_NUMBER= 0;
+    private final int SUBSCRIBE_PROTOCOL_NUMBER = 0;
 
     public void onApplicationEvent(SessionSubscribeEvent event) {
         map = (Map<String, Object>) event.getMessage().getHeaders();
@@ -38,32 +43,47 @@ public class StompSubscribeEvent implements ApplicationListener<SessionSubscribe
         String userId = extractId(String.valueOf(nativeHeaders.get("userId")));
         String sessionId = (String) map.get("simpSessionId");
         if (userId.equals(NULL) || roomId.equals(NULL)) return;
+
+        String nickName = null;
+        boolean isUserSignedInUsedId = (userId.length() < 16);
+        if (isUserSignedInUsedId) nickName = userService.findNickNameById(userId);
+        if (putUserIdIntoSetIfNotDuplicateId(roomId, userId, nickName)) return;
         String[] values = {roomId, userId};
         connectedUserAndRoomInfoStore.connectedUserMap.put(sessionId, values);
-        putUserIdIntoUserIdSetByRoomId(roomId, userId);
+        chatRoomService.increaseParticipantsCount(Long.valueOf(roomId));
         messagingTemplate.convertAndSend(
                 "/sub/chat/room/" + roomId,
                 new MessageDTO(
                         Long.valueOf(SUBSCRIBE_PROTOCOL_NUMBER),
                         roomId,
                         MASTER,
-                        userId,
+                        userId + "/" + nickName,
                         null,
                         false));
-
         messagingTemplate.convertAndSend(
                 "/sub/chat/room/list", new RoomParticipantsInfo(Integer.valueOf(roomId), true));
     }
 
-    private void putUserIdIntoUserIdSetByRoomId(String roomId, String userId) {
-        Set<String> participantsUserSet = connectedUserAndRoomInfoStore.participantsUserMap.get(Long.valueOf(roomId));
+    private boolean putUserIdIntoSetIfNotDuplicateId(String roomId, String userId, String nickName) {
+        Set<String[]> participantsUserSet = connectedUserAndRoomInfoStore.participantsUserMap.get(Long.valueOf(roomId));
+        String[] newParticipantArr = {userId, nickName};
         if (participantsUserSet == null) {
-            Set<String> newUserIdSet = new HashSet<>();
-            newUserIdSet.add(userId);
+            Set<String[]> newUserIdSet = new HashSet<>();
+            newUserIdSet.add(newParticipantArr);
             connectedUserAndRoomInfoStore.participantsUserMap.put(Long.valueOf(roomId), newUserIdSet);
         } else {
-            participantsUserSet.add(userId);
+            if (isDuplicateUserIdExist(userId, participantsUserSet)) return true;
+            participantsUserSet.add(newParticipantArr);
         }
+        return false;
+    }
+
+    private boolean isDuplicateUserIdExist(String targetUserId, Collection<String[]> targetSet) {
+        Iterator<String[]> iterator = targetSet.iterator();
+        while (iterator.hasNext()) {
+            if (iterator.next()[0].equals(targetUserId)) return true;
+        }
+        return false;
     }
 
     private String extractId(String id) {

@@ -12,5 +12,5 @@ import java.util.Set;
 @Component
 public class ConnectedUserAndRoomInfoStore {
     public Map<String, String[]> connectedUserMap = new HashMap<>();
-    public Map<Long, Set<String>> participantsUserMap = new HashMap<>();
+    public Map<Long, Set<String[]>> participantsUserMap = new HashMap<>();
 }

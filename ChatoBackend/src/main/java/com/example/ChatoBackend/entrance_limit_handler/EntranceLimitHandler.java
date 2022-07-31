@@ -44,7 +44,7 @@ public class EntranceLimitHandler extends ChannelInterceptorAdapter {
                 // 여기서는 갑자기 소켓이 닫힌 경우를 가정해서, 결국 메세지 컨트롤러에서 통신 종료 메세지를 보낼 수 없고 다른 빈 컴포넌트의 메소드에서 처리해야할 듯.
                 try {
                     Long roomId = Long.valueOf(connectedUserAndRoomInfoStore.connectedUserMap.get(sessionId)[0]);
-                    chatRoomService.minusParticipantsCount(roomId);
+                    chatRoomService.decreaseParticipantsCount(roomId);
                     // 유저 목록 업데이트를 위해 종료된 아이디를 소켓 메세지로 보내는 메소드(종료된 통신의 유저 아이디);
                     connectedUserAndRoomInfoStore.connectedUserMap.remove(sessionId);
                 } catch (NullPointerException e) {

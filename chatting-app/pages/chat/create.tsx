@@ -30,23 +30,29 @@ function CreateChat() {
         defaultValues: { limitation: 15 },
     });
     const userId = useSelector(({ signInReducer: {id} }: { signInReducer: {id: string} }) => id);
-    const submitRoomForm = async (data: ICreateChat) => {
-        console.log(data);
-        if (data.useCustomSubject && !data.subject) {
+    const submitRoomForm = async ({ 
+        roomName, 
+        useCustomSubject, 
+        subject, 
+        usePassword, 
+        password, 
+        limitation, 
+        subjectOption }: ICreateChat) => {
+        if (useCustomSubject && !subject) {
             setError('subject', {
                 message: 'A Subject is required. :(',
             });
-        } else if (data.usePassword && !data.password) {
+        } else if (usePassword && !password) {
             setError('password', {
                 message: 'A Password is required. :('
             })
         } else if (Object.keys(errors).length === 0) {
             const { status } = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/create`, {
-                roomName: data.roomName,
-                subject: data.useCustomSubject ? data.subject : data.subjectOption,
-                limitation: data.limitation,
-                pwRequired: data.usePassword,
-                password: data.usePassword ? data.password : null,
+                roomName: roomName,
+                subject: useCustomSubject ? subject : subjectOption,
+                limitation: limitation,
+                pwRequired: usePassword,
+                password: usePassword ? password : null,
                 owner: userId ? userId : null,
             })
             if (status === 200) {

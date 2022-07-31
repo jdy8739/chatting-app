@@ -1,15 +1,17 @@
 package com.example.ChatoBackend.service;
 
+import com.example.ChatoBackend.DTO.ParticipantDTO;
 import com.example.ChatoBackend.entity.ChatRoom;
 import com.example.ChatoBackend.repository.ChatRoomRepository;
 import com.example.ChatoBackend.repository.MessageRepository;
+import com.example.ChatoBackend.store.ConnectedUserAndRoomInfoStore;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.ParameterMetaData;
 import java.sql.SQLException;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -20,6 +22,9 @@ public class ChatRoomServiceImpl implements ChatRoomService {
 
     @Autowired
     private MessageRepository messageRepository;
+
+    @Autowired
+    ConnectedUserAndRoomInfoStore connectedUserAndRoomInfoStore;
 
     @Override
     public void saveChatRoom(ChatRoom chatRoom) throws SQLException {
@@ -62,14 +67,18 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         } else if (chatRoomOptional.get().getNowParticipants() + 1 > chatRoomOptional.get().getLimitation()) {
             return false;
         } else {
-            chatRoomRepository.plusParticipantsCount(roomId);
             return true;
         }
     }
 
     @Override
-    public void minusParticipantsCount(Long roomId) {
-        chatRoomRepository.minusParticipantsCount(roomId);
+    public void increaseParticipantsCount(Long roomId) {
+        chatRoomRepository.increaseParticipantsCount(roomId);
+    }
+
+    @Override
+    public void decreaseParticipantsCount(Long roomId) {
+        chatRoomRepository.decreaseParticipantsCount(roomId);
     }
 
     @Override
@@ -89,5 +98,17 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     @Override
     public String findRoomOwnerByRoomId(Long roomId) {
         return chatRoomRepository.findByRoomId(roomId).get().getOwner();
+    }
+
+    @Override
+    public List<ParticipantDTO> getParticipantListByRoomId(Long roomId) {
+        Set<String[]> set = connectedUserAndRoomInfoStore.participantsUserMap.get(roomId);
+        List<ParticipantDTO> participantList = new ArrayList<>();
+        Iterator<String[]> iterator = set.iterator();
+        while (iterator.hasNext()) {
+            String[] participant = iterator.next();
+            participantList.add(new ParticipantDTO(participant[0], participant[1]));
+        }
+        return participantList;
     }
 }

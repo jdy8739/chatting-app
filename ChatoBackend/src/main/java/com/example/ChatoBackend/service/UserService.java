@@ -22,4 +22,6 @@ public interface UserService {
     public boolean checkPasswordMatches(String id, String inputPassword);
 
     public void withdraw(String id);
+
+    public String findNickNameById(String id);
 }

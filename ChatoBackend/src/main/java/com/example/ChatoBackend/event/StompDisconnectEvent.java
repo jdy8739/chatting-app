@@ -11,10 +11,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Slf4j
 @Component
@@ -36,7 +33,7 @@ public class StompDisconnectEvent implements ApplicationListener<SessionDisconne
             String sessionId = event.getSessionId();
             String roomId = connectedUserAndRoomInfoStore.connectedUserMap.get(sessionId)[0];
             String userId = connectedUserAndRoomInfoStore.connectedUserMap.get(sessionId)[1];
-            chatRoomService.minusParticipantsCount(Long.valueOf(roomId));
+            chatRoomService.decreaseParticipantsCount(Long.valueOf(roomId));
             connectedUserAndRoomInfoStore.connectedUserMap.remove(sessionId);
             removeUserIdIntoUserIdSetByRoomId(roomId, userId);
             messagingTemplate.convertAndSend(
@@ -57,11 +54,11 @@ public class StompDisconnectEvent implements ApplicationListener<SessionDisconne
     }
 
     private void removeUserIdIntoUserIdSetByRoomId(String roomId, String userId) {
-        Set<String> participantsUserSet = connectedUserAndRoomInfoStore.participantsUserMap.get(Long.valueOf(roomId));
+        Set<String[]> participantsUserSet = connectedUserAndRoomInfoStore.participantsUserMap.get(Long.valueOf(roomId));
         if (participantsUserSet == null) {
             return;
         } else {
-            participantsUserSet.remove(userId);
+            participantsUserSet.removeIf(element -> element[0].equals(userId));
             if (participantsUserSet.size() == 0) {
                 connectedUserAndRoomInfoStore.participantsUserMap.remove(roomId);
             }
