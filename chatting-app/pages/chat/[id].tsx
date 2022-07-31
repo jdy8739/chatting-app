@@ -76,27 +76,30 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
         stomp.subscribe(`/sub/chat/room/${id}`, ({ body }: { body: string }) => {
             const newMessage: IMessageBody = JSON.parse(body);
             const isSentFromMaster = (newMessage.writer === MASTER);
-            const msgNo = newMessage.msgNo;
             if (isSentFromMaster && newMessage.message === DISBANDED) {
                 expelUser('This room is disbanded.');
                 return;
             }
-            const participantsListChanged = (msgNo !== null && msgNo >= SUBSCRIBE_PROTOCOL_NUMBER && msgNo <= BAN_PROTOCOL_NUMBER);
-            if (isSentFromMaster && participantsListChanged) {
-                const [targetId, targetNickName] = newMessage.message.split('/');
-                if (msgNo === BAN_PROTOCOL_NUMBER) {
-                    if (targetId === randomUserId) expelUser('You are banned!');
-                    newMessage.message = `${targetId.slice(0, 9)} has been banned.`;
-                } else newMessage.message = `${targetId.slice(0, 9)} has just ${msgNo ? 'left' : 'joined'} the room.`;
-                if ((targetId !== randomUserId) && isUserContainerWindowOpened) updateParticipantsList({
-                    id: targetId,
-                    nickName: targetNickName,
-                }, Boolean(msgNo));
-            }
+            const msgNo = newMessage.msgNo;
+            const participantsListChanged = (
+                msgNo !== null && msgNo >= SUBSCRIBE_PROTOCOL_NUMBER && msgNo <= BAN_PROTOCOL_NUMBER
+            );
+            if (isSentFromMaster && participantsListChanged) reflectNewMessageAndUser(msgNo, newMessage.message);
             updateMessageList(newMessage);
             window.scrollTo(0, document.body.scrollHeight);
         }, { roomId: id, userId: randomUserId })
     };
+    const reflectNewMessageAndUser = (msgNo: number, messageContent: string) => {
+        const [targetId, targetNickName] = messageContent.split('/');
+        if (msgNo === BAN_PROTOCOL_NUMBER) {
+            if (targetId === randomUserId) expelUser('You are banned!');
+            messageContent = `${targetId.slice(0, 9)} has been banned.`;
+        } else messageContent = `${targetId.slice(0, 9)} has just ${msgNo ? 'left' : 'joined'} the room.`;
+        if ((targetId !== randomUserId) && isUserContainerWindowOpened) updateParticipantsList({
+            id: targetId,
+            nickName: targetNickName,
+        }, Boolean(msgNo));
+    }
     const updateMessageList = (newMessageInfo: IMessageBody) => {
         const message = newMessageInfo.message;
         const target = Number(message);
