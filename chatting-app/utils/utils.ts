@@ -25,7 +25,7 @@ export const removeCookie = (name: string, options: ICookieOpt) => {
 
 export const CHATO_USERINFO = "CHATO_USERINFO";
 
-export const ID_REGEX = /^[a-zA-Z0-9]/;
+export const ID_REGEX = /^(?!.*[!#$%&’'*+/=?^_`])[a-zA-Z0-9]+$/;
 
 export const PW_REGEX = /^(?=.*[~`!@#$%^&*()--+={}\[\]|\\:;"'<>,.?/_₹])/;
 

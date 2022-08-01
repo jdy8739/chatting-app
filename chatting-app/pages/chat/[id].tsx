@@ -84,21 +84,24 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
             const participantsListChanged = (
                 msgNo !== null && msgNo >= SUBSCRIBE_PROTOCOL_NUMBER && msgNo <= BAN_PROTOCOL_NUMBER
             );
-            if (isSentFromMaster && participantsListChanged) reflectNewMessageAndUser(msgNo, newMessage.message);
-            updateMessageList(newMessage);
+            if (isSentFromMaster && participantsListChanged)
+                reflectNewMessageAndUser(newMessage);
+            else updateMessageList(newMessage);
             window.scrollTo(0, document.body.scrollHeight);
         }, { roomId: id, userId: randomUserId })
-    };
-    const reflectNewMessageAndUser = (msgNo: number, messageContent: string) => {
-        const [targetId, targetNickName] = messageContent.split('/');
+    }
+    const reflectNewMessageAndUser = (newMessage: IMessageBody) => {
+        const msgNo = newMessage.msgNo;
+        const [targetId, targetNickName] = newMessage.message.split('/');
         if (msgNo === BAN_PROTOCOL_NUMBER) {
             if (targetId === randomUserId) expelUser('You are banned!');
-            messageContent = `${targetId.slice(0, 9)} has been banned.`;
-        } else messageContent = `${targetId.slice(0, 9)} has just ${msgNo ? 'left' : 'joined'} the room.`;
+            newMessage.message = `${targetId.slice(0, 9)} has been banned.`;
+        } else newMessage.message = `${targetId.slice(0, 9)} has just ${msgNo ? 'left' : 'joined'} the room.`;
         if ((targetId !== randomUserId) && isUserContainerWindowOpened) updateParticipantsList({
             id: targetId,
             nickName: targetNickName,
         }, Boolean(msgNo));
+        updateMessageList(newMessage);
     }
     const updateMessageList = (newMessageInfo: IMessageBody) => {
         const message = newMessageInfo.message;
@@ -120,7 +123,6 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
         }
     };
     const updateParticipantsList = (targetUser: IParticipants, isUserOut: boolean) => {
-        console.log("tq")
         setParticipants(participants => {
             if (isUserOut) {
                 const targetIndex = participants.findIndex(participant => participant.id === targetUser.id);

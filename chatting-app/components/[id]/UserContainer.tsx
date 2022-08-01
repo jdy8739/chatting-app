@@ -20,11 +20,12 @@ function UserContainer({
     isUserContainerWindowOpened,
     setParticipants,
     shootChatMessage }: IUserContainer) {
-    const showNowUsers = async () => {
+    const showUserContainerWindow = async () => {
         const results: IParticipants[] = await (await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/room/participants/${roomId}`)).data;
         setParticipants(results);
         isUserContainerWindowOpened = true;
     }
+    const hideUserContainerWindow = () => isUserContainerWindowOpened = false;
     const banThisParticipant = (participantId: string) => { 
         shootChatMessage('delete', {
             msgNo: BAN_PROTOCOL_NUMBER,
@@ -37,7 +38,8 @@ function UserContainer({
         <>
             <div
                 className="user-container"
-                onMouseEnter={showNowUsers}
+                onMouseEnter={showUserContainerWindow}
+                onMouseLeave={hideUserContainerWindow}
             >
                 <h4>users</h4>
                 <div className="name-box">

@@ -93,9 +93,9 @@ function SingUp() {
                             placeholder="id"
                             {...register('id', {
                                 required: 'ID is essential!',
-                                pattern: {
-                                    value: ID_REGEX,
-                                    message: 'Id must include english and numbers only.'
+                                validate: {
+                                    regex: value => 
+                                    ID_REGEX.test(value) ? true : 'Id must include english and numbers only.',
                                 },
                                 minLength: {
                                     value: 8,
