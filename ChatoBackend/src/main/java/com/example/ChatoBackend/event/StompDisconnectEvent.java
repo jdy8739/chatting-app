@@ -44,8 +44,8 @@ public class StompDisconnectEvent implements ApplicationListener<SessionDisconne
                             MASTER,
                             userId,
                             null,
+                            false,
                             false));
-
             messagingTemplate.convertAndSend(
                     "/sub/chat/room/list", new RoomParticipantsInfo(Integer.valueOf(roomId), false));
         } catch (NullPointerException e) {

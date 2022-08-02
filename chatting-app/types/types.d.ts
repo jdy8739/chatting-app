@@ -32,6 +32,7 @@ export interface IMessageBody {
     writer: string,
     time?: string,
     isDeleted?: boolean,
+    isPicture?: boolean,
 }
 
 export interface IParticipants {

@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import { clearPreviousRoomId, toastConfig } from "../../utils/utils";
+import { toastConfig } from "../../utils/utils";
 
 const roomSubjectOptions = [
     'life', 'sports', 'study', 'jobs', 'leisure', 'dish', 'tour', 'economy', 'world', 'art', 'music', 'else'

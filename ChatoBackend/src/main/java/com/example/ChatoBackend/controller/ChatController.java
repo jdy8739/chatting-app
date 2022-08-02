@@ -12,15 +12,11 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
-import org.yaml.snakeyaml.util.ArrayUtils;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 @Slf4j
 @Controller
@@ -45,6 +41,7 @@ public class ChatController {
                 jsonObject.get(WRITER).toString(),
                 jsonObject.get(MESSAGE).toString(),
                 jsonObject.get(TIME).toString(),
+                false,
                 false
                 );
         messageDTO.setMsgNo(messageService.saveMessage(messageDTO));
@@ -62,6 +59,7 @@ public class ChatController {
                 jsonObject.get(WRITER).toString(),
                 jsonObject.get(MESSAGE).toString(),
                 "",
+                false,
                 false
         );
         template.convertAndSend(
@@ -69,11 +67,39 @@ public class ChatController {
     }
 
     @MessageMapping(value = "/chat/binary")
-    public void receiveBinaryFile(byte[] bytes, SimpMessageHeaderAccessor simpMessageHeaderAccessor) throws IOException {
+    public void receiveBinaryFile(byte[] bytes, SimpMessageHeaderAccessor simpMessageHeaderAccessor) {
         Map<String, Object> headersMap = (Map<String, Object>) simpMessageHeaderAccessor.getHeader("nativeHeaders");
-        List<Object> list = (List<Object>) headersMap.get("image-size");
-        String tmp = (String) list.get(0);
-        final int imageSize = Integer.parseInt(tmp);
+        List<Object> isList = (List<Object>) headersMap.get("image-size");
+        List<Object> riList = (List<Object>) headersMap.get("room-id");
+        List<Object> wrList = (List<Object>) headersMap.get("writer");
+        int imageSize = Integer.parseInt((String) isList.get(0));
+        Long roomId = Long.parseLong((String) riList.get(0));
+        String writer = (String) wrList.get(0);
+        byte[] imageByte = extractImageByteData(bytes, imageSize);
+        long msgNo;
+        MessageDTO messageDTO = new MessageDTO(
+                null,
+                (String) riList.get(0),
+                writer,
+                "",
+                "",
+                false,
+                true);
+        try {
+            msgNo = messageService.saveMessage(messageDTO);
+            messageDTO.setMsgNo(msgNo);
+            log.info(msgNo + "");
+            messageService.savePicture(imageByte, roomId, msgNo);
+        } catch (IOException e) {
+            messageDTO.setMessage("The Image send has failed.");
+            messageDTO.setWriter("MASTER");
+            messageDTO.setIsPicture(false);
+        } finally {
+            template.convertAndSend("/sub/chat/room/" +roomId, messageDTO);
+        }
+    }
+
+    private byte[] extractImageByteData(byte[] bytes, int imageSize) {
         final int COMA = 44;
         final int MAX = (bytes.length - 1);
         byte[] imageByte = new byte[imageSize];
@@ -86,14 +112,8 @@ public class ChatController {
                 integer = Integer.parseInt(stringBuilder.toString());
                 imageByte[count++] = (byte) integer;
                 stringBuilder.delete(0, stringBuilder.length());
-            } else {
-                stringBuilder.append((char) bytes[i]);
-            }
+            } else stringBuilder.append((char) bytes[i]);
         }
-
-        File newUserFolder = new File("./images/rooms/a.jpg");
-        FileOutputStream writer = new FileOutputStream(newUserFolder);
-        writer.write(imageByte);
-        writer.close();
+        return imageByte;
     }
 }

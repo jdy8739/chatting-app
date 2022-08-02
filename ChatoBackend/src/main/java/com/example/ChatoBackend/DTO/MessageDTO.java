@@ -14,4 +14,5 @@ public class MessageDTO {
     private String message;
     private String time;
     private Boolean isDeleted;
+    private Boolean isPicture;
 }

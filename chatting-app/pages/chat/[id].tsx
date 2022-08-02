@@ -175,28 +175,29 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
     }
     const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.currentTarget.files) {
-            const a = e.currentTarget.files[0];
+            const targetFile = e.currentTarget.files[0];
             const fileReader = new FileReader();
-            fileReader.onload = function(e2) {
-                const result = e2.target?.result;
+            fileReader.onload = function(readerEvent) {
+                const result = readerEvent.target?.result;
                 if (result && typeof result !== 'string') {
                     imageFile = new Uint8Array(result);
-                    console.log(imageFile);
-                } else {
-                    console.log(typeof result);
                 }
             }
-            fileReader.readAsArrayBuffer(a);
+            fileReader.readAsArrayBuffer(targetFile);
         }
     }
     const handleOnClick = () => {
+        const headers = { 
+            'content-type': 'application/octet-stream',
+            'image-size': (imageFile.byteLength),
+            'room-id': id,
+            'writer': randomUserId,
+        }
+        Object.freeze(headers);
         if (socket && stomp) {
             stomp.send(`/pub/chat/binary`, 
             imageFile,
-            { 
-                'content-type': 'application/octet-stream',
-                'image-size': (imageFile.byteLength + 4),
-            })
+            headers)
         }
     }
     useEffect(() => {
@@ -278,7 +279,10 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                                         </span>}
                                         <MessageContent 
                                             isDeleted={msg.isDeleted}
+                                            isPicture={msg.isPicture}
                                             content={msg.message}
+                                            msgNo={msg.msgNo}
+                                            roomId={id}
                                         />
                                     </span>
                                     {i !== 0 && 
@@ -411,9 +415,27 @@ function ChatTimeComponent({ time, isMyMessage }: { time: string, isMyMessage: b
     )
 }
 
-function MessageContent({ isDeleted, content }: { isDeleted?: boolean, content: string }) {
+interface IMessageContent {
+    isDeleted?: boolean,
+    isPicture?: boolean,
+    content: string,
+    roomId: number,
+    msgNo: number,
+}
+
+function MessageContent({ isDeleted, isPicture, content, roomId, msgNo }: IMessageContent) {
+    console.log(roomId + " " + msgNo);
+    
     return (
-        <span>{isDeleted ? 'deleted message' : content}</span>
+        <>
+            {isPicture ? 
+            <img
+                src={`${process.env.NEXT_PUBLIC_API_URL}/room/content-pic/${roomId}/${msgNo}`}
+                width="100px"
+                height="100px"
+            /> :
+            <span>{isDeleted ? 'deleted message' : content}</span>}
+        </>
     )
 }
 

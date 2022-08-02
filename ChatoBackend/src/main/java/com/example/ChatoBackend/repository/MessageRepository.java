@@ -34,6 +34,7 @@ public class MessageRepository {
                 "message VARCHAR(100) NOT NULL, " +
                 "time CHAR(5) NOT NULL, " +
                 "is_deleted TINYINT(1) NOT NULL DEFAULT 0, " +
+                "is_picture TINYINT(1) NOT NULL DEFAULT 0, " +
                 "PRIMARY KEY (msg_id) " +
                 ");";
         sm.executeUpdate(query);
@@ -49,6 +50,7 @@ public class MessageRepository {
         parameters.put("message", messageDTO.getMessage());
         parameters.put("time", messageDTO.getTime());
         parameters.put("is_deleted", false);
+        parameters.put("is_picture", messageDTO.getIsPicture());
         Long newId = simpleJdbcInsert.executeAndReturnKey(parameters).longValue();
         return newId;
     }
@@ -67,7 +69,8 @@ public class MessageRepository {
             String message = rs.getString(3);
             String time = rs.getString(4);
             boolean isDeleted = rs.getBoolean(5);
-            messageDTOList.add(new MessageDTO(msgNo.longValue(), null, writer, message, time, isDeleted));
+            boolean isPicture = rs.getBoolean(6);
+            messageDTOList.add(new MessageDTO(msgNo.longValue(), null, writer, message, time, isDeleted, isPicture));
         }
         con.close();
         return messageDTOList;

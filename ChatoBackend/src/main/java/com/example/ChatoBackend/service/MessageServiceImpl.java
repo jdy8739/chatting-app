@@ -8,6 +8,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
@@ -58,5 +62,16 @@ public class MessageServiceImpl implements MessageService {
         } catch (SQLException e) {
             throw new RuntimeException();
         }
+    }
+
+    @Override
+    public void savePicture(byte[] imageBytes, Long roomId, Long msgNo) throws IOException {
+        String path = "./images/rooms/" + roomId;
+        String picUrlPath = path + "/" + msgNo + ".jpg";
+        File roomDir = new File(path);
+        if (!roomDir.exists()) roomDir.mkdir();
+        FileOutputStream writer = new FileOutputStream(picUrlPath);
+        writer.write(imageBytes);
+        writer.close();
     }
 }

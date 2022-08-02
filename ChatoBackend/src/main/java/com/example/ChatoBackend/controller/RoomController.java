@@ -19,6 +19,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -112,5 +116,23 @@ public class RoomController {
     public ResponseEntity<List<ParticipantDTO>> getParticipantsByRoomId(
             @PathVariable(ROOM_ID) Long roomId) {
         return new ResponseEntity<>(chatRoomService.getParticipantListByRoomId(roomId), HttpStatus.OK);
+    }
+
+    @GetMapping("/content-pic/{roomId}/{msgNo}")
+    public ResponseEntity<byte[]> getContentImage(
+            @PathVariable("roomId") String roomId,
+            @PathVariable("msgNo") String msgNo) {
+        log.info(roomId + " " + msgNo);
+        byte[] imageByteArray = null;
+        try {
+            String path = "./images/rooms/" + roomId;
+            File file = new File(path + "/" + msgNo + ".jpg");
+            imageByteArray = Files.readAllBytes(file.toPath());
+        } catch (NoSuchFileException e) {
+            return new ResponseEntity<>(null, HttpStatus.OK);
+        } catch (IOException e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return new ResponseEntity<>(imageByteArray, HttpStatus.OK);
     }
 }

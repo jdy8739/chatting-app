@@ -59,6 +59,7 @@ public class StompSubscribeEvent implements ApplicationListener<SessionSubscribe
                         MASTER,
                         userId + "/" + nickName,
                         null,
+                        false,
                         false));
         messagingTemplate.convertAndSend(
                 "/sub/chat/room/list", new RoomParticipantsInfo(Integer.valueOf(roomId), true));
