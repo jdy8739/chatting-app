@@ -63,7 +63,7 @@ function SingUp() {
     }
     useEffect(() => {
         setIsRendered(true);
-        clearPreviousRoomId();
+        // clearPreviousRoomId();
         if (getCookie(CHATO_USERINFO)) {
             toast.error('Please sign out ahead of sign up.', toastConfig);
             router.push('/chat/list');

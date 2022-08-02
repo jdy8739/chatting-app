@@ -31,6 +31,8 @@ const CHAT_REMAIN_NUMBER_LIMIT = 10;
 
 let isUserContainerWindowOpened: boolean = false;
 
+let imageFile: ArrayBuffer;
+
 const fetchRoomOwnerAndPreviousChat = async (id: number, count: number, password?: string) => {
     const { owner, messageList }: IChatRoomInfo = await (await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/message/${id}?offset=${count}`, { password })).data;
     messageList?.reverse();
@@ -162,12 +164,40 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
     }
     const shootChatMessage = (target: string, message: IMessageBody) => {
         if (socket && stomp) {
-            stomp.send(`/pub/chat/${target}`, JSON.stringify(message));
+            stomp.send(`/pub/chat/${target}`, 
+            JSON.stringify(message), 
+            { sampleHeader: 'sampleHeader' });
         }
     }
     const expelUser = (sentence: string) => {
         toast.error(sentence, toastConfig);
         router.push('/chat/list');
+    }
+    const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.currentTarget.files) {
+            const a = e.currentTarget.files[0];
+            const fileReader = new FileReader();
+            fileReader.onload = function(e2) {
+                const result = e2.target?.result;
+                if (result && typeof result !== 'string') {
+                    imageFile = new Uint8Array(result);
+                    console.log(imageFile);
+                } else {
+                    console.log(typeof result);
+                }
+            }
+            fileReader.readAsArrayBuffer(a);
+        }
+    }
+    const handleOnClick = () => {
+        if (socket && stomp) {
+            stomp.send(`/pub/chat/binary`, 
+            imageFile,
+            { 
+                'content-type': 'application/octet-stream',
+                'image-size': (imageFile.byteLength + 4),
+            })
+        }
     }
     useEffect(() => {
         // randomUserId = participants[0];
@@ -263,6 +293,11 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                         </div>
                     )
                 }
+                <input
+                    type="file"
+                    onChange={handleOnChange}
+                />
+                <button onClick={handleOnClick}>submit</button>
                 <form 
                     onSubmit={handleChatSubmit}
                     className="chat-form"
