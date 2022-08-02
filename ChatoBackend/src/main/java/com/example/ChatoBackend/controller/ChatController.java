@@ -1,6 +1,7 @@
 package com.example.ChatoBackend.controller;
 
 import com.example.ChatoBackend.DTO.MessageDTO;
+import com.example.ChatoBackend.Utility.Utils;
 import com.example.ChatoBackend.service.MessageServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,9 +32,13 @@ public class ChatController {
     private final SimpMessagingTemplate template;
     @Autowired
     MessageServiceImpl messageService;
-    JSONParser jsonParser = new JSONParser();
+
+    @Autowired
+    Utils utils;
+
     @MessageMapping(value = "/chat/message")
     public void handleMessageSend(String messageString) throws ParseException {
+        JSONParser jsonParser = new JSONParser();
         JSONObject jsonObject = (JSONObject) jsonParser.parse(messageString);
         MessageDTO messageDTO = new MessageDTO(
                 null,
@@ -51,6 +56,7 @@ public class ChatController {
 
     @MessageMapping(value = "/chat/delete")
     public void deleteMessageOrParticipant(String messageString) throws ParseException {
+        JSONParser jsonParser = new JSONParser();
         JSONObject jsonObject = (JSONObject) jsonParser.parse(messageString);
         Long msgNo = (Long) jsonObject.get("msgNo");
         MessageDTO messageDTO = new MessageDTO(
@@ -72,48 +78,31 @@ public class ChatController {
         List<Object> isList = (List<Object>) headersMap.get("image-size");
         List<Object> riList = (List<Object>) headersMap.get("room-id");
         List<Object> wrList = (List<Object>) headersMap.get("writer");
+        List<Object> timeList = (List<Object>) headersMap.get("time");
         int imageSize = Integer.parseInt((String) isList.get(0));
         Long roomId = Long.parseLong((String) riList.get(0));
         String writer = (String) wrList.get(0);
-        byte[] imageByte = extractImageByteData(bytes, imageSize);
+        String now = (String) timeList.get(0);
+        byte[] imageByte = utils.extractImageByteData(bytes, imageSize);
         long msgNo;
         MessageDTO messageDTO = new MessageDTO(
                 null,
                 (String) riList.get(0),
                 writer,
                 "",
-                "",
+                now,
                 false,
                 true);
         try {
             msgNo = messageService.saveMessage(messageDTO);
             messageDTO.setMsgNo(msgNo);
-            log.info(msgNo + "");
             messageService.savePicture(imageByte, roomId, msgNo);
         } catch (IOException e) {
             messageDTO.setMessage("The Image send has failed.");
             messageDTO.setWriter("MASTER");
             messageDTO.setIsPicture(false);
         } finally {
-            template.convertAndSend("/sub/chat/room/" +roomId, messageDTO);
+            template.convertAndSend("/sub/chat/room/" + roomId, messageDTO);
         }
-    }
-
-    private byte[] extractImageByteData(byte[] bytes, int imageSize) {
-        final int COMA = 44;
-        final int MAX = (bytes.length - 1);
-        byte[] imageByte = new byte[imageSize];
-        StringBuilder stringBuilder = new StringBuilder();
-        int count = 0;
-        int integer;
-        for (int i=0; i<bytes.length; i++) {
-            if (i == MAX) stringBuilder.append((char) bytes[i]);
-            if (bytes[i] == COMA) {
-                integer = Integer.parseInt(stringBuilder.toString());
-                imageByte[count++] = (byte) integer;
-                stringBuilder.delete(0, stringBuilder.length());
-            } else stringBuilder.append((char) bytes[i]);
-        }
-        return imageByte;
     }
 }

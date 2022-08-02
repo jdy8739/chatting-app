@@ -7,7 +7,7 @@ import webstomp from "webstomp-client";
 import Seo from "../../components/commons/Seo";
 import UserContainer from "../../components/[id]/UserContainer";
 import { IMessageBody, IParticipants } from "../../types/types";
-import { BAN_PROTOCOL_NUMBER, DISBANDED, generateRandonUserId, MASTER, SUBSCRIBE_PROTOCOL_NUMBER, toastConfig } from "../../utils/utils";
+import { BAN_PROTOCOL_NUMBER, DISBANDED, generateRandonUserId, getNowTime, MASTER, SUBSCRIBE_PROTOCOL_NUMBER, toastConfig } from "../../utils/utils";
 
 interface IChatRoomProps {
     id: number,
@@ -62,14 +62,12 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
             textAreaRef.current.value = '';
         }
         if (socket && stomp) {
-            const now = new Date();
-            const time = `${now.getHours()}:${now.getMinutes()}`;
             shootChatMessage('message', {
                 msgNo: 0,
                 roomId: String(id), 
                 message: newMessage,
                 writer: randomUserId, 
-                time: time
+                time: getNowTime(),
             });
             textAreaRef.current?.setSelectionRange(0, 0);
         }
@@ -192,6 +190,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
             'image-size': (imageFile.byteLength),
             'room-id': id,
             'writer': randomUserId,
+            'time': getNowTime(),
         }
         Object.freeze(headers);
         if (socket && stomp) {
@@ -221,15 +220,13 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
     return (
         <>
             <Seo title={`Chato room ${roomName}`} />
-            {
-                isAllChatShown ||
-                <div
-                    className="previous-chat-show"
-                    onClick={showPreviousChat}
-                >
-                    <h4>show previous</h4>
-                </div>
-            }
+            {isAllChatShown ||
+            <div
+                className="previous-chat-show"
+                onClick={showPreviousChat}
+            >
+                <h4>show previous</h4>
+            </div>}
             <UserContainer
                 roomId={id}
                 participants={participants}
@@ -240,63 +237,58 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                 shootChatMessage={shootChatMessage}
             />
             <div className="container">
-                {
-                    messages.map((msg, i) => 
-                        <div key={i} 
-                            className={`chat-box ${msg.writer === randomUserId ? 'my-chat-box' : 'others-chat-box'}`}
-                        >   
-                            {
-                                i === 0 ? <NameOfTheChatUser msg={msg}/> :
-                                messages[i - 1].writer !== msg.writer && 
-                                <NameOfTheChatUser 
-                                    msg={msg}
-                                    isRoomOwner={msg.writer === roomOwner}
+                {messages.map((msg, i) => 
+                    <div key={i} 
+                        className={`chat-box ${(msg.writer === randomUserId) ? 'my-chat-box' : 'others-chat-box'}`}
+                    >   
+                        {(i === 0) ? <NameOfTheChatUser msg={msg}/> :
+                        (messages[i - 1].writer !== msg.writer) && 
+                        <NameOfTheChatUser 
+                            msg={msg}
+                            isRoomOwner={(msg.writer === roomOwner)}
+                        />}
+                        {(msg.writer === MASTER) ?
+                        <span className="master-chat">{msg.message}</span> :
+                        <>
+                            {(i !== 0) && 
+                            (messages[i - 1].time !== msg.time) &&
+                            (msg.writer === randomUserId) &&
+                            <ChatTimeComponent 
+                                time={msg.time || ''}
+                                isMyMessage={(msg.writer === randomUserId)}
+                            />}
+                            <span
+                                onDoubleClick={() => (msg.writer === randomUserId) ? handleChatDblClick(i) : null}
+                                className={`chat 
+                                ${(msg.writer === randomUserId) ? 'my-chat' : 'others-chat'}
+                                ${msg.isDeleted ? 'deleted-chat' : ''}
+                                `}
+                            >
+                                {!msg.isDeleted &&
+                                (targetChatNumber === i) &&
+                                <span
+                                    onClick={() => deleteChat(id, msg.msgNo)}
+                                    className="delete-btn">
+                                    x
+                                </span>}
+                                <MessageContent 
+                                    isDeleted={msg.isDeleted}
+                                    isPicture={msg.isPicture}
+                                    content={msg.message}
+                                    msgNo={msg.msgNo}
+                                    roomId={id}
                                 />
-                            }
-                            {
-                                msg.writer === MASTER ?
-                                <span className="master-chat">{msg.message}</span> :
-                                <>
-                                    {i !== 0 && 
-                                    messages[i - 1].time !== msg.time &&
-                                    msg.writer === randomUserId &&
-                                    <ChatTimeComponent 
-                                        time={msg.time || ''}
-                                        isMyMessage={msg.writer === randomUserId}
-                                    />}
-                                    <span
-                                        onDoubleClick={() => msg.writer === randomUserId ? handleChatDblClick(i) : null}
-                                        className={`chat 
-                                        ${msg.writer === randomUserId ? 'my-chat' : 'others-chat'}
-                                        ${msg.isDeleted ? 'deleted-chat' : ''}
-                                        `}
-                                    >
-                                        {!msg.isDeleted && targetChatNumber === i &&
-                                        <span
-                                            onClick={() => deleteChat(id, msg.msgNo)}
-                                            className="delete-btn">
-                                            x
-                                        </span>}
-                                        <MessageContent 
-                                            isDeleted={msg.isDeleted}
-                                            isPicture={msg.isPicture}
-                                            content={msg.message}
-                                            msgNo={msg.msgNo}
-                                            roomId={id}
-                                        />
-                                    </span>
-                                    {i !== 0 && 
-                                    messages[i - 1].time !== msg.time && 
-                                    msg.writer !== randomUserId &&
-                                    <ChatTimeComponent 
-                                        time={msg.time || ''}
-                                        isMyMessage={msg.writer === randomUserId}
-                                    />}
-                                </>
-                            }
-                        </div>
-                    )
-                }
+                            </span>
+                            {(i !== 0) && 
+                            (messages[i - 1].time !== msg.time) && 
+                            (msg.writer !== randomUserId) &&
+                            <ChatTimeComponent 
+                                time={msg.time || ''}
+                                isMyMessage={msg.writer === randomUserId}
+                            />}
+                        </>}
+                    </div>
+                )}
                 <input
                     type="file"
                     onChange={handleOnChange}
@@ -349,6 +341,13 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                         justify-content: center;
                         color: #c0c0c0;
                         z-index: 10;
+                    }
+                    .content-img {
+                        max-width: 300px;
+                        height: auto;
+                        padding: 14px;
+                        border-radius: inherit;
+                        background-color: inherit;
                     }
                 `}</style>
             </div>
@@ -424,15 +423,12 @@ interface IMessageContent {
 }
 
 function MessageContent({ isDeleted, isPicture, content, roomId, msgNo }: IMessageContent) {
-    console.log(roomId + " " + msgNo);
-    
     return (
         <>
-            {isPicture ? 
+            {(isPicture && !isDeleted) ? 
             <img
                 src={`${process.env.NEXT_PUBLIC_API_URL}/room/content-pic/${roomId}/${msgNo}`}
-                width="100px"
-                height="100px"
+                className="content-img"
             /> :
             <span>{isDeleted ? 'deleted message' : content}</span>}
         </>

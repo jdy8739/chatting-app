@@ -117,3 +117,9 @@ export const modalBgVariant = {
         opacity: 0
     }
 }
+
+export const getNowTime = () :string => {
+	const now = new Date();
+    const time = `${now.getHours()}:${now.getMinutes()}`;
+	return time;
+}
