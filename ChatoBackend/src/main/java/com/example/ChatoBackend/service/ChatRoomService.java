@@ -31,4 +31,6 @@ public interface ChatRoomService {
     public String findRoomOwnerByRoomId(Long roomId);
 
     public List<ParticipantDTO> getParticipantListByRoomId(Long roomId);
+
+    public boolean checkIfIsRoomOwner(long roomId, String id);
 }

@@ -4,7 +4,8 @@ import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import ClassifiedRooms from "../../components/[id]/ClassifiedRooms";
 import { IMessageBody, IRoom } from "../../types/types";
 import webstomp from "webstomp-client";
-import { DISBANDED, getPreviousRoomId, MASTER } from "../../utils/utils";
+import { CHATO_USERINFO, DISBANDED, getCookie, getPreviousRoomId, MASTER, toastConfig } from "../../utils/utils";
+import { toast } from "react-toastify";
 
 interface IClassifiedRoom {
     [key: string]: { isPinned?: boolean, list: IRoom[] }
@@ -65,7 +66,8 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                     [destinationId]: { list: [targetRoom] }
                 };
             } else {
-                if (targetRoom) roomList[destinationId].list.splice(destinationIndex, 0, targetRoom);
+                if (targetRoom) 
+                    roomList[destinationId].list.splice(destinationIndex, 0, targetRoom);
                 return { 
                     ...roomList,
                     [sourceId]: { list: [...roomList[sourceId].list] },
@@ -76,24 +78,14 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     }
     const deleteRoom = (sourceId: string, index: number) => {
         const targetRoomId = roomList[sourceId].list[index].roomId;
-        axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/room/delete/${targetRoomId}`)
-            .then(() => sendRoomDeleteMessage({
-                msgNo: 0,
-                roomId: String(targetRoomId),
-                message: DISBANDED,
-                writer: MASTER,
-            }));
-        setRoomList(roomList => {
-            const copied = {...roomList};
-            copied[sourceId].list.splice(index, 1);
-            return copied;
-        })
-    }
-    const sendRoomDeleteMessage = (message: IMessageBody) => {
-        if (socket && stomp) stomp.send('/pub/chat/delete', JSON.stringify(message));
+        axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/room/delete/${targetRoomId}`, {
+            headers: { 'authorization': `Bearer ${getCookie(CHATO_USERINFO)}` }
+        }).catch(() => toast.error('You are not authorized!', toastConfig));
     }
     const changeToNewSubject = (roomMovedInfo: IRoomMoved) => {
-        axios.put(`${process.env.NEXT_PUBLIC_API_URL}/room/change_subject`, roomMovedInfo);
+        axios.put(`${process.env.NEXT_PUBLIC_API_URL}/room/change_subject`, roomMovedInfo, {
+            headers: { 'authorization': `Bearer ${getCookie(CHATO_USERINFO)}` }
+        }).catch(() => toast.error('You are not authorized!', toastConfig));
     }
     const subscribeRoomParticipants = () => {
         stomp.subscribe('/sub/chat/room/list', ({ body }: { body: string }) => {

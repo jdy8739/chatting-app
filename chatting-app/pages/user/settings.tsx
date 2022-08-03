@@ -77,36 +77,38 @@ function Settings() {
         })
     }
     const handleUserSettingsSubmit = async (data: IUserInfo, inputPassword: string) => {
-        const updatedUserIndo = {...data, userProfilePic: data.profilePicUrl ? data.profilePicUrl[0] : null};
-        delete updatedUserIndo.profilePicUrl;
-        const formData = new FormData();
-        formData.append('isUseProfilePic', checkIsPicChosen());
-        formData.append('inputPassword', inputPassword);
-        for (let key in updatedUserIndo) formData.append(key, updatedUserIndo[key]);
-        try {
-            const { status, data: token } = await signupAxios.put(`${process.env.NEXT_PUBLIC_API_URL}/user/alter`, formData, {
-                headers: { 
-                    'Content-Type': 'multipart/form-data',
-                    'authorization': `Bearer ${getCookie(CHATO_USERINFO)}`,
+        return new Promise(async (success, fail) => {
+            const updatedUserIndo = {...data, userProfilePic: data.profilePicUrl ? data.profilePicUrl[0] : null};
+            delete updatedUserIndo.profilePicUrl;
+            const formData = new FormData();
+            formData.append('isUseProfilePic', checkIsPicChosen());
+            formData.append('inputPassword', inputPassword);
+            for (let key in updatedUserIndo) formData.append(key, updatedUserIndo[key]);
+            try {
+                const { status, data: token } = await signupAxios.put(`${process.env.NEXT_PUBLIC_API_URL}/user/alter`, formData, {
+                    headers: { 
+                        'Content-Type': 'multipart/form-data',
+                        'authorization': `Bearer ${getCookie(CHATO_USERINFO)}`,
+                    }
+                });
+                if (status === 200) {
+                    toast.success('Your info has been altered successfully!', toastConfig);
+                    const now = new Date();
+                    setCookie(
+                        CHATO_USERINFO,
+                        JSON.stringify(token),
+                        {
+                            path: '/',
+                            expires: new Date(now.setMinutes(now.getMinutes() + 180)),
+                            secure: false,
+                            httpOnly: false,
+                        },
+                    );
+                    handleSignIn(data.id);
+                    success(true);
                 }
-            });
-            if (status === 200) {
-                toast.success('Your info has been altered successfully!', toastConfig);
-                const now = new Date();
-                setCookie(
-                    CHATO_USERINFO,
-                    JSON.stringify(token),
-                    {
-                        path: '/',
-                        expires: new Date(now.setMinutes(now.getMinutes() + 180)),
-                        secure: false,
-                        httpOnly: false,
-                    },
-                );
-                handleSignIn(data.id);
-                router.push('/chat/list');
-            }
-        } catch (e) { return false; };
+            } catch (e) { fail(false); };
+        })
     }
     const checkIsPicChosen = () => {
         let isUserProfilePic: boolean;
@@ -114,19 +116,20 @@ function Settings() {
         else isUserProfilePic = false;
         return String(isUserProfilePic);
     }
-    const handleUserWithdraw = async (inputPassword: string) => {
-        try {
-            const { status } = await signupAxios.put(`${process.env.NEXT_PUBLIC_API_URL}/user/withdraw`, { inputPassword }, { headers: {
-                'authorization': `Bearer ${getCookie(CHATO_USERINFO)}`,
-            }});
-            if (status === 200) {
-                toast.success('Your id has been removed.', toastConfig);
-                removeCookie(CHATO_USERINFO, {path: '/'});
-                handleSignIn('');
-                router.push('/chat/list');
-                return true;
-            }
-        } catch (e) { return false; };
+    const handleUserWithdraw = (inputPassword: string) => {
+        return new Promise(async (success, fail) => {
+            try {
+                const { status } = await signupAxios.put(`${process.env.NEXT_PUBLIC_API_URL}/user/withdraw`, { inputPassword }, { headers: {
+                    'authorization': `Bearer ${getCookie(CHATO_USERINFO)}`,
+                }});
+                if (status === 200) {
+                    toast.success('Your id has been removed.', toastConfig);
+                    removeCookie(CHATO_USERINFO, {path: '/'});
+                    handleSignIn('');
+                    success(true);
+                }
+            } catch (e) { fail(false); };
+        })
     }
     useEffect(() => {
         clearPreviousRoomId();

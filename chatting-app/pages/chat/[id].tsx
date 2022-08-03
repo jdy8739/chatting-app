@@ -24,10 +24,12 @@ interface IChatRoomInfo {
 
 let socket: WebSocket;
 let stomp: any;
-let randomUserId: string = '';
+let currentUserId: string = '';
 let previousShowCnt = 0;
 
 const CHAT_REMAIN_NUMBER_LIMIT = 10;
+
+const STMOP_MESSAGE_SIZE_LIMIT = 500000;
 
 let isUserContainerWindowOpened: boolean = false;
 
@@ -66,7 +68,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                 msgNo: 0,
                 roomId: String(id), 
                 message: newMessage,
-                writer: randomUserId, 
+                writer: currentUserId, 
                 time: getNowTime(),
             });
             textAreaRef.current?.setSelectionRange(0, 0);
@@ -88,16 +90,16 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                 reflectNewMessageAndUser(newMessage);
             else updateMessageList(newMessage);
             window.scrollTo(0, document.body.scrollHeight);
-        }, { roomId: id, userId: randomUserId })
+        }, { roomId: id, userId: currentUserId })
     }
     const reflectNewMessageAndUser = (newMessage: IMessageBody) => {
         const msgNo = newMessage.msgNo;
         const [targetId, targetNickName] = newMessage.message.split('/');
         if (msgNo === BAN_PROTOCOL_NUMBER) {
-            if (targetId === randomUserId) expelUser('You are banned!');
+            if (targetId === currentUserId) expelUser('You are banned!');
             newMessage.message = `${targetId.slice(0, 9)} has been banned.`;
         } else newMessage.message = `${targetId.slice(0, 9)} has just ${msgNo ? 'left' : 'joined'} the room.`;
-        if ((targetId !== randomUserId) && isUserContainerWindowOpened) updateParticipantsList({
+        if ((targetId !== currentUserId) && isUserContainerWindowOpened) updateParticipantsList({
             id: targetId,
             nickName: targetNickName,
         }, Boolean(msgNo));
@@ -184,39 +186,47 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
             fileReader.readAsArrayBuffer(targetFile);
         }
     }
-    const handleOnClick = () => {
-        const headers = { 
-            'content-type': 'application/octet-stream',
-            'image-size': (imageFile.byteLength),
-            'room-id': id,
-            'writer': randomUserId,
-            'time': getNowTime(),
-        }
-        Object.freeze(headers);
-        if (socket && stomp) {
-            stomp.send(`/pub/chat/binary`, 
-            imageFile,
-            headers)
+    const shootBinaryImageMessage = () => {
+        if (!imageFile) {
+            toast.error('No picture has been chosen.', toastConfig);
+        } else if (imageFile.byteLength > STMOP_MESSAGE_SIZE_LIMIT) {
+            toast.error('The picture size exceeds the limit.', toastConfig);
+        } else {
+            const headers = { 
+                'content-type': 'application/octet-stream',
+                'image-size': (imageFile.byteLength),
+                'room-id': id,
+                'writer': currentUserId,
+                'time': getNowTime(),
+            }
+            Object.freeze(headers);
+            if (socket && stomp) {
+                stomp.send(`/pub/chat/binary`, 
+                imageFile,
+                headers)
+            }
         }
     }
     useEffect(() => {
-        // randomUserId = participants[0];
-        randomUserId = userId ? userId : generateRandonUserId();
         socket = new WebSocket('ws://localhost:5000/stomp/chat');
         stomp = webstomp.over(socket);
         stomp.connect({}, () => {
             subscribeNewMessage();
         });
         stomp.debug = () => null;
-        // setPreviousRoomId(id);
-        // setParticipants([{ id: randomUserId, nickName: '' }])
+        /* currentUserId = participants[0];
+        setPreviousRoomId(id);
+        setParticipants([{ id: currentUserId, nickName: '' }]); */
         return () => {
             stomp.disconnect(() => null, {});
-            randomUserId = '';
+            currentUserId = '';
             previousShowCnt = 0;
             isUserContainerWindowOpened = false;
         }
     }, []);
+    useEffect(() => { 
+        currentUserId = userId ? userId : generateRandonUserId();
+    }, [userId]);
     return (
         <>
             <Seo title={`Chato room ${roomName}`} />
@@ -230,7 +240,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
             <UserContainer
                 roomId={id}
                 participants={participants}
-                myId={randomUserId}
+                myId={currentUserId}
                 roomOwner={roomOwner}
                 isUserContainerWindowOpened={isUserContainerWindowOpened}
                 setParticipants={setParticipants}
@@ -239,11 +249,11 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
             <div className="container">
                 {messages.map((msg, i) => 
                     <div key={i} 
-                        className={`chat-box ${(msg.writer === randomUserId) ? 'my-chat-box' : 'others-chat-box'}`}
+                        className={`chat-box ${(msg.writer === currentUserId) ? 'my-chat-box' : 'others-chat-box'}`}
                     >   
-                        {(i === 0) ? <NameOfTheChatUser msg={msg}/> :
+                        {(i === 0) ? <ChatInfo msg={msg} /> :
                         (messages[i - 1].writer !== msg.writer) && 
-                        <NameOfTheChatUser 
+                        <ChatInfo 
                             msg={msg}
                             isRoomOwner={(msg.writer === roomOwner)}
                         />}
@@ -252,15 +262,15 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                         <>
                             {(i !== 0) && 
                             (messages[i - 1].time !== msg.time) &&
-                            (msg.writer === randomUserId) &&
+                            (msg.writer === currentUserId) &&
                             <ChatTimeComponent 
                                 time={msg.time || ''}
-                                isMyMessage={(msg.writer === randomUserId)}
+                                isMyMessage={(msg.writer === currentUserId)}
                             />}
                             <span
-                                onDoubleClick={() => (msg.writer === randomUserId) ? handleChatDblClick(i) : null}
+                                onDoubleClick={() => (msg.writer === currentUserId) ? handleChatDblClick(i) : null}
                                 className={`chat 
-                                ${(msg.writer === randomUserId) ? 'my-chat' : 'others-chat'}
+                                ${(msg.writer === currentUserId) ? 'my-chat' : 'others-chat'}
                                 ${msg.isDeleted ? 'deleted-chat' : ''}
                                 `}
                             >
@@ -281,10 +291,10 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                             </span>
                             {(i !== 0) && 
                             (messages[i - 1].time !== msg.time) && 
-                            (msg.writer !== randomUserId) &&
+                            (msg.writer !== currentUserId) &&
                             <ChatTimeComponent 
                                 time={msg.time || ''}
-                                isMyMessage={msg.writer === randomUserId}
+                                isMyMessage={msg.writer === currentUserId}
                             />}
                         </>}
                     </div>
@@ -293,7 +303,10 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                     type="file"
                     onChange={handleOnChange}
                 />
-                <button onClick={handleOnClick}>submit</button>
+                <button
+                    className="picture-submit"
+                    onClick={shootBinaryImageMessage}
+                >send picture</button>
                 <form 
                     onSubmit={handleChatSubmit}
                     className="chat-form"
@@ -349,6 +362,15 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                         border-radius: inherit;
                         background-color: inherit;
                     }
+                    .picture-submit {
+                        border: 1px solid rgb(0, 219, 146);
+                    }
+                    input[type=file]::-webkit-file-upload-button {
+                        border: 1px solid rgb(0, 219, 146);
+                        border-radius: 12px;
+                        padding: 10px;
+                        background-color: transparent;
+                    }
                 `}</style>
             </div>
         </>
@@ -389,18 +411,20 @@ export async function getServerSideProps({ params: { id }, query: { roomName, pa
     };
 }
 
-function NameOfTheChatUser({ msg, isRoomOwner }: { msg: IMessageBody, isRoomOwner?: boolean }) {
+function ChatInfo({ msg, isRoomOwner }: { msg: IMessageBody, isRoomOwner?: boolean }) {
     return (
-        msg.writer === MASTER ? null :
-        <span>
-            {isRoomOwner && 
-            <img
-                src="/crown.png"
-                width="30px"
-                height="25px"
-            />}
-            <h5>{msg.writer.slice(0, 9)}</h5>
-        </span>
+        <>
+            {(msg.writer !== MASTER) &&
+            <span>
+                {isRoomOwner && 
+                <img
+                    src="/crown.png"
+                    width="30px"
+                    height="25px"
+                />}
+                <h5>{msg.writer.slice(0, 9)}</h5>
+            </span>}
+        </>
     );
 }
 

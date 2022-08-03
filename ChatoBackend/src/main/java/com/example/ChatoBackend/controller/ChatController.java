@@ -97,7 +97,7 @@ public class ChatController {
             msgNo = messageService.saveMessage(messageDTO);
             messageDTO.setMsgNo(msgNo);
             messageService.savePicture(imageByte, roomId, msgNo);
-        } catch (IOException e) {
+        } catch (Exception e) {
             messageDTO.setMessage("The Image send has failed.");
             messageDTO.setWriter("MASTER");
             messageDTO.setIsPicture(false);

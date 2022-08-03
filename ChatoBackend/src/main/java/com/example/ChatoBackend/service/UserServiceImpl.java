@@ -1,5 +1,6 @@
 package com.example.ChatoBackend.service;
 
+import com.example.ChatoBackend.entity.ChatRoom;
 import com.example.ChatoBackend.entity.User;
 import com.example.ChatoBackend.repository.ChatRoomRepository;
 import com.example.ChatoBackend.repository.UserRepository;

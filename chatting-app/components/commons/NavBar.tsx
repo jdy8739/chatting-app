@@ -43,28 +43,26 @@ function NavBar() {
                     </Link>
                     <button>search chat</button>
                     <div style={{ flexGrow: '1' }}></div>
-                    {
-                        userId ? 
-                        <>  
-                            <div className="profile-img">
-                                <img
-                                    width="100%"
-                                    height="100%"
-                                    src={`${process.env.NEXT_PUBLIC_API_URL}/user/profile-pic/${userId}`}
-                                />
-                            </div>
-                            <div id="user-id" onClick={() => router.push('/user/settings')}>{userId}</div>
-                            <button onClick={removeUserId}>sign out</button>
-                        </> :
-                        <>
-                            <Link href="/user/signup">
-                                <button className={router.pathname === '/user/signup' ? 'clicked' : ''}>sign up</button>
-                            </Link>
-                            <Link href="/user/signin">
-                                <button className={router.pathname === '/user/signin' ? 'clicked' : ''}>sign in</button>
-                            </Link>
-                        </>
-                    }
+                    {userId ?
+                    <>  
+                        <div className="profile-img">
+                            <img
+                                width="100%"
+                                height="100%"
+                                src={`${process.env.NEXT_PUBLIC_API_URL}/user/profile-pic/${userId}`}
+                            />
+                        </div>
+                        <div id="user-id" onClick={() => router.push('/user/settings')}>{userId}</div>
+                        <button onClick={removeUserId}>sign out</button>
+                    </> :
+                    <>
+                        <Link href="/user/signup">
+                            <button className={router.pathname === '/user/signup' ? 'clicked' : ''}>sign up</button>
+                        </Link>
+                        <Link href="/user/signin">
+                            <button className={router.pathname === '/user/signin' ? 'clicked' : ''}>sign in</button>
+                        </Link>
+                    </>}
                     <Link href="#">
                         <button>portfolio</button>
                     </Link>

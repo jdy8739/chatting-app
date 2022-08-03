@@ -111,4 +111,13 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         }
         return participantList;
     }
+
+    @Override
+    public boolean checkIfIsRoomOwner(long roomId, String id) {
+        Optional<ChatRoom> optionalChatRoom = chatRoomRepository.findByRoomId(roomId);
+        if (optionalChatRoom.isEmpty()) throw new NoSuchElementException();
+        String roomOwner = optionalChatRoom.get().getOwner();
+        if (roomOwner.equals(id) || roomOwner.equals("MASTER")) return true;
+        else return false;
+    }
 }

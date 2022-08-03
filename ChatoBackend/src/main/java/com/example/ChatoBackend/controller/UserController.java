@@ -149,9 +149,8 @@ public class UserController {
         String userId;
         try {
             userId = jwtUtils.getUserId(token);
-            if (!userService.checkPasswordMatches(userId, map.get("inputPassword"))) {
+            if (!userService.checkPasswordMatches(userId, map.get("inputPassword")))
                 return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-            }
             userService.withdraw(userId);
         } catch (MalformedJwtException e) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
