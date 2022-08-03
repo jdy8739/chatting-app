@@ -56,7 +56,8 @@ function UserContainer({
                                 </div>
                                 {participant.nickName ? participant.nickName : participant.id.slice(0, 9)}
                                 <span style={{color: 'red'}}>{(participant.id === myId) ? '(me)' : ''}</span>
-                                {(participant.id !== myId) && (myId === roomOwner) &&
+                                {(participant.id !== myId) && 
+                                (myId === roomOwner) &&
                                 <img
                                     width="20px"
                                     height="20px"

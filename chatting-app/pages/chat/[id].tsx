@@ -26,14 +26,11 @@ let socket: WebSocket;
 let stomp: any;
 let currentUserId: string = '';
 let previousShowCnt = 0;
+let isUserContainerWindowOpened: boolean = false;
+let imageFile: ArrayBuffer;
 
 const CHAT_REMAIN_NUMBER_LIMIT = 10;
-
 const STMOP_MESSAGE_SIZE_LIMIT = 500000;
-
-let isUserContainerWindowOpened: boolean = false;
-
-let imageFile: ArrayBuffer;
 
 const fetchRoomOwnerAndPreviousChat = async (id: number, count: number, password?: string) => {
     const { owner, messageList }: IChatRoomInfo = await (await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/message/${id}?offset=${count}`, { password })).data;
@@ -251,10 +248,10 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                     <div key={i} 
                         className={`chat-box ${(msg.writer === currentUserId) ? 'my-chat-box' : 'others-chat-box'}`}
                     >   
-                        {(i === 0) ? <ChatInfo msg={msg} /> :
+                        {(i === 0) ? <ChatInfo writer={msg.writer} /> :
                         (messages[i - 1].writer !== msg.writer) && 
                         <ChatInfo 
-                            msg={msg}
+                            writer={msg.writer}
                             isRoomOwner={(msg.writer === roomOwner)}
                         />}
                         {(msg.writer === MASTER) ?
@@ -281,7 +278,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                                     className="delete-btn">
                                     x
                                 </span>}
-                                <MessageContent 
+                                <ChatContent 
                                     isDeleted={msg.isDeleted}
                                     isPicture={msg.isPicture}
                                     content={msg.message}
@@ -397,7 +394,7 @@ export async function getServerSideProps({ params: { id }, query: { roomName, pa
                 permanent: false,
                 destination: "/chat/list",
             },
-            props:{},
+            props: {},
         };
     }
     return {
@@ -411,10 +408,10 @@ export async function getServerSideProps({ params: { id }, query: { roomName, pa
     };
 }
 
-function ChatInfo({ msg, isRoomOwner }: { msg: IMessageBody, isRoomOwner?: boolean }) {
+function ChatInfo({ writer, isRoomOwner }: { writer: string, isRoomOwner?: boolean }) {
     return (
         <>
-            {(msg.writer !== MASTER) &&
+            {(writer !== MASTER) &&
             <span>
                 {isRoomOwner && 
                 <img
@@ -422,7 +419,7 @@ function ChatInfo({ msg, isRoomOwner }: { msg: IMessageBody, isRoomOwner?: boole
                     width="30px"
                     height="25px"
                 />}
-                <h5>{msg.writer.slice(0, 9)}</h5>
+                <h5>{writer.slice(0, 9)}</h5>
             </span>}
         </>
     );
@@ -439,14 +436,14 @@ function ChatTimeComponent({ time, isMyMessage }: { time: string, isMyMessage: b
 }
 
 interface IMessageContent {
-    isDeleted?: boolean,
-    isPicture?: boolean,
     content: string,
     roomId: number,
     msgNo: number,
+    isDeleted?: boolean,
+    isPicture?: boolean,
 }
 
-function MessageContent({ isDeleted, isPicture, content, roomId, msgNo }: IMessageContent) {
+function ChatContent({ isDeleted, isPicture, content, roomId, msgNo }: IMessageContent) {
     return (
         <>
             {(isPicture && !isDeleted) ? 
