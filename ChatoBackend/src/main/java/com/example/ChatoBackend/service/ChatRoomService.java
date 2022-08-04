@@ -28,9 +28,9 @@ public interface ChatRoomService {
 
     public void deleteRoom(Long roomId);
 
-    public String findRoomOwnerByRoomId(Long roomId);
+    public Long findRoomOwnerByRoomId(Long roomId);
 
     public List<ParticipantDTO> getParticipantListByRoomId(Long roomId);
 
-    public boolean checkIfIsRoomOwner(long roomId, String id);
+    public boolean checkIfIsRoomOwner(long roomId, long userNo);
 }

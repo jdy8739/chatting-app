@@ -11,43 +11,52 @@ import { IUserSignedInInfo } from "../../lib/store/modules/signInReducer";
 import { IMessageBody, IParticipants } from "../../types/types";
 import { BAN_PROTOCOL_NUMBER, DISBANDED, generateRandonUserId, getNowTime, MASTER, SUBSCRIBE_PROTOCOL_NUMBER, toastConfig } from "../../utils/utils";
 
+export enum SEND_PROTOCOL {
+    MESSEGE = 'message',
+    DELETE = 'delete',
+}
+
 interface IChatRoomProps {
     id: number,
     roomName: string,
     previousChat: IMessageBody[],
     password?: string,
-    roomOwner: string
+    roomOwner: number | null,
+    roomOwnerId: string,
 }
 
 interface IChatRoomInfo {
-    owner: string,
+    owner: number | null, 
+    ownerId: string,
     messageList?: IMessageBody[] | undefined,
 }
-
+  
 let socket: WebSocket;
 let stomp: any;
 let currentUserName: string = '';
 let previousShowCnt = 0;
-let isUserContainerWindowOpened: boolean = false;
 let imageFile: ArrayBuffer;
 
 const CHAT_REMAIN_NUMBER_LIMIT = 10;
 
 const STMOP_MESSAGE_SIZE_LIMIT = 500000;
 
-const fetchRoomOwnerAndPreviousChat = async (id: number, count: number, password?: string) => {
-    const { owner, messageList }: IChatRoomInfo = await (await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/message/${id}?offset=${count}`, { password })).data;
-    messageList?.reverse();
-    return { owner, messageList };
+const fetchRoomOwnerAndPreviousChat = async (id: number, count: number, password?: string) :Promise<IChatRoomInfo> => {
+    return await (await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/message/${id}?offset=${count}`, { password })).data;
 }
 
-function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChatRoomProps) {
+const classifyChatWriter = (writerNo: (number | null), userNo: number, writer: string, user: string) :boolean => {
+    return writerNo ? (writerNo === userNo) : (writer === user);
+}
+
+function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwnerId }: IChatRoomProps) {
     let newMessage: string;
     const router = useRouter();
     const [messages, setMessages] = useState<IMessageBody[]>(previousChat);
     const [isAllChatShown, setIsAllChatShown] = useState(previousChat.length < CHAT_REMAIN_NUMBER_LIMIT);
     const [targetChatNumber, setTargetChatNumber] = useState(-1);
     const [participants, setParticipants] = useState<IParticipants[]>([]);
+    const [isUserContainerOpened, setIsUserContainerOpened] = useState(true);
     const { userNo, userId, userNickName } = useSelector(({ signInReducer: {userInfo} }: { signInReducer: {userInfo: IUserSignedInInfo} }) => userInfo);
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
     const handleChatSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -64,7 +73,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
             textAreaRef.current.value = '';
         }
         if (socket && stomp) {
-            shootChatMessage('message', {
+            shootChatMessage(SEND_PROTOCOL.MESSEGE, {
                 msgNo: 0,
                 roomId: String(id), 
                 message: newMessage,
@@ -91,19 +100,20 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                 reflectNewMessageAndUser(newMessage);
             else updateMessageList(newMessage);
             window.scrollTo(0, document.body.scrollHeight);
-        }, { roomId: id, userId: currentUserName })
+        }, { roomId: id, userId: (userId || currentUserName) })
     }
     const reflectNewMessageAndUser = (newMessage: IMessageBody) => {
         const msgNo = newMessage.msgNo;
         const [targetId, targetNickName] = newMessage.message.split('/');
         if (msgNo === BAN_PROTOCOL_NUMBER) {
-            if (targetId === currentUserName) expelUser('You are banned!');
+            if (userId ? (targetId === userId) : (targetId === currentUserName))
+                expelUser('You are banned!');
             newMessage.message = `${targetId.slice(0, 9)} has been banned.`;
         } else newMessage.message = `${targetId.slice(0, 9)} has just ${msgNo ? 'left' : 'joined'} the room.`;
-        if ((targetId !== currentUserName) && isUserContainerWindowOpened) updateParticipantsList({
-            id: targetId,
-            nickName: targetNickName,
-        }, Boolean(msgNo));
+        if (isUserContainerOpened) updateParticipantsList({
+                id: targetId,
+                nickName: targetNickName,
+            }, Boolean(msgNo));
         updateMessageList(newMessage);
     }
     const updateMessageList = (newMessageInfo: IMessageBody) => {
@@ -154,7 +164,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
     const deleteChat = async (id: number, msgNo: number) => {
         const { status } = await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/room/del_message/${id}?msg_no=${msgNo}`);
         if (status === 200) {
-            shootChatMessage('delete', {
+            shootChatMessage(SEND_PROTOCOL.DELETE, {
                 msgNo: 0,
                 roomId: String(id), 
                 message: String(msgNo),
@@ -164,7 +174,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
             setTargetChatNumber(-1);
         }
     }
-    const shootChatMessage = (target: string, message: IMessageBody) => {
+    const shootChatMessage = (target: SEND_PROTOCOL, message: IMessageBody) => {
         if (socket && stomp) {
             stomp.send(`/pub/chat/${target}`, 
             JSON.stringify(message), 
@@ -225,7 +235,6 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
             stomp.disconnect(() => null, {});
             currentUserName = '';
             previousShowCnt = 0;
-            isUserContainerWindowOpened = false;
         }
     }, []);
     return (
@@ -241,10 +250,12 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
             <UserContainer
                 roomId={id}
                 participants={participants}
-                myId={currentUserName}
+                myId={userId}
+                myUserNo={userNo}
                 roomOwner={roomOwner}
-                isUserContainerWindowOpened={isUserContainerWindowOpened}
+                roomOwnerId={roomOwnerId}
                 setParticipants={setParticipants}
+                setIsUserContainerOpened={setIsUserContainerOpened}
                 shootChatMessage={shootChatMessage}
             />
             <div className="container">
@@ -256,7 +267,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                         (messages[i - 1].writer !== msg.writer) && 
                         <ChatInfo 
                             writer={msg.writer}
-                            isRoomOwner={(msg.writer === roomOwner)}
+                            isRoomOwner={(msg.writerNo === roomOwner)}
                         />}
                         {(msg.writer === MASTER) ?
                         <span className="master-chat">{msg.message}</span> :
@@ -264,12 +275,13 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                             {(i !== 0) && 
                             (messages[i - 1].time !== msg.time) &&
                             (msg.writer === currentUserName) &&
-                            <ChatTimeComponent 
+                            <ChatTimeComponent
                                 time={msg.time || ''}
-                                isMyMessage={(msg.writer === currentUserName)}
+                                isMyMessage={(msg.writerNo === userNo)}
                             />}
                             <span
-                                onDoubleClick={() => (msg.writer === currentUserName) ? handleChatDblClick(i) : null}
+                                onDoubleClick={() => 
+                                    classifyChatWriter(msg.writerNo, userNo, msg.writer, currentUserName) ? handleChatDblClick(i) : null}
                                 className={`chat 
                                 ${(msg.writer === currentUserName) ? 'my-chat' : 'others-chat'}
                                 ${msg.isDeleted ? 'deleted-chat' : ''}
@@ -295,7 +307,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                             (msg.writer !== currentUserName) &&
                             <ChatTimeComponent 
                                 time={msg.time || ''}
-                                isMyMessage={msg.writer === currentUserName}
+                                isMyMessage={(msg.writerNo === userNo)}
                             />}
                         </>}
                     </div>
@@ -384,12 +396,15 @@ interface IServerProps {
 }
 
 export async function getServerSideProps({ params: { id }, query: { roomName, password }}: IServerProps) {
-    let owner: string;
-    let previousChat: IMessageBody[] | undefined;
+    let owner: (number | null);
+    let ownerId: string;
+    let previousChat: (IMessageBody[] | undefined);
     try {
         const results = await fetchRoomOwnerAndPreviousChat(id, previousShowCnt, password);
         owner = results.owner;
+        ownerId = results.ownerId;
         previousChat = results.messageList;
+        previousChat?.reverse();
         previousChat?.forEach(chat => {if (chat.isDeleted) chat.message = ''});
     } catch (e) {
         console.log(`Failed to fetch previous chat of room id ${id}.`);
@@ -408,6 +423,7 @@ export async function getServerSideProps({ params: { id }, query: { roomName, pa
             previousChat: previousChat ? previousChat : [],
             password: password || null,
             roomOwner: owner,
+            roomOwnerId: ownerId,
         }
     };
 }

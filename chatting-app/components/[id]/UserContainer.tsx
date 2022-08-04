@@ -1,4 +1,5 @@
 import axios from "axios";
+import { SEND_PROTOCOL } from "../../pages/chat/[id]";
 import { IMessageBody, IParticipants } from "../../types/types";
 import { BAN_PROTOCOL_NUMBER, MASTER } from "../../utils/utils";
 
@@ -6,40 +7,45 @@ interface IUserContainer {
     roomId: number,
     participants: IParticipants[],
     myId: string,
-    roomOwner: string | null,
-    isUserContainerWindowOpened: boolean,
+    myUserNo: number,
+    roomOwner: number | null,
+    roomOwnerId: string,
     setParticipants: (participants: IParticipants[]) => void,
-    shootChatMessage: (target: string, message: IMessageBody) => void,
+    setIsUserContainerOpened: (value: boolean) => void,
+    shootChatMessage: (target: SEND_PROTOCOL, message: IMessageBody) => void,
 }
 
 function UserContainer({ 
     roomId,
     participants,
     myId,
+    myUserNo,
     roomOwner,
-    isUserContainerWindowOpened,
+    roomOwnerId,
     setParticipants,
+    setIsUserContainerOpened,
     shootChatMessage }: IUserContainer) {
     const showUserContainerWindow = async () => {
         const results: IParticipants[] = await (await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/room/participants/${roomId}`)).data;
         setParticipants(results);
-        isUserContainerWindowOpened = true;
+        setIsUserContainerOpened(true);
     }
-    const hideUserContainerWindow = () => isUserContainerWindowOpened = false;
     const banThisParticipant = (participantId: string) => { 
-        shootChatMessage('delete', {
+        shootChatMessage(SEND_PROTOCOL.DELETE, {
             msgNo: BAN_PROTOCOL_NUMBER,
             roomId: String(roomId),
             writer: MASTER,
+            writerNo: null,
             message: participantId,
         });
+        setIsUserContainerOpened(true);
     }
     return (
         <>
             <div
                 className="user-container"
                 onMouseEnter={showUserContainerWindow}
-                onMouseLeave={hideUserContainerWindow}
+                onMouseOverCapture={() => setIsUserContainerOpened(true)}
             >
                 <h4>users</h4>
                 <div className="name-box">
@@ -57,7 +63,7 @@ function UserContainer({
                                 {participant.nickName ? participant.nickName : participant.id.slice(0, 9)}
                                 <span style={{color: 'red'}}>{(participant.id === myId) ? '(me)' : ''}</span>
                                 {(participant.id !== myId) && 
-                                (myId === roomOwner) &&
+                                (myUserNo === roomOwner) &&
                                 <img
                                     width="20px"
                                     height="20px"
@@ -66,7 +72,7 @@ function UserContainer({
                                     onClick={() => banThisParticipant(participant.id)}
                                 />}
                                 &emsp;
-                                {(participant.id === roomOwner) &&
+                                {(participant.id === roomOwnerId) &&
                                 <img
                                     src="/crown.png"
                                     width="30px"

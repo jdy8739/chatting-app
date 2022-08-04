@@ -27,4 +27,6 @@ public interface UserService {
     public String findNickNameById(String id);
 
     public Map<String, Object> getUserInfo(String id);
+
+    public String findUserIdByUserNo(long userNo);
 }

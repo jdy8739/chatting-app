@@ -72,7 +72,8 @@ public class RoomController {
         String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
         try {
             long roomId = Long.parseLong(map.get("targetRoomId"));
-            if (!chatRoomService.checkIfIsRoomOwner(roomId, jwtUtils.getUserId(token)))
+            if (!chatRoomService.checkIfIsRoomOwner(roomId,
+                    userService.findUserInfoById(jwtUtils.getUserId(token)).getUserNo()))
                 throw new Exception();
             chatRoomService.changeSubject(roomId, map.get("destinationId"));
             messagingTemplate.convertAndSend("/sub/chat/room/list", map);
@@ -95,7 +96,8 @@ public class RoomController {
             @PathVariable("id") Long roomId,
             @RequestParam(value = "offset") String offset,
             @RequestBody Map<String, String> map) {
-        String roomOwner = "";
+        long roomOwner = 0;
+        String roomOwnerId = "";
         List<MessageDTO> messageDTOList = null;
         if (Integer.valueOf(offset) == 0) {
             if (!chatRoomService.checkPwCorrect(roomId, map.get("password"))) {
@@ -104,10 +106,12 @@ public class RoomController {
                 return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
             }
             roomOwner = chatRoomService.findRoomOwnerByRoomId(roomId);
+            roomOwnerId = userService.findUserIdByUserNo(roomOwner);
         }
         messageDTOList = messageService.getMessages(roomId, Integer.valueOf(offset));
         Map<String, Object> responseMap = new HashMap<>();
         responseMap.put("owner", roomOwner);
+        responseMap.put("ownerId", roomOwnerId);
         responseMap.put("messageList", messageDTOList);
         return new ResponseEntity<>(responseMap, HttpStatus.OK);
     }
@@ -127,7 +131,8 @@ public class RoomController {
             HttpServletRequest req) {
         String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
         try {
-            if (!chatRoomService.checkIfIsRoomOwner(roomId, jwtUtils.getUserId(token)))
+            if (!chatRoomService.checkIfIsRoomOwner(roomId,
+                    userService.findUserInfoById(jwtUtils.getUserId(token)).getUserNo()))
                 throw new Exception();
             chatRoomService.deleteRoom(roomId);
             messageService.deleteRoom(roomId);

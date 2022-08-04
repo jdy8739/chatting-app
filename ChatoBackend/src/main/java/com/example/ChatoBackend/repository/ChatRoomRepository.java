@@ -31,9 +31,4 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
     @Modifying
     @Query("update ChatRoom cr set cr.nowParticipants = cr.nowParticipants - 1 where cr.roomId = :roomId")
     void decreaseParticipantsCount(Long roomId);
-
-    @Transactional
-    @Modifying
-    @Query("update ChatRoom cr set cr.owner = :id where cr.owner = :prevId")
-    void changeRoomOwnerToNewId(String id, String prevId);
 }

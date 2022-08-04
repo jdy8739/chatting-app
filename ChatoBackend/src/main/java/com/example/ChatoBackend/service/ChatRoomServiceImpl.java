@@ -96,7 +96,7 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     }
 
     @Override
-    public String findRoomOwnerByRoomId(Long roomId) {
+    public Long findRoomOwnerByRoomId(Long roomId) {
         return chatRoomRepository.findByRoomId(roomId).get().getOwner();
     }
 
@@ -113,11 +113,11 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     }
 
     @Override
-    public boolean checkIfIsRoomOwner(long roomId, String id) {
+    public boolean checkIfIsRoomOwner(long roomId, long userNo) {
         Optional<ChatRoom> optionalChatRoom = chatRoomRepository.findByRoomId(roomId);
         if (optionalChatRoom.isEmpty()) throw new NoSuchElementException();
-        String roomOwner = optionalChatRoom.get().getOwner();
-        if (roomOwner.equals(id) || roomOwner.equals("MASTER")) return true;
+        long roomOwner = optionalChatRoom.get().getOwner();
+        if (roomOwner == userNo) return true;
         else return false;
     }
 }

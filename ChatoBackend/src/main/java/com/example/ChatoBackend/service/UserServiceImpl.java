@@ -129,7 +129,6 @@ public class UserServiceImpl implements UserService {
         user.setNickName(nickName);
         user.setProfilePicUrl(newProfilePicUrl);
         try {
-            chatRoomRepository.changeRoomOwnerToNewId(id, prevId);
             userRepository.save(user);
         } catch (Exception e) {
             throw new RuntimeException();
@@ -189,5 +188,10 @@ public class UserServiceImpl implements UserService {
         userInfoMap.put("userId", user.getId());
         userInfoMap.put("userNickName", user.getNickName());
         return userInfoMap;
+    }
+
+    @Override
+    public String findUserIdByUserNo(long userNo) {
+        return userRepository.findUserIdByUserNo(userNo);
     }
 }

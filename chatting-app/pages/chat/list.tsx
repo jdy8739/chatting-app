@@ -6,6 +6,7 @@ import { IMessageBody, IRoom } from "../../types/types";
 import webstomp from "webstomp-client";
 import { CHATO_USERINFO, DISBANDED, getCookie, getPreviousRoomId, MASTER, toastConfig } from "../../utils/utils";
 import { toast } from "react-toastify";
+import { SEND_PROTOCOL } from "./[id]";
 
 interface IClassifiedRoom {
     [key: string]: { isPinned?: boolean, list: IRoom[] }
@@ -80,7 +81,20 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         const targetRoomId = roomList[sourceId].list[index].roomId;
         axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/room/delete/${targetRoomId}`, {
             headers: { 'authorization': `Bearer ${getCookie(CHATO_USERINFO)}` }
-        }).catch(() => toast.error('You are not authorized!', toastConfig));
+        })
+        .then(() => {
+            sendRoomDeleteMessage({
+                msgNo: 0,
+                roomId: String(targetRoomId),
+                message: DISBANDED,
+                writer: MASTER,
+                writerNo: null,
+            })
+        })
+        .catch(() => toast.error('You are not authorized!', toastConfig));
+    }
+    const sendRoomDeleteMessage = (message: IMessageBody) => {
+        if (socket && stomp) stomp.send(`/pub/chat/${SEND_PROTOCOL.DELETE}`, JSON.stringify(message));
     }
     const changeToNewSubject = (roomMovedInfo: IRoomMoved) => {
         axios.put(`${process.env.NEXT_PUBLIC_API_URL}/room/change_subject`, roomMovedInfo, {

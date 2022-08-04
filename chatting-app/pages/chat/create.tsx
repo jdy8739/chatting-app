@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
+import { IUserSignedInInfo } from "../../lib/store/modules/signInReducer";
 import { toastConfig } from "../../utils/utils";
 
 const roomSubjectOptions = [
@@ -29,7 +30,7 @@ function CreateChat() {
     const { register, getValues, formState: { errors }, setValue, handleSubmit, setError } = useForm<ICreateChat>({
         defaultValues: { limitation: 15 },
     });
-    const userId = useSelector(({ signInReducer: {id} }: { signInReducer: {id: string} }) => id);
+    const { userId, userNo } = useSelector(({ signInReducer: {userInfo} }: { signInReducer: {userInfo: IUserSignedInInfo} }) => userInfo);
     const submitRoomForm = async ({ 
         roomName, 
         useCustomSubject, 
@@ -53,7 +54,7 @@ function CreateChat() {
                 limitation: limitation,
                 pwRequired: usePassword,
                 password: usePassword ? password : null,
-                owner: userId ? userId : null,
+                owner: userId && (userNo > 0) ? userNo : null,
             })
             if (status === 200) {
                 toast.success('The room has been created!', toastConfig);

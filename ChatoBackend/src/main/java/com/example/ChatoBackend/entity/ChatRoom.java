@@ -38,6 +38,6 @@ public class ChatRoom {
     @Column(length = 20)
     private String password;
 
-    @Column(length = 20)
-    private String owner;
+    @Column
+    private Long owner;
 }

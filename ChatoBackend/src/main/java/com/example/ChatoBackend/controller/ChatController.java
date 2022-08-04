@@ -62,7 +62,7 @@ public class ChatController {
         JSONObject jsonObject = (JSONObject) jsonParser.parse(messageString);
         long msgNo = (Long) jsonObject.get("msgNo");
         MessageDTO messageDTO = new MessageDTO(
-                msgNo == Long.valueOf(BAN_PROTOCOL_NUMBER) ? msgNo : null,
+                msgNo == (long) BAN_PROTOCOL_NUMBER ? msgNo : null,
                 jsonObject.get(ROOM_ID).toString(),
                 jsonObject.get(WRITER).toString(),
                 (Long) jsonObject.get(WRITER_NO),
