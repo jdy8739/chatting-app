@@ -70,7 +70,14 @@ export const toastConfig = {
 export const signupAxios = axios.create();
 
 signupAxios.interceptors.response.use(
-    response => response, 
+    response => {
+		const token = response.headers['cookie'];
+		if (token) {
+			bakeCookie(token);
+			toast.success('Your info has been altered successfully!', toastConfig);
+		}
+		return response;
+	},
     error => {
 		handleErrors(error);
         return Promise.reject(error);
@@ -93,6 +100,8 @@ export const signinAxios = axios.create();
 
 signinAxios.interceptors.response.use(
     response => {
+		const token = response.headers['cookie'];
+		if (token) bakeCookie(token);
 		toast.success('Hello! Welcome To Chato', toastConfig);
 		return response;
 	},
@@ -122,4 +131,18 @@ export const getNowTime = () :string => {
 	const now = new Date();
     const time = `${now.getHours()}:${now.getMinutes()}`;
 	return time;
+}
+
+const bakeCookie = (token: string) => {
+	const now = new Date();
+	setCookie(
+		CHATO_USERINFO,
+		JSON.stringify(token),
+		{
+			path: '/',
+			expires: new Date(now.setMinutes(now.getMinutes() + 180)),
+			secure: false,
+			httpOnly: false,
+		},
+	);
 }

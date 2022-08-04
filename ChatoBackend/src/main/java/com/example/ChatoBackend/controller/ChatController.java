@@ -25,6 +25,7 @@ import java.util.Map;
 public class ChatController {
     private final String ROOM_ID = "roomId";
     private final String WRITER = "writer";
+    private final String WRITER_NO = "writerNo";
     private final String MESSAGE = "message";
     private final String TIME = "time";
     private final int BAN_PROTOCOL_NUMBER = 2;
@@ -44,6 +45,7 @@ public class ChatController {
                 null,
                 jsonObject.get(ROOM_ID).toString(),
                 jsonObject.get(WRITER).toString(),
+                (Long) jsonObject.get(WRITER_NO),
                 jsonObject.get(MESSAGE).toString(),
                 jsonObject.get(TIME).toString(),
                 false,
@@ -58,11 +60,12 @@ public class ChatController {
     public void deleteMessageOrParticipant(String messageString) throws ParseException {
         JSONParser jsonParser = new JSONParser();
         JSONObject jsonObject = (JSONObject) jsonParser.parse(messageString);
-        Long msgNo = (Long) jsonObject.get("msgNo");
+        long msgNo = (Long) jsonObject.get("msgNo");
         MessageDTO messageDTO = new MessageDTO(
                 msgNo == Long.valueOf(BAN_PROTOCOL_NUMBER) ? msgNo : null,
                 jsonObject.get(ROOM_ID).toString(),
                 jsonObject.get(WRITER).toString(),
+                (Long) jsonObject.get(WRITER_NO),
                 jsonObject.get(MESSAGE).toString(),
                 "",
                 false,
@@ -77,18 +80,21 @@ public class ChatController {
         Map<String, Object> headersMap = (Map<String, Object>) simpMessageHeaderAccessor.getHeader("nativeHeaders");
         List<Object> isList = (List<Object>) headersMap.get("image-size");
         List<Object> riList = (List<Object>) headersMap.get("room-id");
-        List<Object> wrList = (List<Object>) headersMap.get("writer");
-        List<Object> timeList = (List<Object>) headersMap.get("time");
+        List<Object> wrList = (List<Object>) headersMap.get(WRITER);
+        List<Object> wnList = (List<Object>) headersMap.get("writer-no");
+        List<Object> timeList = (List<Object>) headersMap.get(TIME);
         int imageSize = Integer.parseInt((String) isList.get(0));
         Long roomId = Long.parseLong((String) riList.get(0));
         String writer = (String) wrList.get(0);
         String now = (String) timeList.get(0);
+        String writerNo = (String) wnList.get(0);
         byte[] imageByte = utils.extractImageByteData(bytes, imageSize);
         long msgNo;
         MessageDTO messageDTO = new MessageDTO(
                 null,
                 (String) riList.get(0),
                 writer,
+                writerNo.equals("null") ? null : Long.valueOf(writerNo),
                 "",
                 now,
                 false,

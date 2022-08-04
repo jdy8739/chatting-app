@@ -17,6 +17,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOError;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -63,13 +65,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void signin(String id, String password) {
+    public Map<String, Object> signin(String id, String password) {
         Optional<User> optionalUser = userRepository.findById(id);
         if (optionalUser.isEmpty()) throw new NoSuchElementException();
         User user = optionalUser.get();
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new BadCredentialsException("Password not matches.");
-        }
+        } else return assembleUserInfo(user);
     }
 
     @Override
@@ -173,5 +175,19 @@ public class UserServiceImpl implements UserService {
         } catch (NoSuchElementException e) {
             return null;
         }
+    }
+
+    @Override
+    public Map<String, Object> getUserInfo(String id) {
+        User user = findUserInfoById(id);
+        return assembleUserInfo(user);
+    }
+
+    private Map<String, Object> assembleUserInfo (User user) {
+        Map<String, Object> userInfoMap = new HashMap<>();
+        userInfoMap.put("userNo", user.getUserNo());
+        userInfoMap.put("userId", user.getId());
+        userInfoMap.put("userNickName", user.getNickName());
+        return userInfoMap;
     }
 }

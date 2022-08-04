@@ -30,6 +30,7 @@ export interface IMessageBody {
     roomId: string,
     message: string,
     writer: string,
+    writerNo: number | null,
     time?: string,
     isDeleted?: boolean,
     isPicture?: boolean,

@@ -3,37 +3,27 @@ import { useRouter } from "next/router";
 import React, { useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
-import { signIn } from "../../lib/store/modules/signInReducer";
-import { CHATO_USERINFO, clearPreviousRoomId, getCookie, setCookie, signinAxios, toastConfig } from "../../utils/utils";
+import { IUserSignedInInfo, signIn } from "../../lib/store/modules/signInReducer";
+import { CHATO_USERINFO, clearPreviousRoomId, getCookie, signinAxios, toastConfig } from "../../utils/utils";
 
 function Signin() {
     const router = useRouter();
     const dispatch = useDispatch();
     const idInputRef = useRef<HTMLInputElement>(null);
     const pwInputRef = useRef<HTMLInputElement>(null);
-    const changeUserId = (id: string) => dispatch(signIn(id));
+    const reflectUserInfo = (userInfo: IUserSignedInInfo) => dispatch(signIn(userInfo));
     const handleSigninSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const userId = idInputRef.current?.value;
-        const id = userId;
+        const id = idInputRef.current?.value;
         const password = pwInputRef.current?.value;
         if (id && password) {
             try {
-                const { status, data: token } = await signinAxios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/signin`, {id, password});
-                const now = new Date();
-                setCookie(
-                    CHATO_USERINFO,
-                    JSON.stringify(token),
-                    {
-                        path: '/',
-                        expires: new Date(now.setMinutes(now.getMinutes() + 180)),
-                        secure: false,
-                        httpOnly: false,
-                    },
-                );
-                changeUserId(userId);
-                if (status === 200) router.push('/chat/list');
-            } catch (e) {}
+                const { status, data }: { status: number, data: IUserSignedInInfo } = await signinAxios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/signin`, {id, password});
+                if (status === 200) {
+                    reflectUserInfo(data);
+                    router.push('/chat/list');
+                }
+            } catch (e) {};
         }
     }
     useEffect(() => {

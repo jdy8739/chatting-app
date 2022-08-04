@@ -3,10 +3,11 @@ import { AnimatePresence } from "framer-motion";
 import { useRouter } from "next/router";
 import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import Modal from "../../components/commons/Modal";
-import { signIn, signOut } from "../../lib/store/modules/signInReducer";
+import { IUserSignedInInfo, signIn, signOut } from "../../lib/store/modules/signInReducer";
 import { CHATO_USERINFO, clearPreviousRoomId, getCookie, ID_REGEX, removeCookie, setCookie, signupAxios, toastConfig } from "../../utils/utils";
 
 export interface IUserInfo {
@@ -25,7 +26,9 @@ function Settings() {
     const [userInfo, setUserInfo] = useState<IUserInfo>();
     const [picBlobString, setPicBlobString] = useState('');
     const [protocol, setProtocol] = useState(0);
-    const handleSignIn = (id: string) => dispatch(signIn(id));
+    const { userNo } = useSelector(({ signInReducer: {userInfo} }: { signInReducer: {userInfo: IUserSignedInInfo} }) => userInfo);
+    const handleSignIn = (userInfo: IUserSignedInInfo) => dispatch(signIn(userInfo));
+    const handleSignOut = () => dispatch(signOut());
     const { 
         register, 
         formState: { errors }, 
@@ -34,7 +37,7 @@ function Settings() {
         handleSubmit } = useForm<IUserInfo>();
     const fetchUserInfo = async (token: string) => {
         try {
-            const { data: userInfo }: { data: IUserInfo } = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/info`, {} , {
+            const { data: userInfo }: { data: IUserInfo } = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/user/info`, {
                 headers: { 'authorization': `Bearer ${token}` }
             });
             setInputRefValue(userInfo);
@@ -76,7 +79,7 @@ function Settings() {
             if (userInfo) return {...userInfo, profilePicUrl: (userInfo?.profilePicUrl) ? '' : tmpPicUrl};
         })
     }
-    const handleUserSettingsSubmit = async (data: IUserInfo, inputPassword: string) => {
+    const handleUserSettingsSubmit = async (data: IUserInfo, inputPassword: string) :Promise<boolean> => {
         return new Promise(async (success, fail) => {
             const updatedUserIndo = {...data, userProfilePic: data.profilePicUrl ? data.profilePicUrl[0] : null};
             delete updatedUserIndo.profilePicUrl;
@@ -85,26 +88,21 @@ function Settings() {
             formData.append('inputPassword', inputPassword);
             for (let key in updatedUserIndo) formData.append(key, updatedUserIndo[key]);
             try {
-                const { status, data: token } = await signupAxios.put(`${process.env.NEXT_PUBLIC_API_URL}/user/alter`, formData, {
+                const { status } = await signupAxios.put(`${process.env.NEXT_PUBLIC_API_URL}/user/alter`, formData, {
                     headers: { 
                         'Content-Type': 'multipart/form-data',
                         'authorization': `Bearer ${getCookie(CHATO_USERINFO)}`,
                     }
                 });
                 if (status === 200) {
-                    toast.success('Your info has been altered successfully!', toastConfig);
-                    const now = new Date();
-                    setCookie(
-                        CHATO_USERINFO,
-                        JSON.stringify(token),
-                        {
-                            path: '/',
-                            expires: new Date(now.setMinutes(now.getMinutes() + 180)),
-                            secure: false,
-                            httpOnly: false,
-                        },
-                    );
-                    handleSignIn(data.id);
+                    if (userInfo?.id === data.id) handleSignOut();
+                    setTimeout(() => {
+                        handleSignIn({
+                            userNo: userNo,
+                            userId: data.id,
+                            userNickName: data.nickName,
+                        });
+                    }, 500);
                     success(true);
                 }
             } catch (e) { fail(false); };
@@ -116,7 +114,7 @@ function Settings() {
         else isUserProfilePic = false;
         return String(isUserProfilePic);
     }
-    const handleUserWithdraw = (inputPassword: string) => {
+    const handleUserWithdraw = (inputPassword: string) :Promise<boolean> => {
         return new Promise(async (success, fail) => {
             try {
                 const { status } = await signupAxios.put(`${process.env.NEXT_PUBLIC_API_URL}/user/withdraw`, { inputPassword }, { headers: {
@@ -125,7 +123,7 @@ function Settings() {
                 if (status === 200) {
                     toast.success('Your id has been removed.', toastConfig);
                     removeCookie(CHATO_USERINFO, {path: '/'});
-                    handleSignIn('');
+                    handleSignIn({ userNo: -1, userId: '', userNickName: '' });
                     success(true);
                 }
             } catch (e) { fail(false); };

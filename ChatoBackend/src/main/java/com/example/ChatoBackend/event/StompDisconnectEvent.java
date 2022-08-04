@@ -42,6 +42,7 @@ public class StompDisconnectEvent implements ApplicationListener<SessionDisconne
                             Long.valueOf(DISCONNECT_PROTOCOL_NUMBER),
                             roomId,
                             MASTER,
+                            null,
                             userId,
                             null,
                             false,

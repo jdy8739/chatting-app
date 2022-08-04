@@ -2,20 +2,41 @@ const SIGN_IN = "SIGN_IN";
 
 const SING_OUT = "SIGN_OUT"
 
+export interface IUserSignedInInfo {
+  userNo: number,
+  userId: string,
+  userNickName: string,
+}
+
 // Action Creators
-export const signIn = (text: string) => ({ type: SIGN_IN, text });
+export const signIn = (userInfo: IUserSignedInInfo) => ({ type: SIGN_IN, userInfo });
 
 export const signOut = () => ({ type: SING_OUT });
+
 // Initial State
-const initialState: {id: string} = {id: ''};
+const initialState: {userInfo: IUserSignedInInfo} = {
+  userInfo: {
+    userNo: -1,
+    userId: '',
+    userNickName: ''
+  }
+};
 
 // Reducer
-const signInReducer = (state = initialState, action: {type: string, text: string}) => {
+const signInReducer = (state = initialState, action: {type: string, userInfo: IUserSignedInInfo}) :{userInfo: IUserSignedInInfo} => {
   switch (action.type) {
     case SIGN_IN:
-      return {...state, ['id']: action.text}
+      return {
+        userInfo: { ...action.userInfo }
+      };
     case SING_OUT:
-      return {['id']: ''}
+      return {
+        userInfo: {
+          userNo: -1,
+          userId: '',
+          userNickName: '',
+        }
+      }
     default:
       return state;
   }

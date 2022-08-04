@@ -57,6 +57,7 @@ public class StompSubscribeEvent implements ApplicationListener<SessionSubscribe
                         Long.valueOf(SUBSCRIBE_PROTOCOL_NUMBER),
                         roomId,
                         MASTER,
+                        null,
                         userId + "/" + nickName,
                         null,
                         false,

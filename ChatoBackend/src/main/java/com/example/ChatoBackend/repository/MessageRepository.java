@@ -31,6 +31,7 @@ public class MessageRepository {
                 " (" +
                 "msg_id int NOT NULL AUTO_INCREMENT, " +
                 "writer VARCHAR(35) NOT NULL, " +
+                "writer_no int, " +
                 "message VARCHAR(100) NOT NULL, " +
                 "time CHAR(5) NOT NULL, " +
                 "is_deleted TINYINT(1) NOT NULL DEFAULT 0, " +
@@ -47,6 +48,7 @@ public class MessageRepository {
                 .withTableName(tableName).usingGeneratedKeyColumns("msg_id");
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("writer", messageDTO.getWriter());
+        parameters.put("writer_no", messageDTO.getWriterNo());
         parameters.put("message", messageDTO.getMessage());
         parameters.put("time", messageDTO.getTime());
         parameters.put("is_deleted", false);
@@ -64,13 +66,23 @@ public class MessageRepository {
         ResultSet rs = sm.executeQuery(query);
         List<MessageDTO> messageDTOList = new ArrayList<>();
         while (rs.next()) {
-            Integer msgNo = rs.getInt(1);
+            Long msgNo = Long.valueOf(rs.getInt(1));
             String writer = rs.getString(2);
-            String message = rs.getString(3);
-            String time = rs.getString(4);
-            boolean isDeleted = rs.getBoolean(5);
-            boolean isPicture = rs.getBoolean(6);
-            messageDTOList.add(new MessageDTO(msgNo.longValue(), null, writer, message, time, isDeleted, isPicture));
+            Long writerNo = rs.getLong(3);
+            String message = rs.getString(4);
+            String time = rs.getString(5);
+            boolean isDeleted = rs.getBoolean(6);
+            boolean isPicture = rs.getBoolean(7);
+            messageDTOList.add(
+                    new MessageDTO(
+                            msgNo,
+                            null,
+                            writer,
+                            writerNo,
+                            message,
+                            time,
+                            isDeleted,
+                            isPicture));
         }
         con.close();
         return messageDTOList;

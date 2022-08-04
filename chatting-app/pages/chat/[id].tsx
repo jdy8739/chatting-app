@@ -1,11 +1,13 @@
 import axios from "axios";
 import { useRouter } from "next/router";
+import { userInfo } from "os";
 import React, { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import webstomp from "webstomp-client";
 import Seo from "../../components/commons/Seo";
 import UserContainer from "../../components/[id]/UserContainer";
+import { IUserSignedInInfo } from "../../lib/store/modules/signInReducer";
 import { IMessageBody, IParticipants } from "../../types/types";
 import { BAN_PROTOCOL_NUMBER, DISBANDED, generateRandonUserId, getNowTime, MASTER, SUBSCRIBE_PROTOCOL_NUMBER, toastConfig } from "../../utils/utils";
 
@@ -24,12 +26,13 @@ interface IChatRoomInfo {
 
 let socket: WebSocket;
 let stomp: any;
-let currentUserId: string = '';
+let currentUserName: string = '';
 let previousShowCnt = 0;
 let isUserContainerWindowOpened: boolean = false;
 let imageFile: ArrayBuffer;
 
 const CHAT_REMAIN_NUMBER_LIMIT = 10;
+
 const STMOP_MESSAGE_SIZE_LIMIT = 500000;
 
 const fetchRoomOwnerAndPreviousChat = async (id: number, count: number, password?: string) => {
@@ -45,7 +48,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
     const [isAllChatShown, setIsAllChatShown] = useState(previousChat.length < CHAT_REMAIN_NUMBER_LIMIT);
     const [targetChatNumber, setTargetChatNumber] = useState(-1);
     const [participants, setParticipants] = useState<IParticipants[]>([]);
-    const userId = useSelector(({ signInReducer: {id} }: { signInReducer: {id: string} }) => id);
+    const { userNo, userId, userNickName } = useSelector(({ signInReducer: {userInfo} }: { signInReducer: {userInfo: IUserSignedInInfo} }) => userInfo);
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
     const handleChatSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -65,7 +68,8 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                 msgNo: 0,
                 roomId: String(id), 
                 message: newMessage,
-                writer: currentUserId, 
+                writer: currentUserName,
+                writerNo: (userNo > 0) ? userNo : null,
                 time: getNowTime(),
             });
             textAreaRef.current?.setSelectionRange(0, 0);
@@ -87,16 +91,16 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                 reflectNewMessageAndUser(newMessage);
             else updateMessageList(newMessage);
             window.scrollTo(0, document.body.scrollHeight);
-        }, { roomId: id, userId: currentUserId })
+        }, { roomId: id, userId: currentUserName })
     }
     const reflectNewMessageAndUser = (newMessage: IMessageBody) => {
         const msgNo = newMessage.msgNo;
         const [targetId, targetNickName] = newMessage.message.split('/');
         if (msgNo === BAN_PROTOCOL_NUMBER) {
-            if (targetId === currentUserId) expelUser('You are banned!');
+            if (targetId === currentUserName) expelUser('You are banned!');
             newMessage.message = `${targetId.slice(0, 9)} has been banned.`;
         } else newMessage.message = `${targetId.slice(0, 9)} has just ${msgNo ? 'left' : 'joined'} the room.`;
-        if ((targetId !== currentUserId) && isUserContainerWindowOpened) updateParticipantsList({
+        if ((targetId !== currentUserName) && isUserContainerWindowOpened) updateParticipantsList({
             id: targetId,
             nickName: targetNickName,
         }, Boolean(msgNo));
@@ -155,6 +159,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                 roomId: String(id), 
                 message: String(msgNo),
                 writer: MASTER,
+                writerNo: (userNo > 0) ? userNo : null,
             })
             setTargetChatNumber(-1);
         }
@@ -174,7 +179,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
         if (e.currentTarget.files) {
             const targetFile = e.currentTarget.files[0];
             const fileReader = new FileReader();
-            fileReader.onload = function(readerEvent) {
+            fileReader.onload = (readerEvent) => {
                 const result = readerEvent.target?.result;
                 if (result && typeof result !== 'string') {
                     imageFile = new Uint8Array(result);
@@ -193,18 +198,20 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                 'content-type': 'application/octet-stream',
                 'image-size': (imageFile.byteLength),
                 'room-id': id,
-                'writer': currentUserId,
+                'writer': currentUserName,
+                'writer-no': (userNo > 0) ? userNo : null,
                 'time': getNowTime(),
             }
             Object.freeze(headers);
             if (socket && stomp) {
-                stomp.send(`/pub/chat/binary`, 
+                stomp.send(`/pub/chat/binary`,
                 imageFile,
                 headers)
             }
         }
     }
     useEffect(() => {
+        currentUserName = userNickName ? userNickName : generateRandonUserId();
         socket = new WebSocket('ws://localhost:5000/stomp/chat');
         stomp = webstomp.over(socket);
         stomp.connect({}, () => {
@@ -216,14 +223,11 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
         setParticipants([{ id: currentUserId, nickName: '' }]); */
         return () => {
             stomp.disconnect(() => null, {});
-            currentUserId = '';
+            currentUserName = '';
             previousShowCnt = 0;
             isUserContainerWindowOpened = false;
         }
     }, []);
-    useEffect(() => { 
-        currentUserId = userId ? userId : generateRandonUserId();
-    }, [userId]);
     return (
         <>
             <Seo title={`Chato room ${roomName}`} />
@@ -237,7 +241,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
             <UserContainer
                 roomId={id}
                 participants={participants}
-                myId={currentUserId}
+                myId={currentUserName}
                 roomOwner={roomOwner}
                 isUserContainerWindowOpened={isUserContainerWindowOpened}
                 setParticipants={setParticipants}
@@ -246,7 +250,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
             <div className="container">
                 {messages.map((msg, i) => 
                     <div key={i} 
-                        className={`chat-box ${(msg.writer === currentUserId) ? 'my-chat-box' : 'others-chat-box'}`}
+                        className={`chat-box ${(msg.writer === currentUserName) ? 'my-chat-box' : 'others-chat-box'}`}
                     >   
                         {(i === 0) ? <ChatInfo writer={msg.writer} /> :
                         (messages[i - 1].writer !== msg.writer) && 
@@ -259,15 +263,15 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                         <>
                             {(i !== 0) && 
                             (messages[i - 1].time !== msg.time) &&
-                            (msg.writer === currentUserId) &&
+                            (msg.writer === currentUserName) &&
                             <ChatTimeComponent 
                                 time={msg.time || ''}
-                                isMyMessage={(msg.writer === currentUserId)}
+                                isMyMessage={(msg.writer === currentUserName)}
                             />}
                             <span
-                                onDoubleClick={() => (msg.writer === currentUserId) ? handleChatDblClick(i) : null}
+                                onDoubleClick={() => (msg.writer === currentUserName) ? handleChatDblClick(i) : null}
                                 className={`chat 
-                                ${(msg.writer === currentUserId) ? 'my-chat' : 'others-chat'}
+                                ${(msg.writer === currentUserName) ? 'my-chat' : 'others-chat'}
                                 ${msg.isDeleted ? 'deleted-chat' : ''}
                                 `}
                             >
@@ -288,10 +292,10 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner }: IChat
                             </span>
                             {(i !== 0) && 
                             (messages[i - 1].time !== msg.time) && 
-                            (msg.writer !== currentUserId) &&
+                            (msg.writer !== currentUserName) &&
                             <ChatTimeComponent 
                                 time={msg.time || ''}
-                                isMyMessage={msg.writer === currentUserId}
+                                isMyMessage={msg.writer === currentUserName}
                             />}
                         </>}
                     </div>

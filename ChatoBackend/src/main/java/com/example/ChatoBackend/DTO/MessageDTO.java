@@ -11,6 +11,7 @@ public class MessageDTO {
     private Long msgNo;
     private String roomId;
     private String writer;
+    private Long writerNo;
     private String message;
     private String time;
     private Boolean isDeleted;

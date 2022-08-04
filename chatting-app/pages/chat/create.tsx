@@ -25,7 +25,7 @@ function CreateChat() {
     const [isRendered, setIsRendered] = useState(false);
     const [useCustomSubject, setUseCustomSubject] = useState(false);
     const [usePassword, setUsePassword] = useState(false);
-    const [isReRendered, setIsReRendered] = useState(false);
+    const setIsReRendered = useState(false)[1];
     const { register, getValues, formState: { errors }, setValue, handleSubmit, setError } = useForm<ICreateChat>({
         defaultValues: { limitation: 15 },
     });

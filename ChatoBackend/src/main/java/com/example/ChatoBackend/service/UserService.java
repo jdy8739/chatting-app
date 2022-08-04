@@ -5,6 +5,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Map;
 
 public interface UserService {
 
@@ -12,7 +13,7 @@ public interface UserService {
 
     public String saveProfilePic(String id, MultipartFile profilePicBinary) throws IOException;
 
-    public void signin(String id, String password);
+    public Map<String, Object> signin(String id, String password);
 
     public User findUserInfoById(String id);
 
@@ -24,4 +25,6 @@ public interface UserService {
     public void withdraw(String id);
 
     public String findNickNameById(String id);
+
+    public Map<String, Object> getUserInfo(String id);
 }

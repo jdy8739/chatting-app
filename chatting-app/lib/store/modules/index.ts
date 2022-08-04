@@ -1,10 +1,10 @@
-import { CombinedState, combineReducers } from "redux";
+import { combineReducers } from "redux";
 import { HYDRATE } from "next-redux-wrapper";
-import signInReducer from "./signInReducer";
+import signInReducer, { IUserSignedInInfo } from "./signInReducer";
 
 const rootReducer = (
   state: any, 
-  action: { type: string; text: string, payload?: unknown }) => {
+  action: { type: string; userInfo: IUserSignedInInfo, payload?: unknown }) => {
   switch (action.type) {
     case HYDRATE:
       return action.payload;

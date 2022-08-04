@@ -4,9 +4,7 @@ import com.example.ChatoBackend.entity.User;
 import com.example.ChatoBackend.jwt.JWTUtils;
 import com.example.ChatoBackend.service.UserServiceImpl;
 import io.jsonwebtoken.MalformedJwtException;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.apache.tomcat.util.http.fileupload.impl.FileSizeLimitExceededException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -22,8 +20,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
-import java.sql.SQLException;
-import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -75,30 +71,39 @@ public class UserController {
     }
 
     @PostMapping("/signin")
-    public ResponseEntity<String> signin(@RequestBody Map<String, String> siginMap) {
+    public ResponseEntity<Map<String, Object>> signin(@RequestBody Map<String, String> siginMap) {
         try {
-            userService.signin(siginMap.get("id"), siginMap.get("password"));
+            Map<String, Object> userInfoMap =
+                    userService.signin(siginMap.get("id"), siginMap.get("password"));
+            HttpHeaders httpHeaders = new HttpHeaders();
+            httpHeaders.set("Access-Control-Expose-Headers", "*");
+            httpHeaders.add(HttpHeaders.COOKIE, jwtUtils.makeJWT(siginMap.get("id")));
+            return new ResponseEntity<>(userInfoMap, httpHeaders, HttpStatus.OK);
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } catch (BadCredentialsException e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        return ResponseEntity.ok()
-                .body(jwtUtils.makeJWT(siginMap.get("id")));
     }
 
-    @PostMapping("/get-userId")
-    public ResponseEntity<String> getUserId(HttpServletRequest req) {
-        String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
-        return new ResponseEntity<>(jwtUtils.getUserId(token), HttpStatus.OK);
+    @GetMapping("/get-userInfo")
+    public ResponseEntity<Map<String, Object>> getUserId(HttpServletRequest req) {
+        try {
+            String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
+            Map<String, Object> userInfoMap =
+                    userService.getUserInfo(jwtUtils.getUserId(token));
+            return new ResponseEntity<>(userInfoMap, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
     }
 
-    @PostMapping("/info")
+    @GetMapping("/info")
     public ResponseEntity<User> getUserInfo(HttpServletRequest req) {
         String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
         try {
-            User user = userService.findUserInfoById(jwtUtils.getUserId(token));
-            return new ResponseEntity<>(user, HttpStatus.OK);
+            return new ResponseEntity<>(
+                    userService.findUserInfoById(jwtUtils.getUserId(token)), HttpStatus.OK);
         } catch (MalformedJwtException e) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         } catch (NoSuchElementException e) {
@@ -107,7 +112,7 @@ public class UserController {
     }
 
     @PutMapping("/alter")
-    public ResponseEntity<String> alter(
+    public ResponseEntity<Void> alter(
             @RequestParam String id,
             @RequestParam String nickName,
             @RequestParam String isUseProfilePic,
@@ -137,7 +142,10 @@ public class UserController {
         } catch (RuntimeException e) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
-        return new ResponseEntity<>(jwtUtils.makeJWT(id), HttpStatus.OK);
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.set("Access-Control-Expose-Headers", "*");
+        httpHeaders.add(HttpHeaders.COOKIE, jwtUtils.makeJWT(id));
+        return new ResponseEntity<>(httpHeaders, HttpStatus.OK);
     }
 
     @PutMapping("/withdraw")
