@@ -33,10 +33,6 @@ export const MASTER = 'MASTER';
 
 export const DISBANDED = 'disbanded';
 
-export const SUBSCRIBE_PROTOCOL_NUMBER = 0;
-
-export const BAN_PROTOCOL_NUMBER = 2;
-
 export const generateRandonUserId = () => {
     let a = new Uint32Array(3);
     window.crypto.getRandomValues(a);

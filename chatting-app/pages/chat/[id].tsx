@@ -9,11 +9,17 @@ import Seo from "../../components/commons/Seo";
 import UserContainer from "../../components/[id]/UserContainer";
 import { IUserSignedInInfo } from "../../lib/store/modules/signInReducer";
 import { IMessageBody, IParticipants } from "../../types/types";
-import { BAN_PROTOCOL_NUMBER, DISBANDED, generateRandonUserId, getNowTime, MASTER, SUBSCRIBE_PROTOCOL_NUMBER, toastConfig } from "../../utils/utils";
+import { DISBANDED, generateRandonUserId, getNowTime, MASTER, toastConfig } from "../../utils/utils";
 
 export enum SEND_PROTOCOL {
     MESSEGE = 'message',
     DELETE = 'delete',
+    BINARY = 'binary',
+}
+
+export enum RECEIVE_PROTOCOL {
+    SUBSCRIBE = 0,
+    BAN = 2,
 }
 
 interface IChatRoomProps {
@@ -45,10 +51,6 @@ const fetchRoomOwnerAndPreviousChat = async (id: number, count: number, password
     return await (await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/message/${id}?offset=${count}`, { password })).data;
 }
 
-const classifyChatWriter = (writerNo: (number | null), userNo: number, writer: string, user: string) :boolean => {
-    return writerNo ? (writerNo === userNo) : (writer === user);
-}
-
 function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwnerId }: IChatRoomProps) {
     let newMessage: string;
     const router = useRouter();
@@ -56,7 +58,6 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
     const [isAllChatShown, setIsAllChatShown] = useState(previousChat.length < CHAT_REMAIN_NUMBER_LIMIT);
     const [targetChatNumber, setTargetChatNumber] = useState(-1);
     const [participants, setParticipants] = useState<IParticipants[]>([]);
-    const [isUserContainerOpened, setIsUserContainerOpened] = useState(true);
     const { userNo, userId, userNickName } = useSelector(({ signInReducer: {userInfo} }: { signInReducer: {userInfo: IUserSignedInInfo} }) => userInfo);
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
     const handleChatSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -94,7 +95,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
             }
             const msgNo = newMessage.msgNo;
             const participantsListChanged = (
-                msgNo !== null && msgNo >= SUBSCRIBE_PROTOCOL_NUMBER && msgNo <= BAN_PROTOCOL_NUMBER
+                msgNo !== null && msgNo >= RECEIVE_PROTOCOL.SUBSCRIBE && msgNo <= RECEIVE_PROTOCOL.BAN
             );
             if (isSentFromMaster && participantsListChanged)
                 reflectNewMessageAndUser(newMessage);
@@ -105,15 +106,15 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
     const reflectNewMessageAndUser = (newMessage: IMessageBody) => {
         const msgNo = newMessage.msgNo;
         const [targetId, targetNickName] = newMessage.message.split('/');
-        if (msgNo === BAN_PROTOCOL_NUMBER) {
+        if (msgNo === RECEIVE_PROTOCOL.BAN) {
             if (userId ? (targetId === userId) : (targetId === currentUserName))
                 expelUser('You are banned!');
             newMessage.message = `${targetId.slice(0, 9)} has been banned.`;
         } else newMessage.message = `${targetId.slice(0, 9)} has just ${msgNo ? 'left' : 'joined'} the room.`;
-        if (isUserContainerOpened) updateParticipantsList({
-                id: targetId,
-                nickName: targetNickName,
-            }, Boolean(msgNo));
+        updateParticipantsList({
+            id: targetId,
+            nickName: targetNickName,
+        }, Boolean(msgNo));
         updateMessageList(newMessage);
     }
     const updateMessageList = (newMessageInfo: IMessageBody) => {
@@ -214,7 +215,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
             }
             Object.freeze(headers);
             if (socket && stomp) {
-                stomp.send(`/pub/chat/binary`,
+                stomp.send(`/pub/chat/${SEND_PROTOCOL.BINARY}`,
                 imageFile,
                 headers)
             }
@@ -255,17 +256,18 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
                 roomOwner={roomOwner}
                 roomOwnerId={roomOwnerId}
                 setParticipants={setParticipants}
-                setIsUserContainerOpened={setIsUserContainerOpened}
                 shootChatMessage={shootChatMessage}
             />
             <div className="container">
                 {messages.map((msg, i) => 
                     <div key={i} 
-                        className={`chat-box ${(msg.writer === currentUserName) ? 'my-chat-box' : 'others-chat-box'}`}
+                        className={`chat-box ${
+                            ((msg.writer === currentUserName) ||
+                            (msg.writerNo === userNo)) ? 'my-chat-box' : 'others-chat-box'}`}
                     >   
                         {(i === 0) ? <ChatInfo writer={msg.writer} /> :
                         (messages[i - 1].writer !== msg.writer) && 
-                        <ChatInfo 
+                        <ChatInfo
                             writer={msg.writer}
                             isRoomOwner={(msg.writerNo === roomOwner)}
                         />}
@@ -274,17 +276,17 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
                         <>
                             {(i !== 0) && 
                             (messages[i - 1].time !== msg.time) &&
-                            (msg.writer === currentUserName) &&
-                            <ChatTimeComponent
+                            (((userNo < 0) && (msg.writer === currentUserName)) || (msg.writerNo === userNo)) &&
+                            <ChatTimeComponent 
                                 time={msg.time || ''}
-                                isMyMessage={(msg.writerNo === userNo)}
                             />}
                             <span
                                 onDoubleClick={() => 
-                                    classifyChatWriter(msg.writerNo, userNo, msg.writer, currentUserName) ? handleChatDblClick(i) : null}
+                                    ((msg.writer === currentUserName) || (roomOwner === userNo)) ? handleChatDblClick(i) : null}
                                 className={`chat 
-                                ${(msg.writer === currentUserName) ? 'my-chat' : 'others-chat'}
-                                ${msg.isDeleted ? 'deleted-chat' : ''}
+                                    ${(msg.writer === currentUserName) ||
+                                    (msg.writerNo === userNo) ? 'my-chat' : 'others-chat'}
+                                    ${msg.isDeleted ? 'deleted-chat' : ''}
                                 `}
                             >
                                 {!msg.isDeleted &&
@@ -304,11 +306,11 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
                             </span>
                             {(i !== 0) && 
                             (messages[i - 1].time !== msg.time) && 
-                            (msg.writer !== currentUserName) &&
+                            ((msg.writer !== currentUserName) && (msg.writerNo !== userNo)) &&
                             <ChatTimeComponent 
                                 time={msg.time || ''}
-                                isMyMessage={(msg.writerNo === userNo)}
-                            />}
+                            />
+                            }
                         </>}
                     </div>
                 )}
@@ -419,9 +421,9 @@ export async function getServerSideProps({ params: { id }, query: { roomName, pa
     return {
         props: {
             id,
-            roomName: roomName || '',
-            previousChat: previousChat ? previousChat : [],
-            password: password || null,
+            roomName: (roomName || ''),
+            previousChat: (previousChat ? previousChat : []),
+            password: (password || null),
             roomOwner: owner,
             roomOwnerId: ownerId,
         }
@@ -445,14 +447,8 @@ function ChatInfo({ writer, isRoomOwner }: { writer: string, isRoomOwner?: boole
     );
 }
 
-function ChatTimeComponent({ time, isMyMessage }: { time: string, isMyMessage: boolean }) {
-    return (
-        <span>
-            { !isMyMessage && <>&ensp;</> }
-            <span className="time">{time}</span>
-            { isMyMessage && <>&ensp;</> }
-        </span>
-    )
+function ChatTimeComponent({ time }: { time: string}) {
+    return (<>&emsp;<span className="time">{time}</span>&emsp;</>)
 }
 
 interface IMessageContent {

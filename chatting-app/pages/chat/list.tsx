@@ -104,9 +104,12 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     const subscribeRoomParticipants = () => {
         stomp.subscribe('/sub/chat/room/list', ({ body }: { body: string }) => {
             const messageObj = JSON.parse(body);
-            if (Object.hasOwn(messageObj, 'isEnter')) updateRoomParticipants(messageObj);
-            else if (Object.hasOwn(messageObj, 'isDeleted')) updateRoomDeleted(messageObj);
-            else if (Object.hasOwn(messageObj, 'destinationId')) updateRoomMoved(messageObj);
+            if (Object.hasOwn(messageObj, 'isEnter'))
+                updateRoomParticipants(messageObj);
+            else if (Object.hasOwn(messageObj, 'isDeleted'))
+                updateRoomDeleted(messageObj);
+            else if (Object.hasOwn(messageObj, 'destinationId'))
+                updateRoomMoved(messageObj);
             else updateRoomCreated(messageObj);
         });
     };

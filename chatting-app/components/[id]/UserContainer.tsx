@@ -1,7 +1,7 @@
 import axios from "axios";
-import { SEND_PROTOCOL } from "../../pages/chat/[id]";
+import { RECEIVE_PROTOCOL, SEND_PROTOCOL } from "../../pages/chat/[id]";
 import { IMessageBody, IParticipants } from "../../types/types";
-import { BAN_PROTOCOL_NUMBER, MASTER } from "../../utils/utils";
+import { MASTER } from "../../utils/utils";
 
 interface IUserContainer { 
     roomId: number,
@@ -11,7 +11,6 @@ interface IUserContainer {
     roomOwner: number | null,
     roomOwnerId: string,
     setParticipants: (participants: IParticipants[]) => void,
-    setIsUserContainerOpened: (value: boolean) => void,
     shootChatMessage: (target: SEND_PROTOCOL, message: IMessageBody) => void,
 }
 
@@ -23,29 +22,25 @@ function UserContainer({
     roomOwner,
     roomOwnerId,
     setParticipants,
-    setIsUserContainerOpened,
     shootChatMessage }: IUserContainer) {
     const showUserContainerWindow = async () => {
         const results: IParticipants[] = await (await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/room/participants/${roomId}`)).data;
         setParticipants(results);
-        setIsUserContainerOpened(true);
     }
     const banThisParticipant = (participantId: string) => { 
         shootChatMessage(SEND_PROTOCOL.DELETE, {
-            msgNo: BAN_PROTOCOL_NUMBER,
+            msgNo: RECEIVE_PROTOCOL.BAN,
             roomId: String(roomId),
             writer: MASTER,
             writerNo: null,
             message: participantId,
         });
-        setIsUserContainerOpened(true);
     }
     return (
         <>
             <div
                 className="user-container"
                 onMouseEnter={showUserContainerWindow}
-                onMouseOverCapture={() => setIsUserContainerOpened(true)}
             >
                 <h4>users</h4>
                 <div className="name-box">

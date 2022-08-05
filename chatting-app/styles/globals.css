@@ -67,6 +67,7 @@ h5 {
 .chat-box {
   padding: 20px 0px;
   word-wrap: break-word;
+  position: relative;
 }
 
 .my-chat-box {
