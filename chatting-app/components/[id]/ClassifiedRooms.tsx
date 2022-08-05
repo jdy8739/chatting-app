@@ -5,12 +5,17 @@ import Room from "./Room";
 
 
 function ClassifiedRooms({ rooms, subject }: { rooms: IRoom[], subject: string }) {
+    const addToLikeList = () => {
+        
+    }
     return (
         <>
             <div className="table">
                 <h3 className="title">
                     {subject}
-                    <div className="liked"></div>
+                    <div className="liked"
+                        onClick={addToLikeList}
+                    ></div>
                 </h3>
                 <Droppable droppableId={subject}>
                     {(provided, snapshot) => (

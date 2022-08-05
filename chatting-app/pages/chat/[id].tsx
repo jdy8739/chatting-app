@@ -221,6 +221,12 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
             }
         }
     }
+    const checkIfIsMyChat = function <T>(arg: T) {
+        if (typeof arg === 'string')
+        return (arg === currentUserName);
+        else if (typeof arg === 'number')
+        return (arg === userNo);
+    };
     useEffect(() => {
         currentUserName = userNickName ? userNickName : generateRandonUserId();
         socket = new WebSocket('ws://localhost:5000/stomp/chat');
@@ -262,8 +268,8 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
                 {messages.map((msg, i) => 
                     <div key={i} 
                         className={`chat-box ${
-                            ((msg.writer === currentUserName) ||
-                            (msg.writerNo === userNo)) ? 'my-chat-box' : 'others-chat-box'}`}
+                            (checkIfIsMyChat(msg.writer) ||
+                            checkIfIsMyChat(msg.writerNo)) ? 'my-chat-box' : 'others-chat-box'}`}
                     >   
                         {(i === 0) ? <ChatInfo writer={msg.writer} /> :
                         (messages[i - 1].writer !== msg.writer) && 
@@ -276,16 +282,16 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
                         <>
                             {(i !== 0) && 
                             (messages[i - 1].time !== msg.time) &&
-                            (((userNo < 0) && (msg.writer === currentUserName)) || (msg.writerNo === userNo)) &&
+                            (((userNo < 0) && checkIfIsMyChat(msg.writer)) || checkIfIsMyChat(msg.writerNo)) &&
                             <ChatTimeComponent 
                                 time={msg.time || ''}
                             />}
                             <span
                                 onDoubleClick={() => 
-                                    ((msg.writer === currentUserName) || (roomOwner === userNo)) ? handleChatDblClick(i) : null}
+                                    (checkIfIsMyChat(msg.writer) || (roomOwner === userNo)) ? handleChatDblClick(i) : null}
                                 className={`chat 
-                                    ${(msg.writer === currentUserName) ||
-                                    (msg.writerNo === userNo) ? 'my-chat' : 'others-chat'}
+                                    ${checkIfIsMyChat(msg.writer) ||
+                                    checkIfIsMyChat(msg.writerNo) ? 'my-chat' : 'others-chat'}
                                     ${msg.isDeleted ? 'deleted-chat' : ''}
                                 `}
                             >
@@ -306,7 +312,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
                             </span>
                             {(i !== 0) && 
                             (messages[i - 1].time !== msg.time) && 
-                            ((msg.writer !== currentUserName) && (msg.writerNo !== userNo)) &&
+                            (!checkIfIsMyChat(msg.writer) && (msg.writerNo !== userNo)) &&
                             <ChatTimeComponent 
                                 time={msg.time || ''}
                             />
