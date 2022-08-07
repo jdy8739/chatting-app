@@ -1,19 +1,31 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
-import ClassifiedRooms from "../../components/[id]/ClassifiedRooms";
+import ClassifiedRooms from "../../components/list/ClassifiedRooms";
 import { IMessageBody, IRoom } from "../../types/types";
 import webstomp from "webstomp-client";
 import { CHATO_USERINFO, DISBANDED, getCookie, MASTER, toastConfig } from "../../utils/utils";
 import { toast } from "react-toastify";
 import { SEND_PROTOCOL } from "./[id]";
 
+enum PINNED {
+    PINNED = "pinned",
+    NOT_PINNED = "not_pinned",
+}
+
+const TRASH_CAN = 'trash-can';
+
+const SHOW = {
+    VISIBLE: {},
+    INVISIBLE: { display: 'none' },
+}
+
 interface ITest {
     test: string[]
 }
 
-interface IClassifiedRoom {
-    [key: string]: { list: IRoom[], isPinned?: boolean }
+export interface IClassifiedRoom {
+    [key: string]: { list: IRoom[], isPinned: boolean }
 }
 
 interface IRoomMoved {
@@ -39,7 +51,11 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     }
     const arrangeEachRoom = (room: IRoom, roomList: IClassifiedRoom) => {
         const subject = room.subject;
-        if (!Object.hasOwn(roomList, subject)) roomList[subject] = { list: [room] };
+        if (!Object.hasOwn(roomList, subject)) 
+            roomList[subject] = { 
+                list: [room],
+                isPinned: false
+            };
         else roomList[subject]['list'].push(room);
     }
     const checkIfSubjectPinned = (targetSubject: string, roomList: IClassifiedRoom, pinnedSubjects: string[]) => {
@@ -47,23 +63,42 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
             roomList[targetSubject].isPinned = true;
         else roomList[targetSubject].isPinned = false;
     }
-    const onDragEnd = ({ destination, source }: DropResult) => {
-        if (destination) {
-            if (destination.droppableId === 'trash-can') {
+    const onDragEnd = ({ destination, source, draggableId }: DropResult) => {
+        const destinationId = destination?.droppableId;
+        const sourceId = source.droppableId;
+        const isDestinationAboutPin = (destinationId === PINNED.PINNED || destinationId === PINNED.NOT_PINNED);
+        const isSourceAboutPin = (sourceId === PINNED.PINNED || sourceId === PINNED.NOT_PINNED);
+        if (isSourceAboutPin) {
+            if (isDestinationAboutPin) updateTableMoved(destinationId, draggableId);
+            else if (destinationId === TRASH_CAN) return;
+            return;
+        } else if (destination) {
+            if (destinationId === TRASH_CAN) {
                 deleteRoom(source.droppableId, source.index);
                 return;
             }
-            const isSameSubjectMove = (source.droppableId === destination.droppableId);
+            const isSameSubjectMove = (sourceId === destinationId);
             const roomMovedInfo: IRoomMoved = {
-                sourceId: source.droppableId,
-                destinationId: destination.droppableId,
+                sourceId: sourceId,
+                destinationId: (destinationId || ''),
                 sourceIndex: source.index, 
                 destinationIndex: destination.index,
-                targetRoomId: isSameSubjectMove ? undefined : roomList[source.droppableId].list[source.index].roomId,
+                targetRoomId: isSameSubjectMove ? undefined : roomList[sourceId].list[source.index].roomId,
             }
             if (!isSameSubjectMove) changeToNewSubject(roomMovedInfo);
             else updateRoomMoved(roomMovedInfo);
         }
+    }
+    const updateTableMoved = (destination: PINNED, draggableId: string) => {
+        setRoomList(roomList => {
+            return {
+                ...roomList,
+                [draggableId]: {
+                    list: roomList[draggableId].list,
+                    isPinned: (destination === PINNED.PINNED) ? true : false,
+                }
+            }
+        })
     }
     const updateRoomMoved = ({ sourceId, sourceIndex, destinationId, destinationIndex, targetRoomId }: IRoomMoved) => {
         setRoomList(roomList => {
@@ -218,33 +253,44 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     return (
         <>
             <DragDropContext onDragEnd={onDragEnd}>
-                <div className="container grid-box pinned">
-                    {Object.keys(roomList).map((key, i) => {
-                        return (
-                            <div key={i}>
-                                {(roomList[key].isPinned) && 
-                                <ClassifiedRooms
-                                    rooms={roomList[key].list}
-                                    subject={key} 
-                                />}
-                            </div>
-                        )
-                    })}
-                </div>
-                <div className="container grid-box">
-                    {Object.keys(roomList).map((key, i) => {
-                        return (
-                            <div key={i}>
-                                {(!roomList[key].isPinned) && 
-                                <ClassifiedRooms
-                                    rooms={roomList[key].list}
-                                    subject={key} 
-                                />}
-                            </div>
-                        )
-                    })}
-                </div>
-                <Droppable droppableId="trash-can">
+                {[true, false].map(value => {
+                    return (
+                        <Droppable
+                            key={String(value)}
+                            droppableId={`${value ? PINNED.PINNED : PINNED.NOT_PINNED}`}
+                            direction='horizontal'
+                        >
+                            {(provided, snapshot) => 
+                            <div
+                                ref={provided.innerRef} 
+                                {...provided.droppableProps}
+                                className={`container grid-box ${value ? PINNED.PINNED : ''}
+                                ${snapshot.draggingFromThisWith ? 'draggingFromThisWith-pin' : ''} 
+                                ${snapshot.draggingOverWith ? 'isDraggingOver-pin' : ''}
+                                `}
+                            >
+                                {Object.keys(roomList).map((subject, index) => {
+                                    return (
+                                        <div
+                                            key={subject}
+                                            style={(value ? (roomList[subject].isPinned) : (!roomList[subject].isPinned)) ? SHOW.VISIBLE : SHOW.INVISIBLE}
+                                        >
+                                            {(value ? (roomList[subject].isPinned) : (!roomList[subject].isPinned)) && 
+                                            <ClassifiedRooms
+                                                rooms={roomList[subject].list}
+                                                subject={subject}
+                                                isPinned={(roomList[subject].isPinned)}
+                                                setRoomList={setRoomList}
+                                                index={index}
+                                            />}
+                                        </div>
+                                    )
+                                })}
+                            </div>}
+                        </Droppable>
+                    )
+                })}
+                <Droppable droppableId={`${TRASH_CAN}`}>
                     {(provided, snapshot) => (
                         <img
                             width={'75px'}
@@ -253,7 +299,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                             ref={provided.innerRef} 
                             {...provided.droppableProps}
                             {...snapshot}
-                            className={`trash-can ${snapshot.isDraggingOver ? 'bigger' : ''}`}
+                            className={`${TRASH_CAN} ${snapshot.isDraggingOver ? 'bigger' : ''}`}
                         />
                     )}
                 </Droppable>
@@ -266,7 +312,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                 }
                 .trash-can {
                     transition: all 0.5s;
-                    position: absolute;
+                    position: fixed;
                     right: 30px;
                     bottom: 30px;
                 }
@@ -275,7 +321,14 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                 }
                 .pinned {
                     background-color: #ffd17c;
-                    width: vw100;
+                    transition: all 1s;
+                    width: 100vw;
+                }
+                .draggingFromThisWith-pin {
+                    background-color: violet;
+                }
+                .isDraggingOver-pin {
+                    background-color: #37ffde;
                 }
             `}</style>
         </>

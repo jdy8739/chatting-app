@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import React, { useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
 import { IRoom } from "../../types/types";
-import Modal from "../list/Modal";
+import Modal from "./Modal";
 
 function Room({ room, index }: { room: IRoom, index: number }) {
     const router = useRouter();
