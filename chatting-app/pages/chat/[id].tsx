@@ -264,6 +264,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
                 setParticipants={setParticipants}
                 shootChatMessage={shootChatMessage}
             />
+            {/* 재랜더링 시 불필요한 연산을 방지하 위해, 컴포넌트로 넣는 작업이 필요해 보임 */}
             <div className="container">
                 {messages.map((msg, i) => 
                     <div key={i} 

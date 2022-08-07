@@ -13,7 +13,8 @@ function ClassifiedRooms({ rooms, subject }: { rooms: IRoom[], subject: string }
             <div className="table">
                 <h3 className="title">
                     {subject}
-                    <div className="liked"
+                    <div
+                        className="liked"
                         onClick={addToLikeList}
                     ></div>
                 </h3>

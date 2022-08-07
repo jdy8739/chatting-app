@@ -4,12 +4,16 @@ import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import ClassifiedRooms from "../../components/[id]/ClassifiedRooms";
 import { IMessageBody, IRoom } from "../../types/types";
 import webstomp from "webstomp-client";
-import { CHATO_USERINFO, DISBANDED, getCookie, getPreviousRoomId, MASTER, toastConfig } from "../../utils/utils";
+import { CHATO_USERINFO, DISBANDED, getCookie, MASTER, toastConfig } from "../../utils/utils";
 import { toast } from "react-toastify";
 import { SEND_PROTOCOL } from "./[id]";
 
+interface ITest {
+    test: string[]
+}
+
 interface IClassifiedRoom {
-    [key: string]: { isPinned?: boolean, list: IRoom[] }
+    [key: string]: { list: IRoom[], isPinned?: boolean }
 }
 
 interface IRoomMoved {
@@ -25,15 +29,23 @@ let stomp: any;
 
 function ChattingList({ rooms }: { rooms: IRoom[] }) {
     const [roomList, setRoomList] = useState<IClassifiedRoom>({});
-    const arrangeRoomList = async () => {
+    const arrangeRoomList = (pinnedSubjects: string[]) => {
         const defaultRoomListObject: IClassifiedRoom = {};
         rooms.forEach(room => arrangeEachRoom(room, defaultRoomListObject));
+        Object.keys(defaultRoomListObject).forEach(subject => {
+            checkIfSubjectPinned(subject, defaultRoomListObject, pinnedSubjects);
+        });
         setRoomList(defaultRoomListObject);
     }
     const arrangeEachRoom = (room: IRoom, roomList: IClassifiedRoom) => {
         const subject = room.subject;
         if (!Object.hasOwn(roomList, subject)) roomList[subject] = { list: [room] };
         else roomList[subject]['list'].push(room);
+    }
+    const checkIfSubjectPinned = (targetSubject: string, roomList: IClassifiedRoom, pinnedSubjects: string[]) => {
+        if (pinnedSubjects.some(subject => (subject === targetSubject)))
+            roomList[targetSubject].isPinned = true;
+        else roomList[targetSubject].isPinned = false;
     }
     const onDragEnd = ({ destination, source }: DropResult) => {
         if (destination) {
@@ -63,16 +75,28 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
             if (!Object.hasOwn(roomList, destinationId)) {
                 return {
                     ...roomList,
-                    [sourceId]: { list: [...roomList[sourceId].list] },
-                    [destinationId]: { list: [targetRoom] }
+                    [sourceId]: { 
+                        list: [...roomList[sourceId].list],
+                        isPinned: roomList[sourceId].isPinned,
+                    },
+                    [destinationId]: {
+                        list: [targetRoom],
+                        isPinned: roomList[destinationId].isPinned,
+                    }
                 };
             } else {
                 if (targetRoom) 
                     roomList[destinationId].list.splice(destinationIndex, 0, targetRoom);
                 return { 
                     ...roomList,
-                    [sourceId]: { list: [...roomList[sourceId].list] },
-                    [destinationId]: { list: [...roomList[destinationId].list] }
+                    [sourceId]: {
+                        list: [...roomList[sourceId].list],
+                        isPinned: roomList[sourceId].isPinned,
+                    },
+                    [destinationId]: {
+                        list: [...roomList[destinationId].list],
+                        isPinned: roomList[destinationId].isPinned,
+                    }
                 };
             }
         })
@@ -125,14 +149,26 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                 }
                 roomList[targetKey].list.splice(+targetIndex, 1, target);
             }
-            return {...roomList, [targetKey]: {list: [...roomList[targetKey].list]}};
+            return {
+                ...roomList,
+                [targetKey]: {
+                    list: [...roomList[targetKey].list],
+                    isPinned: roomList[targetKey].isPinned,
+                }
+            };
         })
     }
     const updateRoomCreated = (room: IRoom) => {
         setRoomList(roomList => {
             arrangeEachRoom(room, roomList);
             const targetRoomList = roomList[room.subject].list;
-            return {...roomList, [room.subject]: { list: [...targetRoomList] }};
+            return { 
+                ...roomList,
+                [room.subject]: {
+                    list: [...targetRoomList],
+                    isPinned: Object.hasOwn(roomList, room.subject) ? roomList[room.subject].isPinned : false,
+                }
+            };
         })
     }
     const updateRoomDeleted = (info: { roomId: number, isDeleted: number }) => {
@@ -141,7 +177,13 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
             if (targetIndex === -1) return roomList;
             const targetRoomList = roomList[targetKey].list;
             targetRoomList.splice(+targetIndex, 1);
-            return {...roomList, [targetKey]: { list: [...targetRoomList] }};
+            return { 
+                ...roomList,
+                [targetKey]: {
+                    list: [...targetRoomList],
+                    isPinned: roomList[targetKey].isPinned,
+                }
+            };
         })
     }
     const findSubjectAndRoomIndexByRoomId = (roomId: number, roomList: IClassifiedRoom) => {
@@ -157,8 +199,8 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         return [targetKey, targetIndex];
     }
     useEffect(() => {
-        arrangeRoomList();
-        socket = new WebSocket('ws://localhost:5000/stomp/chat');
+        axios.get('/test.json').then(({data: {test}}: {data: ITest}) => arrangeRoomList(test));
+        socket = new WebSocket(`ws://localhost:5000/stomp/chat`);
         stomp = webstomp.over(socket);
         stomp.connect({}, () => {
             subscribeRoomParticipants();
@@ -176,9 +218,31 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     return (
         <>
             <DragDropContext onDragEnd={onDragEnd}>
+                <div className="container grid-box pinned">
+                    {Object.keys(roomList).map((key, i) => {
+                        return (
+                            <div key={i}>
+                                {(roomList[key].isPinned) && 
+                                <ClassifiedRooms
+                                    rooms={roomList[key].list}
+                                    subject={key} 
+                                />}
+                            </div>
+                        )
+                    })}
+                </div>
                 <div className="container grid-box">
-                    {Object.keys(roomList).map((key, i) => 
-                    <ClassifiedRooms key={i} rooms={roomList[key].list} subject={key} />)}
+                    {Object.keys(roomList).map((key, i) => {
+                        return (
+                            <div key={i}>
+                                {(!roomList[key].isPinned) && 
+                                <ClassifiedRooms
+                                    rooms={roomList[key].list}
+                                    subject={key} 
+                                />}
+                            </div>
+                        )
+                    })}
                 </div>
                 <Droppable droppableId="trash-can">
                     {(provided, snapshot) => (
@@ -208,6 +272,10 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                 }
                 .bigger {
                     transform: scale(1.2);
+                }
+                .pinned {
+                    background-color: #ffd17c;
+                    width: vw100;
                 }
             `}</style>
         </>
