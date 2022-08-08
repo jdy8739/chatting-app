@@ -23,6 +23,11 @@ export enum RECEIVE_PROTOCOL {
     BAN = 2,
 }
 
+enum LIMIT {
+    CHAT_REMAIN_NUMBER = 10,
+    STMOP_MESSAGE_SIZE = 500000,
+}
+
 interface IChatRoomProps {
     id: number,
     roomName: string,
@@ -45,10 +50,6 @@ let previousShowCnt = 0;
 let imageFile: ArrayBuffer;
 let timeOut: NodeJS.Timeout;
 
-const CHAT_REMAIN_NUMBER_LIMIT = 10;
-
-const STMOP_MESSAGE_SIZE_LIMIT = 500000;
-
 const fetchRoomOwnerAndPreviousChat = async (id: number, count: number, password?: string) :Promise<IChatRoomInfo> => {
     return await (await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/message/${id}?offset=${count}`, { password })).data;
 }
@@ -57,7 +58,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
     let newMessage: string;
     const router = useRouter();
     const [messages, setMessages] = useState<IMessageBody[]>(previousChat);
-    const [isAllChatShown, setIsAllChatShown] = useState(previousChat.length < CHAT_REMAIN_NUMBER_LIMIT);
+    const [isAllChatShown, setIsAllChatShown] = useState(previousChat.length < LIMIT.CHAT_REMAIN_NUMBER);
     const [targetChatNumber, setTargetChatNumber] = useState(-1);
     const [participants, setParticipants] = useState<IParticipants[]>([]);
     const { userNo, userId, userNickName } = useSelector(({ signInReducer: {userInfo} }: { signInReducer: {userInfo: IUserSignedInInfo} }) => userInfo);
@@ -97,12 +98,11 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
             }
             const msgNo = newMessage.msgNo;
             const participantsListChanged = (
-                msgNo !== null && msgNo >= RECEIVE_PROTOCOL.SUBSCRIBE && msgNo <= RECEIVE_PROTOCOL.BAN
+                (msgNo !== null) && (msgNo >= RECEIVE_PROTOCOL.SUBSCRIBE) && (msgNo <= RECEIVE_PROTOCOL.BAN)
             );
             if (isSentFromMaster && participantsListChanged)
                 reflectNewMessageAndUser(newMessage);
             else updateMessageList(newMessage);
-            window.scrollTo(0, document.body.scrollHeight);
         }, { roomId: id, userId: (userId || currentUserName) })
     }
     const reflectNewMessageAndUser = (newMessage: IMessageBody) => {
@@ -130,7 +130,9 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
                 return copied;
             })
             return;
-        } else setMessages(messages => [...messages, newMessageInfo]);
+        } else 
+            setMessages(messages => [...messages, newMessageInfo]);
+            window.scrollTo(0, document.body.scrollHeight);
     };
     const updateParticipantsList = (targetUser: IParticipants, isUserOut: boolean) => {
         setParticipants(participants => {
@@ -147,7 +149,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
         previousShowCnt += 1;
         const { messageList: newMessages } = await fetchRoomOwnerAndPreviousChat(id, previousShowCnt, password);
         if (newMessages) {
-            if (newMessages.length < CHAT_REMAIN_NUMBER_LIMIT) setIsAllChatShown(true);
+            if (newMessages.length < LIMIT.CHAT_REMAIN_NUMBER) setIsAllChatShown(true);
             setMessages(messages => {
                 const copied = [...newMessages.reverse(), ...messages];
                 return copied;
@@ -159,8 +161,8 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
         if (index === targetChatNumber) {
             clearTimeout(timeOut);
             setTargetChatNumber(-1);
-        }
-        else {
+        } else {
+            console.log(index + ' ' + targetChatNumber);
             setTargetChatNumber(index);
             clearTimeout(timeOut);
             timeOut = setTimeout(() => {
@@ -208,7 +210,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
     const shootBinaryImageMessage = () => {
         if (!imageFile) {
             toast.error('No picture has been chosen.', toastConfig);
-        } else if (imageFile.byteLength > STMOP_MESSAGE_SIZE_LIMIT) {
+        } else if (imageFile.byteLength > LIMIT.STMOP_MESSAGE_SIZE) {
             toast.error('The picture size exceeds the limit.', toastConfig);
         } else {
             const headers = { 
@@ -254,9 +256,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
             clearTimeout(timeOut);
         }
     }, []);
-    useEffect(() => {
-        if (userNo !== -1) startAndSubscribeChatting();
-    }, [userNo])
+    useEffect(() => {if (userNo !== -1) startAndSubscribeChatting();}, [userNo]);
     return (
         <>
             <Seo title={`Chato room ${roomName}`} />

@@ -28,8 +28,7 @@ function MessageComponent({
     userNo,
     roomOwner,
     roomId,
-    isNumberMatches,
-    isDeleted }: IMessageComponent) {
+    isNumberMatches }: IMessageComponent) {
     console.log('rendered. ');
     const checkIsEligibleToDelete = () => {
         return (checkIfIsMyChat(msg.writer) || (msg.writerNo === userNo) || (roomOwner === userNo));
@@ -44,7 +43,7 @@ function MessageComponent({
             (prevWriter !== msg.writer) && 
             <ChatInfo
                 writer={msg.writer}
-                isRoomOwner={(msg.writerNo === roomOwner)}
+                isRoomOwner={(Boolean(roomOwner) && (msg.writerNo === roomOwner))}
             />}
             {(msg.writer === MASTER) ?
             <span className="master-chat">{msg.message}</span> :
@@ -53,7 +52,7 @@ function MessageComponent({
                 (prevTime !== msg.time) &&
                 (((userNo < 0) && checkIfIsMyChat(msg.writer)) || (msg.writerNo === userNo)) &&
                 <ChatTimeComponent
-                    time={msg.time || ''}
+                    time={(msg.time || '')}
                 />}
                 <span
                     onDoubleClick={() => 

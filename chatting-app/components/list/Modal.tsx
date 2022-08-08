@@ -1,7 +1,8 @@
 import axios from "axios";
-import { AnimatePresence, motion } from "framer-motion";
-import React, { useRef } from "react";
-import { modalBgVariant } from "../../utils/utils";
+import { motion } from "framer-motion";
+import React, { useEffect, useRef } from "react";
+import { toast } from "react-toastify";
+import { modalBgVariant, toastConfig } from "../../utils/utils";
 
 interface IModal {
     roomId: number,
@@ -10,27 +11,32 @@ interface IModal {
     pushToChatRoom: (password?: string) => void
 }
 
+let timeOut: NodeJS.Timeout;
+
 function Modal({ roomId, query, hideModal, pushToChatRoom }: IModal) {
     const modalRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const stopPropagation = (e: React.MouseEvent<HTMLDivElement>) => e.stopPropagation();
     const submitPassword = async (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter' || e.keyCode === 13) {
-            const isPwValid = await (await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/enter_password`, {
+            const { data } = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/enter_password`, {
                 roomId: roomId,
                 password: inputRef.current?.value
-            })).data;
-            if (isPwValid)
-                pushToChatRoom(inputRef.current?.value);
+            });
+            if (data) pushToChatRoom(inputRef.current?.value);
             else {
                 const targetRef = modalRef.current;
                 if (targetRef) {
                     targetRef.classList.add('wrong-pw');
-                    setTimeout(() => targetRef.classList.remove('wrong-pw'), 300);
+                    timeOut = setTimeout(() => targetRef.classList.remove('wrong-pw'), 300);
+                    toast.error('Password is not correct, or the number of participant exceeds limit.', toastConfig);
                 }
             }
         }
     }
+    useEffect(() => {
+        return () => { clearTimeout(timeOut); };
+    }, [])
     return (
         <motion.div
             className="modal-bg"

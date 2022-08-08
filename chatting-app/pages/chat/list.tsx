@@ -250,7 +250,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         return () => {
             stomp.disconnect(() => null, {});
         }
-    }, [])
+    }, []);
     return (
         <>
             <DragDropContext onDragEnd={onDragEnd}>

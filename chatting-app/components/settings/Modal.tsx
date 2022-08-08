@@ -1,8 +1,14 @@
 import React, { useEffect, useRef } from "react";
 import { IUserInfo } from "../../pages/user/settings";
 import { AnimatePresence, motion } from "framer-motion";
-import { modalBgVariant } from "../../utils/utils";
+import { modalBgVariant, toastConfig } from "../../utils/utils";
 import { useRouter } from "next/router";
+import { toast } from "react-toastify";
+
+enum EXECUTE {
+    ALTER_USER_INFO = 1,
+    WITHDRAW = 2,
+}
 
 interface IModal {
     alteredUserInfo: IUserInfo
@@ -12,9 +18,7 @@ interface IModal {
     protocol: number,
 }
 
-const EXECUTE_ALTER_USER_INFO = 1;
-
-const EXECUTE_WITHDRAW = 2;
+let timeOut: NodeJS.Timeout;
 
 function Modal({ handleUserSettingsSubmit, handleUserWithdraw, setProtocol, protocol, alteredUserInfo }: IModal) {
     const router = useRouter();
@@ -25,9 +29,9 @@ function Modal({ handleUserSettingsSubmit, handleUserWithdraw, setProtocol, prot
         try {
             if (e.keyCode === 13) {
                 const inputPassword = e.currentTarget.value;
-                if (protocol === EXECUTE_ALTER_USER_INFO)
+                if (protocol === EXECUTE.ALTER_USER_INFO)
                     await handleUserSettingsSubmit(alteredUserInfo, inputPassword);
-                else if (protocol === EXECUTE_WITHDRAW)
+                else if (protocol === EXECUTE.WITHDRAW)
                     await handleUserWithdraw(inputPassword);
                 router.push('/chat/list');
             }
@@ -35,12 +39,13 @@ function Modal({ handleUserSettingsSubmit, handleUserWithdraw, setProtocol, prot
             const targetRef = modalRef.current;
             if (targetRef) {
                 targetRef.classList.add('wrong-pw');
-                setTimeout(() => targetRef.classList.remove('wrong-pw'), 300);
+                timeOut = setTimeout(() => targetRef.classList.remove('wrong-pw'), 300);
             }
         }
     }
     useEffect(() => {
         if (inputRef.current) inputRef.current.focus();
+        return () => { clearTimeout(timeOut); };
     }, []);
     return (
         <motion.div

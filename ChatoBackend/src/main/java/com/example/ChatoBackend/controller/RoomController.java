@@ -87,8 +87,9 @@ public class RoomController {
     public ResponseEntity<Boolean> checkPwValidation(@RequestBody Map<String, String> map) {
         Long roomId = Long.valueOf(map.get(ROOM_ID));
         String password = map.get("password");
-        Boolean isValidPw = chatRoomService.checkPwValidation(roomId, password);
-        return new ResponseEntity<>(isValidPw, HttpStatus.OK);
+        Boolean isRoomAccessible = (chatRoomService.checkPwValidation(roomId, password) &&
+                        chatRoomService.checkRoomStatusOK(roomId));
+        return new ResponseEntity<>(isRoomAccessible, HttpStatus.OK);
     }
 
     @PostMapping("/message/{id}")
