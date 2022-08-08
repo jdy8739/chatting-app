@@ -1,15 +1,16 @@
 import axios from "axios";
 import { useRouter } from "next/router";
 import { userInfo } from "os";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import webstomp from "webstomp-client";
 import Seo from "../../components/commons/Seo";
+import MessageComponent from "../../components/[id]/MessageComponent";
 import UserContainer from "../../components/[id]/UserContainer";
 import { IUserSignedInInfo } from "../../lib/store/modules/signInReducer";
 import { IMessageBody, IParticipants } from "../../types/types";
-import { DISBANDED, generateRandonUserId, getNowTime, MASTER, toastConfig } from "../../utils/utils";
+import { CHATO_USERINFO, DISBANDED, generateRandonUserId, getCookie, getNowTime, MASTER, toastConfig } from "../../utils/utils";
 
 export enum SEND_PROTOCOL {
     MESSEGE = 'message',
@@ -42,6 +43,7 @@ let stomp: any;
 let currentUserName: string = '';
 let previousShowCnt = 0;
 let imageFile: ArrayBuffer;
+let timeOut: NodeJS.Timeout;
 
 const CHAT_REMAIN_NUMBER_LIMIT = 10;
 
@@ -128,13 +130,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
                 return copied;
             })
             return;
-        } else {
-            setMessages(messages => {
-                const copied = [...messages];
-                copied.push(newMessageInfo);
-                return copied;
-            });
-        }
+        } else setMessages(messages => [...messages, newMessageInfo]);
     };
     const updateParticipantsList = (targetUser: IParticipants, isUserOut: boolean) => {
         setParticipants(participants => {
@@ -149,20 +145,30 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
     const showPreviousChat = async () => {
         setTargetChatNumber(-1);
         previousShowCnt += 1;
-        const { messageList } = await fetchRoomOwnerAndPreviousChat(id, previousShowCnt, password);
-        if (messageList) {
-            if (messageList.length < CHAT_REMAIN_NUMBER_LIMIT) setIsAllChatShown(true);
+        const { messageList: newMessages } = await fetchRoomOwnerAndPreviousChat(id, previousShowCnt, password);
+        if (newMessages) {
+            if (newMessages.length < CHAT_REMAIN_NUMBER_LIMIT) setIsAllChatShown(true);
             setMessages(messages => {
-                const copied = [...messageList, ...messages];
+                const copied = [...newMessages.reverse(), ...messages];
                 return copied;
             })
         }
     };
-    const handleChatDblClick = (index: number) => {
-        if (index === targetChatNumber) setTargetChatNumber(-1);
-        else setTargetChatNumber(index);
-    }
-    const deleteChat = async (id: number, msgNo: number) => {
+    const handleChatDblClick = useCallback((index: number) => {
+        /* targetChatNumber이 변경되지않음. */
+        if (index === targetChatNumber) {
+            clearTimeout(timeOut);
+            setTargetChatNumber(-1);
+        }
+        else {
+            setTargetChatNumber(index);
+            clearTimeout(timeOut);
+            timeOut = setTimeout(() => {
+                setTargetChatNumber(-1);
+            }, 3000)
+        }
+    }, [])
+    const deleteChat = useCallback(async (id: number, msgNo: number) => {
         const { status } = await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/room/del_message/${id}?msg_no=${msgNo}`);
         if (status === 200) {
             shootChatMessage(SEND_PROTOCOL.DELETE, {
@@ -174,7 +180,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
             })
             setTargetChatNumber(-1);
         }
-    }
+    }, [])
     const shootChatMessage = (target: SEND_PROTOCOL, message: IMessageBody) => {
         if (socket && stomp) {
             stomp.send(`/pub/chat/${target}`, 
@@ -221,20 +227,23 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
             }
         }
     }
-    const checkIfIsMyChat = function <T>(arg: T) {
+    const checkIfIsMyChat = useCallback(function <T>(arg: T) {
         if (typeof arg === 'string')
         return (arg === currentUserName);
-        else if (typeof arg === 'number')
-        return (arg === userNo);
-    };
-    useEffect(() => {
+        else if (typeof arg === 'number') {
+            return (arg === userNo);
+        }
+    }, [])
+    const startAndSubscribeChatting = () => {
         currentUserName = userNickName ? userNickName : generateRandonUserId();
+        stomp.connect({}, () => { subscribeNewMessage(); });
+    }
+    useEffect(() => {
         socket = new WebSocket('ws://localhost:5000/stomp/chat');
         stomp = webstomp.over(socket);
-        stomp.connect({}, () => {
-            subscribeNewMessage();
-        });
         stomp.debug = () => null;
+        if (!getCookie(CHATO_USERINFO))
+            startAndSubscribeChatting();
         /* currentUserId = participants[0];
         setPreviousRoomId(id);
         setParticipants([{ id: currentUserId, nickName: '' }]); */
@@ -242,8 +251,12 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
             stomp.disconnect(() => null, {});
             currentUserName = '';
             previousShowCnt = 0;
+            clearTimeout(timeOut);
         }
     }, []);
+    useEffect(() => {
+        if (userNo !== -1) startAndSubscribeChatting();
+    }, [userNo])
     return (
         <>
             <Seo title={`Chato room ${roomName}`} />
@@ -264,62 +277,24 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
                 setParticipants={setParticipants}
                 shootChatMessage={shootChatMessage}
             />
-            {/* 재랜더링 시 불필요한 연산을 방지하 위해, 컴포넌트로 넣는 작업이 필요해 보임 */}
+            {/* 재랜더링 시 불필요한 연산을 방지하 위해, 컴포넌트로 넣는 작업이 필요해 보임. (해결) */}
             <div className="container">
                 {messages.map((msg, i) => 
-                    <div key={i} 
-                        className={`chat-box ${
-                            (checkIfIsMyChat(msg.writer) ||
-                            checkIfIsMyChat(msg.writerNo)) ? 'my-chat-box' : 'others-chat-box'}`}
-                    >   
-                        {(i === 0) ? <ChatInfo writer={msg.writer} /> :
-                        (messages[i - 1].writer !== msg.writer) && 
-                        <ChatInfo
-                            writer={msg.writer}
-                            isRoomOwner={(msg.writerNo === roomOwner)}
-                        />}
-                        {(msg.writer === MASTER) ?
-                        <span className="master-chat">{msg.message}</span> :
-                        <>
-                            {(i !== 0) && 
-                            (messages[i - 1].time !== msg.time) &&
-                            (((userNo < 0) && checkIfIsMyChat(msg.writer)) || checkIfIsMyChat(msg.writerNo)) &&
-                            <ChatTimeComponent 
-                                time={msg.time || ''}
-                            />}
-                            <span
-                                onDoubleClick={() => 
-                                    (checkIfIsMyChat(msg.writer) || (roomOwner === userNo)) ? handleChatDblClick(i) : null}
-                                className={`chat 
-                                    ${checkIfIsMyChat(msg.writer) ||
-                                    checkIfIsMyChat(msg.writerNo) ? 'my-chat' : 'others-chat'}
-                                    ${msg.isDeleted ? 'deleted-chat' : ''}
-                                `}
-                            >
-                                {!msg.isDeleted &&
-                                (targetChatNumber === i) &&
-                                <span
-                                    onClick={() => deleteChat(id, msg.msgNo)}
-                                    className="delete-btn">
-                                    x
-                                </span>}
-                                <ChatContent 
-                                    isDeleted={msg.isDeleted}
-                                    isPicture={msg.isPicture}
-                                    content={msg.message}
-                                    msgNo={msg.msgNo}
-                                    roomId={id}
-                                />
-                            </span>
-                            {(i !== 0) && 
-                            (messages[i - 1].time !== msg.time) && 
-                            (!checkIfIsMyChat(msg.writer) && (msg.writerNo !== userNo)) &&
-                            <ChatTimeComponent 
-                                time={msg.time || ''}
-                            />
-                            }
-                        </>}
-                    </div>
+                    (<MessageComponent
+                        key={i}
+                        index={i}
+                        msg={msg}
+                        isDeleted={msg.isDeleted}
+                        prevWriter={messages[i - 1]?.writer}
+                        prevTime={messages[i - 1]?.time}
+                        checkIfIsMyChat={checkIfIsMyChat}
+                        deleteChat={deleteChat}
+                        handleChatDblClick={handleChatDblClick}
+                        userNo={userNo}
+                        roomOwner={roomOwner}
+                        roomId={id}
+                        isNumberMatches={(targetChatNumber === i)}
+                    />)
                 )}
                 <input
                     type="file"
@@ -337,7 +312,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
                         ref={textAreaRef}
                         onKeyDown={handleTextAreaKeyDown}
                     />
-                    <button className="submit-button">submit</button>
+                    <button className="submit-button">submit {targetChatNumber}</button>
                 </form>
                 <style>{`
                     .chat-form { 
@@ -412,8 +387,7 @@ export async function getServerSideProps({ params: { id }, query: { roomName, pa
         const results = await fetchRoomOwnerAndPreviousChat(id, previousShowCnt, password);
         owner = results.owner;
         ownerId = results.ownerId;
-        previousChat = results.messageList;
-        previousChat?.reverse();
+        previousChat = results.messageList?.reverse();
         previousChat?.forEach(chat => {if (chat.isDeleted) chat.message = ''});
     } catch (e) {
         console.log(`Failed to fetch previous chat of room id ${id}.`);
@@ -435,48 +409,6 @@ export async function getServerSideProps({ params: { id }, query: { roomName, pa
             roomOwnerId: ownerId,
         }
     };
-}
-
-function ChatInfo({ writer, isRoomOwner }: { writer: string, isRoomOwner?: boolean }) {
-    return (
-        <>
-            {(writer !== MASTER) &&
-            <span>
-                {isRoomOwner && 
-                <img
-                    src="/crown.png"
-                    width="30px"
-                    height="25px"
-                />}
-                <h5>{writer.slice(0, 9)}</h5>
-            </span>}
-        </>
-    );
-}
-
-function ChatTimeComponent({ time }: { time: string}) {
-    return (<>&emsp;<span className="time">{time}</span>&emsp;</>)
-}
-
-interface IMessageContent {
-    content: string,
-    roomId: number,
-    msgNo: number,
-    isDeleted?: boolean,
-    isPicture?: boolean,
-}
-
-function ChatContent({ isDeleted, isPicture, content, roomId, msgNo }: IMessageContent) {
-    return (
-        <>
-            {(isPicture && !isDeleted) ? 
-            <img
-                src={`${process.env.NEXT_PUBLIC_API_URL}/room/content-pic/${roomId}/${msgNo}`}
-                className="content-img"
-            /> :
-            <span>{isDeleted ? 'deleted message' : content}</span>}
-        </>
-    )
 }
 
 export default ChattingRoom;
