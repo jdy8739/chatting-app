@@ -64,6 +64,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         else roomList[targetSubject].isPinned = false;
     }
     const onDragEnd = ({ destination, source, draggableId }: DropResult) => {
+        console.log(destination?.droppableId);
         const destinationId = destination?.droppableId;
         const sourceId = source.droppableId;
         const isDestinationAboutPin = (destinationId === PINNED.PINNED || destinationId === PINNED.NOT_PINNED);
@@ -264,7 +265,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                             <div
                                 ref={provided.innerRef} 
                                 {...provided.droppableProps}
-                                className={`container grid-box ${value ? PINNED.PINNED : ''}
+                                className={`container grid-box ${value ? PINNED.PINNED : PINNED.NOT_PINNED}
                                 ${snapshot.draggingFromThisWith ? 'draggingFromThisWith-pin' : ''} 
                                 ${snapshot.draggingOverWith ? 'isDraggingOver-pin' : ''}
                                 `}
@@ -290,7 +291,10 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                         </Droppable>
                     )
                 })}
-                <Droppable droppableId={`${TRASH_CAN}`}>
+                <Droppable
+                    droppableId={`${TRASH_CAN}`}
+                    type="active"
+                >
                     {(provided, snapshot) => (
                         <img
                             width={'75px'}
@@ -320,9 +324,13 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                     transform: scale(1.2);
                 }
                 .pinned {
+                    width: 100vw;
                     background-color: #ffd17c;
                     transition: all 1s;
+                }
+                .not_pinned {
                     width: 100vw;
+                    margin-top: 0;
                 }
                 .draggingFromThisWith-pin {
                     background-color: violet;

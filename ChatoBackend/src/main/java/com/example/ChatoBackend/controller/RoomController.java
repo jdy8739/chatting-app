@@ -97,7 +97,7 @@ public class RoomController {
             @RequestParam(value = "offset") String offset,
             @RequestBody Map<String, String> map) {
         long roomOwner = 0;
-        String roomOwnerId = "";
+        String roomOwnerId = null;
         List<MessageDTO> messageDTOList = null;
         if (Integer.valueOf(offset) == 0) {
             if (!chatRoomService.checkPwCorrect(roomId, map.get("password"))) {
@@ -105,8 +105,10 @@ public class RoomController {
             } else if (!chatRoomService.checkRoomStatusOK(roomId)) {
                 return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
             }
-            roomOwner = chatRoomService.findRoomOwnerByRoomId(roomId);
-            roomOwnerId = userService.findUserIdByUserNo(roomOwner);
+            try {
+                roomOwner = chatRoomService.findRoomOwnerByRoomId(roomId);
+                roomOwnerId = userService.findUserIdByUserNo(roomOwner);
+            } catch (NullPointerException e) {};
         }
         messageDTOList = messageService.getMessages(roomId, Integer.valueOf(offset));
         Map<String, Object> responseMap = new HashMap<>();

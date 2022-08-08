@@ -88,7 +88,7 @@ h5 {
   min-width: 450px;
   padding: 120px 0;
   position: relative;
-  margin: 60px auto;
+  margin: 60px auto 0 auto;
 }
 
 .delete-btn {
