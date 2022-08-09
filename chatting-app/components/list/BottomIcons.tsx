@@ -36,7 +36,7 @@ function BottomIcons({ setRoomList }: { setRoomList: Dispatch<SetStateAction<ICl
                         ref={provided.innerRef} 
                         {...provided.droppableProps}
                         {...snapshot}
-                        className={`icon ${snapshot.isDraggingOver ? 'bigger' : ''}`}
+                        className={`icon trash-can ${snapshot.isDraggingOver ? 'bigger' : ''}`}
                     />
                 )}
             </Droppable>
@@ -50,7 +50,6 @@ function BottomIcons({ setRoomList }: { setRoomList: Dispatch<SetStateAction<ICl
             </AnimatePresence>
             <style>{`
                 .icons {
-                    transition: all 0.5s;
                     position: fixed;
                     right: 30px;
                     bottom: 30px;
@@ -60,6 +59,9 @@ function BottomIcons({ setRoomList }: { setRoomList: Dispatch<SetStateAction<ICl
                 }
                 .icon:first-child {
                     cursor: pointer;
+                }
+                .trash-can {
+                    transition: all 0.5s;
                 }
                 .bigger {
                     transform: scale(1.2);

@@ -1,10 +1,9 @@
 import axios from "axios";
 import { useRouter } from "next/router";
-import { userInfo } from "os";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import webstomp from "webstomp-client";
+import webstomp, { Client } from "webstomp-client";
 import Seo from "../../components/commons/Seo";
 import MessageComponent from "../../components/[id]/MessageComponent";
 import UserContainer from "../../components/[id]/UserContainer";
@@ -49,7 +48,7 @@ interface IChatRoomInfo {
 }
   
 let socket: WebSocket;
-let stomp: any;
+let stomp: Client;
 let currentUserName: string = '';
 let previousShowCnt = 0;
 let imageFile: ArrayBuffer;
@@ -108,7 +107,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
             if (isSentFromMaster && participantsListChanged)
                 reflectNewMessageAndUser(newMessage);
             else updateMessageList(newMessage);
-        }, { roomId: id, userId: (userId || currentUserName) })
+        }, { roomId: String(id), userId: (userId || currentUserName) })
     }
     const reflectNewMessageAndUser = (newMessage: IMessageBody) => {
         const msgNo = newMessage.msgNo;

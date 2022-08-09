@@ -1,15 +1,14 @@
 import { combineReducers } from "redux";
 import { HYDRATE } from "next-redux-wrapper";
-import signInReducer, { IUserSignedInInfo } from "./signInReducer";
+import signInReducer from "./signInReducer";
+import likedSubjectReducer from "./likedSubjectReducer";
 
-const rootReducer = (
-  state: any, 
-  action: { type: string; userInfo: IUserSignedInInfo, payload?: unknown }) => {
+const rootReducer = (state: any, action: any) => {
   switch (action.type) {
     case HYDRATE:
       return action.payload;
     default:
-      return combineReducers({ signInReducer })(state, action);
+      return combineReducers({ signInReducer, likedSubjectReducer })(state, action);
   }
 };
 

@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
+import { MASTER_PROTOCOL } from "../../pages/chat/[id]";
 import { IMessageBody } from "../../types/types";
-import { MASTER } from "../../utils/utils";
 
 interface IMessageComponent {
     msg: IMessageBody,
@@ -45,7 +45,7 @@ function MessageComponent({
                 writer={msg.writer}
                 isRoomOwner={(Boolean(roomOwner) && (msg.writerNo === roomOwner))}
             />}
-            {(msg.writer === MASTER) ?
+            {(msg.writer === MASTER_PROTOCOL.MASTER) ?
             <span className="master-chat">{msg.message}</span> :
             <>
                 {(index !== 0) && 
@@ -93,7 +93,7 @@ function MessageComponent({
 function ChatInfo({ writer, isRoomOwner }: { writer: string, isRoomOwner?: boolean }) {
     return (
         <>
-            {(writer !== MASTER) &&
+            {(writer !== MASTER_PROTOCOL.MASTER) &&
             <span>
                 {isRoomOwner && 
                 <img

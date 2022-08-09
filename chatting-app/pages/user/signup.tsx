@@ -3,17 +3,17 @@ import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import Seo from "../../components/commons/Seo";
-import { CHATO_USERINFO, clearPreviousRoomId, getCookie, ID_REGEX, PW_REGEX, signupAxios, toastConfig } from "../../utils/utils";
+import { CHATO_USERINFO, getCookie, ID_REGEX, PW_REGEX, signupAxios, toastConfig } from "../../utils/utils";
 
 interface ISignUpForm {
 	id: string,
     nickName: string,
 	password: string,
 	passwordCheck: string,
-    userProfilePic?: File | null
+    userProfilePic?: (File | null),
 }
 
-let userProfilePic: File | undefined;
+let userProfilePic: (File | undefined);
 
 function SingUp() {
     const router = useRouter();

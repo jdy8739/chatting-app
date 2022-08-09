@@ -1,7 +1,6 @@
 import axios from "axios";
-import { RECEIVE_PROTOCOL, SEND_PROTOCOL } from "../../pages/chat/[id]";
+import { MASTER_PROTOCOL, RECEIVE_PROTOCOL, SEND_PROTOCOL } from "../../pages/chat/[id]";
 import { IMessageBody, IParticipants } from "../../types/types";
-import { MASTER } from "../../utils/utils";
 
 interface IUserContainer { 
     roomId: number,
@@ -31,7 +30,7 @@ function UserContainer({
         shootChatMessage(SEND_PROTOCOL.DELETE, {
             msgNo: RECEIVE_PROTOCOL.BAN,
             roomId: String(roomId),
-            writer: MASTER,
+            writer: MASTER_PROTOCOL.MASTER,
             writerNo: null,
             message: participantId,
         });

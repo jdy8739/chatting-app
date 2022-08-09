@@ -138,3 +138,21 @@ const bakeCookie = (token: string) => {
 		},
 	);
 }
+
+export const getPinnedSubjectStorage = () :(string[] | null) => {
+	const subjectArray = globalThis.localStorage.getItem('pinned');
+	return subjectArray ? JSON.parse(subjectArray) : null;
+}
+
+export const setPinnedSubjectStorage = (subject: string) => {
+	let subjectArray = getPinnedSubjectStorage();
+	if (subjectArray) {
+		const filtered = subjectArray.filter(elem => elem !== subject);
+		if (subjectArray.length === filtered.length) {
+			if (filtered.length > 7) { filtered.shift(); };
+			filtered.push(subject);
+		}
+		subjectArray = filtered;
+	} else subjectArray = [subject];
+	globalThis.localStorage.setItem('pinned', JSON.stringify(subjectArray));
+}

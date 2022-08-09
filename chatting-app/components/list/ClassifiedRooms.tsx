@@ -1,7 +1,12 @@
-import React, { Dispatch, SetStateAction } from "react";
+import axios from "axios";
+import React, { Dispatch, SetStateAction, useEffect } from "react";
 import { Draggable, Droppable } from "react-beautiful-dnd";
+import { useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
+import { addInList, removeInList } from "../../lib/store/modules/likedSubjectReducer";
 import { IClassifiedRoom } from "../../pages/chat/list";
 import { IRoom } from "../../types/types";
+import { CHATO_USERINFO, getCookie, setPinnedSubjectStorage } from "../../utils/utils";
 import Room from "./Room";
 
 interface IClassifiedRoomsProps { 
@@ -10,6 +15,7 @@ interface IClassifiedRoomsProps {
     isPinned: boolean,
     setRoomList: Dispatch<SetStateAction<IClassifiedRoom>>,
     index: number,
+    subjectList: string[],
 }
 
 function ClassifiedRooms({
@@ -17,9 +23,14 @@ function ClassifiedRooms({
     subject,
     isPinned,
     setRoomList,
-    index }: IClassifiedRoomsProps) {
-    console.log('table redered.');
-    const addToLikeList = () => {
+    index,
+    subjectList }: IClassifiedRoomsProps) {
+    console.log('table rendered.');
+    const dispatch = useDispatch();
+    const toggleLikeList = () => {
+        const token = getCookie(CHATO_USERINFO);
+        if (!token) setPinnedSubjectStorage(subject);
+        else toggleSubjectToServer(token);
         setRoomList(roomList => {
             return {
                 ...roomList,
@@ -30,6 +41,16 @@ function ClassifiedRooms({
             }
         })
     }
+    const toggleSubjectToServer = (token: string) => {
+        // axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/like`, {
+        //     subject: subject,
+        //     isLike: true,
+        // }, {headers: {'authorization': `Bearer ${token}`}});
+        // then...
+        if (subjectList.some(checkIfExists)) dispatch(removeInList(subject));
+        else dispatch(addInList(subject));
+    }
+    const checkIfExists = (subjectElem: string) => (subjectElem === subject);
     return (
         <>
             <Draggable
@@ -47,7 +68,7 @@ function ClassifiedRooms({
                         <h3>{subject + " " + index}</h3>
                         <div
                             className="liked"
-                            onClick={addToLikeList}
+                            onClick={toggleLikeList}
                         >
                             {isPinned &&
                             <img
@@ -128,4 +149,10 @@ function ClassifiedRooms({
     )
 }
 
-export default React.memo(ClassifiedRooms);
+interface ISubjectList { subjectList: string[] };
+
+const judgeEqual = ({ subjectList: proSubjectList }: ISubjectList, { subjectList }: ISubjectList) => {
+    return (proSubjectList !== subjectList);
+}
+
+export default React.memo(ClassifiedRooms, judgeEqual);

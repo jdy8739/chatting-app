@@ -1,6 +1,8 @@
-const SIGN_IN = "SIGN_IN";
 
-const SING_OUT = "SIGN_OUT"
+enum SIGN {
+  IN = "SIGN_IN",
+  OUT = "SIGN_OUT",
+}
 
 export interface IUserSignedInInfo {
   userNo: number,
@@ -9,9 +11,9 @@ export interface IUserSignedInInfo {
 }
 
 // Action Creators
-export const signIn = (userInfo: IUserSignedInInfo) => ({ type: SIGN_IN, userInfo });
+export const signIn = (userInfo: IUserSignedInInfo) => ({ type: SIGN.IN, userInfo });
 
-export const signOut = () => ({ type: SING_OUT });
+export const signOut = () => ({ type: SIGN.OUT });
 
 // Initial State
 const initialState: {userInfo: IUserSignedInInfo} = {
@@ -25,11 +27,11 @@ const initialState: {userInfo: IUserSignedInInfo} = {
 // Reducer
 const signInReducer = (state = initialState, action: {type: string, userInfo: IUserSignedInInfo}) :{userInfo: IUserSignedInInfo} => {
   switch (action.type) {
-    case SIGN_IN:
+    case SIGN.IN:
       return {
         userInfo: { ...action.userInfo }
       };
-    case SING_OUT:
+    case SIGN.OUT:
       return {
         userInfo: {
           userNo: -1,

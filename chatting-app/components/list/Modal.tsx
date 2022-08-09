@@ -44,6 +44,7 @@ function Modal({ roomId, query, hideModal, pushToChatRoom, addSubjectTable }: IM
         if (newTableName && addSubjectTable) addSubjectTable(newTableName);
     }
     useEffect(() => {
+        inputRef.current?.focus();
         return () => { clearTimeout(timeOut); };
     }, [])
     return (

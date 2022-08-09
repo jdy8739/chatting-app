@@ -3,25 +3,18 @@ import { useEffect, useState } from "react";
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import ClassifiedRooms from "../../components/list/ClassifiedRooms";
 import { IMessageBody, IRoom } from "../../types/types";
-import webstomp from "webstomp-client";
-import { CHATO_USERINFO, getCookie, toastConfig } from "../../utils/utils";
+import webstomp, { Client } from "webstomp-client";
+import { CHATO_USERINFO, getCookie, getPinnedSubjectStorage, toastConfig } from "../../utils/utils";
 import { toast } from "react-toastify";
 import { MASTER_PROTOCOL, SEND_PROTOCOL } from "./[id]";
 import BottomIcons from "../../components/list/BottomIcons";
+import { useSelector } from "react-redux";
+import { IUserSignedInInfo } from "../../lib/store/modules/signInReducer";
 
 export enum SECTION {
     PINNED = "pinned",
     NOT_PINNED = "not_pinned",
     TRASH_CAN = 'trash-can',
-}
-
-const SHOW = {
-    VISIBLE: {},
-    INVISIBLE: { display: 'none' },
-}
-
-interface ITest {
-    test: string[]
 }
 
 export interface IClassifiedRoom {
@@ -36,17 +29,26 @@ interface IRoomMoved {
     targetRoomId?: number,
 }
 
+const SHOW = {
+    VISIBLE: {},
+    INVISIBLE: { display: 'none' },
+}
+
 let socket: WebSocket;
-let stomp: any;
+let stomp: Client;
 
 function ChattingList({ rooms }: { rooms: IRoom[] }) {
     const [roomList, setRoomList] = useState<IClassifiedRoom>({});
-    const arrangeRoomList = (pinnedSubjects: string[]) => {
+    const { userNo } = useSelector(({ signInReducer: {userInfo} }: { signInReducer: {userInfo: IUserSignedInInfo} }) => userInfo);
+    const subjectList = useSelector(({ likedSubjectReducer: { subjectList }}: { likedSubjectReducer: {subjectList: string[]} }) => subjectList);
+    const arrangeRoomList = (pinnedSubjects: (string[] | null)) => {
         const defaultRoomListObject: IClassifiedRoom = {};
         rooms.forEach(room => arrangeEachRoom(room, defaultRoomListObject));
-        Object.keys(defaultRoomListObject).forEach(subject => {
-            checkIfSubjectPinned(subject, defaultRoomListObject, pinnedSubjects);
-        });
+        if (pinnedSubjects) {
+            Object.keys(defaultRoomListObject).forEach(subject => {
+                checkIfSubjectPinned(subject, defaultRoomListObject, pinnedSubjects);
+            });
+        }
         setRoomList(defaultRoomListObject);
     }
     const arrangeEachRoom = (room: IRoom, roomList: IClassifiedRoom) => {
@@ -234,7 +236,9 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         return [targetKey, targetIndex];
     }
     useEffect(() => {
-        axios.get('/test.json').then(({data: {test}}: {data: ITest}) => arrangeRoomList(test));
+        // axios.get('/test.json').then(({data: {test}}: {data: ITest}) => arrangeRoomList(test));
+        if (!getCookie(CHATO_USERINFO))
+            arrangeRoomList(getPinnedSubjectStorage());
         socket = new WebSocket(`ws://localhost:5000/stomp/chat`);
         stomp = webstomp.over(socket);
         stomp.connect({}, () => {
@@ -250,6 +254,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
             stomp.disconnect(() => null, {});
         }
     }, []);
+    useEffect(() => {if (userNo > 0) arrangeRoomList(subjectList)}, [userNo]);
     return (
         <>
             <DragDropContext onDragEnd={onDragEnd}>
@@ -282,6 +287,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                                                 isPinned={(roomList[subject].isPinned)}
                                                 setRoomList={setRoomList}
                                                 index={index}
+                                                subjectList={subjectList}
                                             />}
                                         </div>
                                     )

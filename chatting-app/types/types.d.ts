@@ -1,4 +1,5 @@
 import 'react-toastify';
+import 'webstomp-client';
 
 declare module 'react-toastify' {
     export interface ToastOptions {
@@ -10,6 +11,14 @@ declare module 'react-toastify' {
         draggable: boolean,
         progress: boolean,
         theme: string,
+    }
+}
+
+type ISendMethod = (destination: string, body?: string | ArrayBuffer | undefined, headers?: ExtendedHeaders | undefined) => void;
+
+declare module 'webstomp-client' {
+    export interface Client {
+        send: ISendMethod,
     }
 }
 
