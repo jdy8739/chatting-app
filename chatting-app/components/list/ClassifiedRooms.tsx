@@ -18,6 +18,7 @@ function ClassifiedRooms({
     isPinned,
     setRoomList,
     index }: IClassifiedRoomsProps) {
+    console.log('table redered.');
     const addToLikeList = () => {
         setRoomList(roomList => {
             return {
@@ -36,7 +37,7 @@ function ClassifiedRooms({
                 key={ subject }
                 index={ index }
             >
-                {(provided, snapshot) => 
+                {provided => 
                 <div className="table"
                     ref={provided.innerRef} 
                     { ...provided.dragHandleProps }

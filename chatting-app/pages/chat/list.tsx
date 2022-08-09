@@ -4,16 +4,16 @@ import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import ClassifiedRooms from "../../components/list/ClassifiedRooms";
 import { IMessageBody, IRoom } from "../../types/types";
 import webstomp from "webstomp-client";
-import { CHATO_USERINFO, DISBANDED, getCookie, MASTER, toastConfig } from "../../utils/utils";
+import { CHATO_USERINFO, getCookie, toastConfig } from "../../utils/utils";
 import { toast } from "react-toastify";
-import { SEND_PROTOCOL } from "./[id]";
+import { MASTER_PROTOCOL, SEND_PROTOCOL } from "./[id]";
+import BottomIcons from "../../components/list/BottomIcons";
 
-enum PINNED {
+export enum SECTION {
     PINNED = "pinned",
     NOT_PINNED = "not_pinned",
+    TRASH_CAN = 'trash-can',
 }
-
-const TRASH_CAN = 'trash-can';
 
 const SHOW = {
     VISIBLE: {},
@@ -64,17 +64,16 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         else roomList[targetSubject].isPinned = false;
     }
     const onDragEnd = ({ destination, source, draggableId }: DropResult) => {
-        console.log(destination?.droppableId);
         const destinationId = destination?.droppableId;
         const sourceId = source.droppableId;
-        const isDestinationAboutPin = (destinationId === PINNED.PINNED || destinationId === PINNED.NOT_PINNED);
-        const isSourceAboutPin = (sourceId === PINNED.PINNED || sourceId === PINNED.NOT_PINNED);
+        const isDestinationAboutPin = (destinationId === SECTION.PINNED || destinationId === SECTION.NOT_PINNED);
+        const isSourceAboutPin = (sourceId === SECTION.PINNED || sourceId === SECTION.NOT_PINNED);
         if (isSourceAboutPin) {
             if (isDestinationAboutPin) updateTableMoved(destinationId, draggableId);
-            else if (destinationId === TRASH_CAN) return;
+            else if (destinationId === SECTION.TRASH_CAN) return;
             return;
         } else if (destination) {
-            if (destinationId === TRASH_CAN) {
+            if (destinationId === SECTION.TRASH_CAN) {
                 deleteRoom(source.droppableId, source.index);
                 return;
             }
@@ -90,13 +89,13 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
             else updateRoomMoved(roomMovedInfo);
         }
     }
-    const updateTableMoved = (destination: PINNED, draggableId: string) => {
+    const updateTableMoved = (destination: SECTION, draggableId: string) => {
         setRoomList(roomList => {
             return {
                 ...roomList,
                 [draggableId]: {
                     list: roomList[draggableId].list,
-                    isPinned: (destination === PINNED.PINNED) ? true : false,
+                    isPinned: (destination === SECTION.PINNED) ? true : false,
                 }
             }
         })
@@ -117,7 +116,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                     },
                     [destinationId]: {
                         list: [targetRoom],
-                        isPinned: roomList[destinationId].isPinned,
+                        isPinned: false,
                     }
                 };
             } else {
@@ -146,8 +145,8 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
             sendRoomDeleteMessage({
                 msgNo: 0,
                 roomId: String(targetRoomId),
-                message: DISBANDED,
-                writer: MASTER,
+                message: MASTER_PROTOCOL.DISBANDED,
+                writer: MASTER_PROTOCOL.MASTER,
                 writerNo: null,
             })
         })
@@ -258,14 +257,14 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                     return (
                         <Droppable
                             key={String(value)}
-                            droppableId={`${value ? PINNED.PINNED : PINNED.NOT_PINNED}`}
+                            droppableId={`${value ? SECTION.PINNED : SECTION.NOT_PINNED}`}
                             direction='horizontal'
                         >
                             {(provided, snapshot) => 
                             <div
                                 ref={provided.innerRef} 
                                 {...provided.droppableProps}
-                                className={`container grid-box ${value ? PINNED.PINNED : PINNED.NOT_PINNED}
+                                className={`container grid-box ${value ? SECTION.PINNED : SECTION.NOT_PINNED}
                                 ${snapshot.draggingFromThisWith ? 'draggingFromThisWith-pin' : ''} 
                                 ${snapshot.draggingOverWith ? 'isDraggingOver-pin' : ''}
                                 `}
@@ -291,37 +290,15 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                         </Droppable>
                     )
                 })}
-                <Droppable
-                    droppableId={`${TRASH_CAN}`}
-                    type="active"
-                >
-                    {(provided, snapshot) => (
-                        <img
-                            width={'75px'}
-                            height={'75px'}
-                            src={'/trash_can.jpg.png'}
-                            ref={provided.innerRef} 
-                            {...provided.droppableProps}
-                            {...snapshot}
-                            className={`${TRASH_CAN} ${snapshot.isDraggingOver ? 'bigger' : ''}`}
-                        />
-                    )}
-                </Droppable>
+                <BottomIcons 
+                    setRoomList={setRoomList}
+                />
             </DragDropContext>
             <style>{`
                 .grid-box {
                     display: grid;
                     grid-template-columns: repeat(auto-fill, 335px);
                     justify-content: center;
-                }
-                .trash-can {
-                    transition: all 0.5s;
-                    position: fixed;
-                    right: 30px;
-                    bottom: 30px;
-                }
-                .bigger {
-                    transform: scale(1.2);
                 }
                 .pinned {
                     width: 100vw;

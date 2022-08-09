@@ -29,10 +29,6 @@ export const ID_REGEX = /^(?!.*[!#$%&’'*+/=?^_`])[a-zA-Z0-9]+$/;
 
 export const PW_REGEX = /^(?=.*[~`!@#$%^&*()--+={}\[\]|\\:;"'<>,.?/_₹])/;
 
-export const MASTER = 'MASTER';
-
-export const DISBANDED = 'disbanded';
-
 export const generateRandonUserId = () => {
     let a = new Uint32Array(3);
     window.crypto.getRandomValues(a);

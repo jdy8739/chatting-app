@@ -10,7 +10,7 @@ import MessageComponent from "../../components/[id]/MessageComponent";
 import UserContainer from "../../components/[id]/UserContainer";
 import { IUserSignedInInfo } from "../../lib/store/modules/signInReducer";
 import { IMessageBody, IParticipants } from "../../types/types";
-import { CHATO_USERINFO, DISBANDED, generateRandonUserId, getCookie, getNowTime, MASTER, toastConfig } from "../../utils/utils";
+import { CHATO_USERINFO, generateRandonUserId, getCookie, getNowTime, toastConfig } from "../../utils/utils";
 
 export enum SEND_PROTOCOL {
     MESSEGE = 'message',
@@ -21,6 +21,11 @@ export enum SEND_PROTOCOL {
 export enum RECEIVE_PROTOCOL {
     SUBSCRIBE = 0,
     BAN = 2,
+}
+
+export enum MASTER_PROTOCOL {
+    MASTER = "MASTER",
+    DISBANDED = "disbanded",
 }
 
 enum LIMIT {
@@ -91,8 +96,8 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
     const subscribeNewMessage = () => {
         stomp.subscribe(`/sub/chat/room/${id}`, ({ body }: { body: string }) => {
             const newMessage: IMessageBody = JSON.parse(body);
-            const isSentFromMaster = (newMessage.writer === MASTER);
-            if (isSentFromMaster && newMessage.message === DISBANDED) {
+            const isSentFromMaster = (newMessage.writer === MASTER_PROTOCOL.MASTER);
+            if (isSentFromMaster && newMessage.message === MASTER_PROTOCOL.DISBANDED) {
                 expelUser('This room is disbanded.');
                 return;
             }
@@ -122,7 +127,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
     const updateMessageList = (newMessageInfo: IMessageBody) => {
         const message = newMessageInfo.message;
         const target = Number(message);
-        if ((newMessageInfo.writer === MASTER) && !window.isNaN(target)) {
+        if ((newMessageInfo.writer === MASTER_PROTOCOL.MASTER) && !window.isNaN(target)) {
             setMessages(messages => {
                 const copied = [...messages];
                 const targetIndex = copied.findIndex(chat => chat.msgNo === target);
@@ -177,7 +182,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
                 msgNo: 0,
                 roomId: String(id), 
                 message: String(msgNo),
-                writer: MASTER,
+                writer: MASTER_PROTOCOL.MASTER,
                 writerNo: (userNo > 0) ? userNo : null,
             })
             setTargetChatNumber(-1);
@@ -312,7 +317,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
                         ref={textAreaRef}
                         onKeyDown={handleTextAreaKeyDown}
                     />
-                    <button className="submit-button">submit {targetChatNumber}</button>
+                    <button className="submit-button">submit</button>
                 </form>
                 <style>{`
                     .chat-form { 
