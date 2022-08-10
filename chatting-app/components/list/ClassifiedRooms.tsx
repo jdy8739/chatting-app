@@ -1,56 +1,29 @@
-import axios from "axios";
-import React, { Dispatch, SetStateAction } from "react";
+import React, { useEffect } from "react";
 import { Draggable, Droppable } from "react-beautiful-dnd";
-import { useSelector } from "react-redux";
-import { useDispatch } from "react-redux";
-import { addInList, removeInList } from "../../lib/store/modules/likedSubjectReducer";
-import { IClassifiedRoom, ISubjectListSelector } from "../../pages/chat/list";
+import { SECTION } from "../../pages/chat/list";
 import { IRoom } from "../../types/types";
-import { CHATO_USERINFO, getCookie, setPinnedSubjectStorage } from "../../utils/utils";
 import Room from "./Room";
 
-interface IClassifiedRoomsProps { 
+interface IClassifiedRoomsProps {
     rooms: IRoom[],
     subject: string,
     isPinned: boolean,
-    setRoomList: Dispatch<SetStateAction<IClassifiedRoom>>,
+    toggleLikeList: (destination: SECTION, subject: string, subejctList: string[]) => void,
     index: number,
-    subjectList: Array<string>,
+    subjectList: string[],
 }
 
 function ClassifiedRooms({
     rooms,
     subject,
     isPinned,
-    setRoomList,
+    toggleLikeList,
     index,
     subjectList }: IClassifiedRoomsProps) {
     console.log('table rendered.');
-    const dispatch = useDispatch();
-    const toggleLikeList = () => {
-        const token = getCookie(CHATO_USERINFO);
-        if (!token) setPinnedSubjectStorage(subject);
-        else toggleSubjectToServer(token);
-        setRoomList(roomList => {
-            return {
-                ...roomList,
-                [subject]: {
-                    list: roomList[subject].list,
-                    isPinned: !isPinned,
-                }
-            }
-        })
+    const updateRoomMoved = () => {
+        toggleLikeList(isPinned ? SECTION.NOT_PINNED : SECTION.PINNED, subject, subjectList);
     }
-    const toggleSubjectToServer = async (token: string) => {
-        const isAddLike = subjectList.some(checkIfExists);
-        const { status } = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/manage_subject_like`, 
-        { subject, isAddLike }, { headers: {'authorization': `Bearer ${token}`} });
-        if (status === 200) {
-            if (isAddLike) dispatch(removeInList(subject));
-            else dispatch(addInList(subject));
-        }
-    }
-    const checkIfExists = (subjectElem: string) => (subjectElem === subject);
     return (
         <>
             <Draggable
@@ -65,10 +38,10 @@ function ClassifiedRooms({
                     { ...provided.draggableProps }
                 >
                     <div className="title">
-                        <h3>{subject + " " + index}</h3>
+                        <h3>{subject}</h3>
                         <div
                             className="liked"
-                            onClick={toggleLikeList}
+                            onClick={updateRoomMoved}
                         >
                             {isPinned &&
                             <img
@@ -92,7 +65,12 @@ function ClassifiedRooms({
                                 {...provided.droppableProps}
                                 {...snapshot}
                             >
-                                {rooms.map((room, index) => <Room key={room.roomId} room={room} index={index} />)}
+                                {rooms.map((room, index) => 
+                                <Room
+                                    key={room.roomId}
+                                    room={room}
+                                    index={index}
+                                />)}
                             </div>
                         )}
                     </Droppable>
@@ -149,4 +127,10 @@ function ClassifiedRooms({
     )
 }
 
-export default React.memo(ClassifiedRooms);
+const judgeEqual = (
+    { subjectList: proSubjectList, isPinned: proIsPinned }: IClassifiedRoomsProps, 
+    { subjectList, isPinned }: IClassifiedRoomsProps) => {
+    return ((proSubjectList !== subjectList) && (proIsPinned === isPinned));
+}
+
+export default React.memo(ClassifiedRooms, judgeEqual);

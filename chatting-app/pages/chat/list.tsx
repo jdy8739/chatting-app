@@ -1,15 +1,16 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import ClassifiedRooms from "../../components/list/ClassifiedRooms";
 import { IMessageBody, IRoom } from "../../types/types";
 import webstomp, { Client } from "webstomp-client";
-import { CHATO_USERINFO, getCookie, getPinnedSubjectStorage, toastConfig } from "../../utils/utils";
+import { CHATO_USERINFO, getCookie, getPinnedSubjectStorage, setPinnedSubjectStorage, toastConfig } from "../../utils/utils";
 import { toast } from "react-toastify";
 import { MASTER_PROTOCOL, SEND_PROTOCOL } from "./[id]";
 import BottomIcons from "../../components/list/BottomIcons";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { IUserSignedInInfo } from "../../lib/store/modules/signInReducer";
+import { addInList, removeInList } from "../../lib/store/modules/likedSubjectReducer";
 
 export enum SECTION {
     PINNED = "pinned",
@@ -50,10 +51,11 @@ const SHOW = {
 
 let socket: WebSocket;
 let stomp: Client;
-let renderingCount = 0;
 
 function ChattingList({ rooms }: { rooms: IRoom[] }) {
+    const dispatch = useDispatch();
     const [roomList, setRoomList] = useState<IClassifiedRoom>({});
+    const { userId } = useSelector(({ signInReducer: {userInfo} }: IUserInfoSelector) => userInfo);
     const subjectList = useSelector(({ likedSubjectReducer: { subjectList }}: ISubjectListSelector) => subjectList);
     const arrangeRoomList = (pinnedSubjects: (string[] | null)) => {
         const defaultRoomListObject: IClassifiedRoom = {};
@@ -70,7 +72,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         if (!Object.hasOwn(roomList, subject)) 
             roomList[subject] = { 
                 list: [room],
-                isPinned: false
+                isPinned: false,
             };
         else roomList[subject]['list'].push(room);
     }
@@ -85,7 +87,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         const isDestinationAboutPin = (destinationId === SECTION.PINNED || destinationId === SECTION.NOT_PINNED);
         const isSourceAboutPin = (sourceId === SECTION.PINNED || sourceId === SECTION.NOT_PINNED);
         if (isSourceAboutPin) {
-            if (isDestinationAboutPin) updateTableMoved(destinationId, draggableId);
+            if (isDestinationAboutPin) toggleLikeList(destinationId, draggableId, subjectList);
             else if (destinationId === SECTION.TRASH_CAN) return;
             return;
         } else if (destination) {
@@ -249,15 +251,32 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         })
         return [targetKey, targetIndex];
     }
+    const toggleLikeList = useCallback((destination: SECTION, subject: string, subjectList: string[]) => {
+        const token = getCookie(CHATO_USERINFO);
+        if (!token) {
+            setPinnedSubjectStorage(subject);
+            updateTableMoved(destination, subject);
+        } else toggleSubjectToServer(token, subject, subjectList);
+    }, [])
+    const toggleSubjectToServer = async (token: string, subject: string, subjectList: string[]) => {
+        const checkIfExists = (subjectElem: string) => (subjectElem === subject);
+        const isAddLike = subjectList.some(checkIfExists);
+        const { status } = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/manage_subject_like`, 
+        { subject, isAddLike }, { headers: {'authorization': `Bearer ${token}`} });
+        if (status === 200) {
+            if (isAddLike) dispatch(removeInList(subject));
+            else dispatch(addInList(subject));
+        }
+    }
     useEffect(() => {
-        if (!getCookie(CHATO_USERINFO))
-            arrangeRoomList(getPinnedSubjectStorage());
         socket = new WebSocket(`ws://localhost:5000/stomp/chat`);
         stomp = webstomp.over(socket);
         stomp.connect({}, () => {
             subscribeRoomParticipants();
         });
         stomp.debug = () => null;
+        if (!getCookie(CHATO_USERINFO))
+            arrangeRoomList(getPinnedSubjectStorage());        
         /* const previousRoomId = getPreviousRoomId();
         if (previousRoomId) {
             console.log(previousRoomId);
@@ -265,10 +284,9 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         } */
         return () => {
             stomp.disconnect(() => null, {});
-            renderingCount = 0;
         }
     }, []);
-    useEffect(() => {arrangeRoomList(subjectList)}, [subjectList]);
+    useEffect(() => { if (userId) arrangeRoomList(subjectList) }, [subjectList]);
     return (
         <>
             <DragDropContext onDragEnd={onDragEnd}>
@@ -299,7 +317,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                                                 rooms={roomList[subject].list}
                                                 subject={subject}
                                                 isPinned={(roomList[subject].isPinned)}
-                                                setRoomList={setRoomList}
+                                                toggleLikeList={toggleLikeList}
                                                 index={index}
                                                 subjectList={subjectList}
                                             />}
