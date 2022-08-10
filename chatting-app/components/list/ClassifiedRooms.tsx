@@ -1,10 +1,10 @@
 import axios from "axios";
-import React, { Dispatch, SetStateAction, useEffect } from "react";
+import React, { Dispatch, SetStateAction } from "react";
 import { Draggable, Droppable } from "react-beautiful-dnd";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import { addInList, removeInList } from "../../lib/store/modules/likedSubjectReducer";
-import { IClassifiedRoom } from "../../pages/chat/list";
+import { IClassifiedRoom, ISubjectListSelector } from "../../pages/chat/list";
 import { IRoom } from "../../types/types";
 import { CHATO_USERINFO, getCookie, setPinnedSubjectStorage } from "../../utils/utils";
 import Room from "./Room";
@@ -15,7 +15,7 @@ interface IClassifiedRoomsProps {
     isPinned: boolean,
     setRoomList: Dispatch<SetStateAction<IClassifiedRoom>>,
     index: number,
-    subjectList: string[],
+    subjectList: Array<string>,
 }
 
 function ClassifiedRooms({
@@ -41,14 +41,14 @@ function ClassifiedRooms({
             }
         })
     }
-    const toggleSubjectToServer = (token: string) => {
-        // axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/like`, {
-        //     subject: subject,
-        //     isLike: true,
-        // }, {headers: {'authorization': `Bearer ${token}`}});
-        // then...
-        if (subjectList.some(checkIfExists)) dispatch(removeInList(subject));
-        else dispatch(addInList(subject));
+    const toggleSubjectToServer = async (token: string) => {
+        const isAddLike = subjectList.some(checkIfExists);
+        const { status } = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/manage_subject_like`, 
+        { subject, isAddLike }, { headers: {'authorization': `Bearer ${token}`} });
+        if (status === 200) {
+            if (isAddLike) dispatch(removeInList(subject));
+            else dispatch(addInList(subject));
+        }
     }
     const checkIfExists = (subjectElem: string) => (subjectElem === subject);
     return (
@@ -149,10 +149,4 @@ function ClassifiedRooms({
     )
 }
 
-interface ISubjectList { subjectList: string[] };
-
-const judgeEqual = ({ subjectList: proSubjectList }: ISubjectList, { subjectList }: ISubjectList) => {
-    return (proSubjectList !== subjectList);
-}
-
-export default React.memo(ClassifiedRooms, judgeEqual);
+export default React.memo(ClassifiedRooms);

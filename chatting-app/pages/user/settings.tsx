@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 import Modal from "../../components/settings/Modal";
 import { IUserSignedInInfo, signIn, signOut } from "../../lib/store/modules/signInReducer";
 import { CHATO_USERINFO, clearPreviousRoomId, getCookie, ID_REGEX, removeCookie, setCookie, signupAxios, toastConfig } from "../../utils/utils";
+import { IUserInfoSelector } from "../chat/list";
 
 export interface IUserInfo {
     id: string,
@@ -26,7 +27,7 @@ function Settings() {
     const [userInfo, setUserInfo] = useState<IUserInfo>();
     const [picBlobString, setPicBlobString] = useState('');
     const [protocol, setProtocol] = useState(0);
-    const { userNo } = useSelector(({ signInReducer: {userInfo} }: { signInReducer: {userInfo: IUserSignedInInfo} }) => userInfo);
+    const { userNo } = useSelector(({ signInReducer: {userInfo} }: IUserInfoSelector) => userInfo);
     const handleSignIn = (userInfo: IUserSignedInInfo) => dispatch(signIn(userInfo));
     const handleSignOut = () => dispatch(signOut());
     const { 

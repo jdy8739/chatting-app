@@ -7,9 +7,9 @@ import webstomp, { Client } from "webstomp-client";
 import Seo from "../../components/commons/Seo";
 import MessageComponent from "../../components/[id]/MessageComponent";
 import UserContainer from "../../components/[id]/UserContainer";
-import { IUserSignedInInfo } from "../../lib/store/modules/signInReducer";
 import { IMessageBody, IParticipants } from "../../types/types";
 import { CHATO_USERINFO, generateRandonUserId, getCookie, getNowTime, toastConfig } from "../../utils/utils";
+import { IUserInfoSelector } from "./list";
 
 export enum SEND_PROTOCOL {
     MESSEGE = 'message',
@@ -65,7 +65,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
     const [isAllChatShown, setIsAllChatShown] = useState(previousChat.length < LIMIT.CHAT_REMAIN_NUMBER);
     const [targetChatNumber, setTargetChatNumber] = useState(-1);
     const [participants, setParticipants] = useState<IParticipants[]>([]);
-    const { userNo, userId, userNickName } = useSelector(({ signInReducer: {userInfo} }: { signInReducer: {userInfo: IUserSignedInInfo} }) => userInfo);
+    const { userNo, userId, userNickName } = useSelector(({ signInReducer: {userInfo} }: IUserInfoSelector) => userInfo);
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
     const handleChatSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();

@@ -100,7 +100,7 @@ public class RoomController {
         long roomOwner = 0;
         String roomOwnerId = null;
         List<MessageDTO> messageDTOList = null;
-        if (Integer.valueOf(offset) == 0) {
+        if (Integer.parseInt(offset) == 0) {
             if (!chatRoomService.checkPwCorrect(roomId, map.get("password"))) {
                 return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
             } else if (!chatRoomService.checkRoomStatusOK(roomId)) {

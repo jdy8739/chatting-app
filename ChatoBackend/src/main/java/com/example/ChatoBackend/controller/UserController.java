@@ -15,7 +15,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.security.auth.login.CredentialException;
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.nio.file.Files;
@@ -86,8 +85,9 @@ public class UserController {
         }
     }
 
+    /* 로그인, 새로고침 시 클라이언트 redux에 회원 정보 저장 용도 */
     @GetMapping("/get-userInfo")
-    public ResponseEntity<Map<String, Object>> getUserId(HttpServletRequest req) {
+    public ResponseEntity<Map<String, Object>> getUserSignedInInfo(HttpServletRequest req) {
         try {
             String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
             Map<String, Object> userInfoMap =
@@ -98,8 +98,9 @@ public class UserController {
         }
     }
 
+    /* 회원 정보 수정, 삭제 페이지 용도 */
     @GetMapping("/info")
-    public ResponseEntity<User> getUserInfo(HttpServletRequest req) {
+    public ResponseEntity<User> getUserWholeInfo(HttpServletRequest req) {
         String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
         try {
             return new ResponseEntity<>(
@@ -164,5 +165,17 @@ public class UserController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @PostMapping("/manage_subject_like")
+    public ResponseEntity<Void> manageSubjectLike(
+            @RequestBody Map<String, String> map,
+            HttpServletRequest req) {
+        String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
+        Long userNo = userService.findUserNoByUserId(jwtUtils.getUserId(token));
+        String subject = map.get("subject");
+        boolean isAddLike = Boolean.parseBoolean(map.get("isAddLike"));
+        userService.toggleSubjectLike(userNo, subject, isAddLike);
+        return new ResponseEntity<Void>(HttpStatus.OK);
     }
 }

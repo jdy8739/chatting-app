@@ -1,15 +1,27 @@
 import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { replaceList, truncateList } from "../../lib/store/modules/likedSubjectReducer";
 import { IUserSignedInInfo, signIn, signOut } from "../../lib/store/modules/signInReducer";
+import { IUserInfoSelector } from "../../pages/chat/list";
 import { CHATO_USERINFO, getCookie, removeCookie } from "../../utils/utils";
+
+interface ILikedSubject {
+    likedSubjectNo: number,
+    subject: string,
+    userNo: number,
+}
+
+interface ISignedIn extends IUserSignedInInfo {
+    likedSubjects?: ILikedSubject[],
+}
 
 function NavBar() {
     const router = useRouter();
     const dispatch = useDispatch();
-    const userInfo = useSelector(({signInReducer: { userInfo }}: {signInReducer: { userInfo: IUserSignedInInfo }}) => userInfo);
+    const userInfo = useSelector(({signInReducer: { userInfo }}: IUserInfoSelector) => userInfo);
     const handleSignIn = (userInfo: IUserSignedInInfo) => dispatch(signIn(userInfo));
     const handleSignOut = () => dispatch(signOut());
     const fetchUserInfo = async () => {
@@ -18,13 +30,21 @@ function NavBar() {
             axios.get(`${process.env.NEXT_PUBLIC_API_URL}/user/get-userInfo`, {
                 headers: { 'authorization': `Bearer ${token}` }
             })
-            .then(({ data }: { data: IUserSignedInInfo }) => handleSignIn(data))
+            .then(({ data }: { data: ISignedIn }) => {
+                const likedList: Array<string> = [];
+                if (data.likedSubjects)
+                    data.likedSubjects.forEach(subject => likedList.push(subject.subject));
+                dispatch(replaceList(likedList));
+                delete data.likedSubjects;
+                handleSignIn(data);
+            })
             .catch(() => removeCookie(CHATO_USERINFO, {path: '/'}));
         }
     }
     const removeSignedInUserInfo = () => {
         removeCookie(CHATO_USERINFO, { path: '/' });
         handleSignOut();
+        dispatch(truncateList());
         router.push('/chat/list');
     }
     useEffect(() => {

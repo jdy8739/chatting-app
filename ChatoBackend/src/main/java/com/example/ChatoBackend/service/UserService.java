@@ -29,4 +29,8 @@ public interface UserService {
     public Map<String, Object> getUserInfo(String id);
 
     public String findUserIdByUserNo(long userNo);
+
+    public Long findUserNoByUserId(String id);
+
+    public void toggleSubjectLike(Long userNo, String subject, boolean isAddLike);
 }

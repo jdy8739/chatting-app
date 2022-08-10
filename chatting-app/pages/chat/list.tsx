@@ -17,8 +17,22 @@ export enum SECTION {
     TRASH_CAN = 'trash-can',
 }
 
+export interface ISubjectListSelector { 
+    likedSubjectReducer: { 
+        subjectList: string[],
+    } 
+};
+
+export interface IUserInfoSelector { 
+    signInReducer: { 
+        userInfo: IUserSignedInInfo,
+    } 
+}
+
 export interface IClassifiedRoom {
-    [key: string]: { list: IRoom[], isPinned: boolean }
+    [key: string]: { 
+        list: IRoom[], isPinned: boolean,
+    }
 }
 
 interface IRoomMoved {
@@ -36,11 +50,11 @@ const SHOW = {
 
 let socket: WebSocket;
 let stomp: Client;
+let renderingCount = 0;
 
 function ChattingList({ rooms }: { rooms: IRoom[] }) {
     const [roomList, setRoomList] = useState<IClassifiedRoom>({});
-    const { userNo } = useSelector(({ signInReducer: {userInfo} }: { signInReducer: {userInfo: IUserSignedInInfo} }) => userInfo);
-    const subjectList = useSelector(({ likedSubjectReducer: { subjectList }}: { likedSubjectReducer: {subjectList: string[]} }) => subjectList);
+    const subjectList = useSelector(({ likedSubjectReducer: { subjectList }}: ISubjectListSelector) => subjectList);
     const arrangeRoomList = (pinnedSubjects: (string[] | null)) => {
         const defaultRoomListObject: IClassifiedRoom = {};
         rooms.forEach(room => arrangeEachRoom(room, defaultRoomListObject));
@@ -236,7 +250,6 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         return [targetKey, targetIndex];
     }
     useEffect(() => {
-        // axios.get('/test.json').then(({data: {test}}: {data: ITest}) => arrangeRoomList(test));
         if (!getCookie(CHATO_USERINFO))
             arrangeRoomList(getPinnedSubjectStorage());
         socket = new WebSocket(`ws://localhost:5000/stomp/chat`);
@@ -252,9 +265,10 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         } */
         return () => {
             stomp.disconnect(() => null, {});
+            renderingCount = 0;
         }
     }, []);
-    useEffect(() => {if (userNo > 0) arrangeRoomList(subjectList)}, [userNo]);
+    useEffect(() => {arrangeRoomList(subjectList)}, [subjectList]);
     return (
         <>
             <DragDropContext onDragEnd={onDragEnd}>

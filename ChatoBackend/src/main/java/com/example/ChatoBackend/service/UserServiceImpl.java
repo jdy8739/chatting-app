@@ -1,8 +1,10 @@
 package com.example.ChatoBackend.service;
 
 import com.example.ChatoBackend.entity.ChatRoom;
+import com.example.ChatoBackend.entity.LikedSubject;
 import com.example.ChatoBackend.entity.User;
 import com.example.ChatoBackend.repository.ChatRoomRepository;
+import com.example.ChatoBackend.repository.LikedSubjectRepository;
 import com.example.ChatoBackend.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.http.fileupload.impl.FileSizeLimitExceededException;
@@ -32,6 +34,8 @@ public class UserServiceImpl implements UserService {
     @Autowired
     ChatRoomRepository chatRoomRepository;
 
+    @Autowired
+    LikedSubjectRepository likedSubjectRepository;
     @Autowired
     PasswordEncoder passwordEncoder;
 
@@ -184,14 +188,27 @@ public class UserServiceImpl implements UserService {
 
     private Map<String, Object> assembleUserInfo (User user) {
         Map<String, Object> userInfoMap = new HashMap<>();
-        userInfoMap.put("userNo", user.getUserNo());
+        Long userNo = user.getUserNo();
+        userInfoMap.put("userNo", userNo);
         userInfoMap.put("userId", user.getId());
         userInfoMap.put("userNickName", user.getNickName());
+        userInfoMap.put("likedSubjects", likedSubjectRepository.findLikedListByUserNo(userNo));
         return userInfoMap;
     }
 
     @Override
     public String findUserIdByUserNo(long userNo) {
         return userRepository.findUserIdByUserNo(userNo);
+    }
+
+    @Override
+    public Long findUserNoByUserId(String id) {
+        return userRepository.findUserNoByUserId(id);
+    }
+
+    @Override
+    public void toggleSubjectLike(Long userNo, String subject, boolean isAddLike) {
+        if (isAddLike) likedSubjectRepository.deleteLikedSubjectByUserNo(userNo, subject);
+        else likedSubjectRepository.save(new LikedSubject(userNo, subject));
     }
 }
