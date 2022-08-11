@@ -14,7 +14,7 @@ interface ILikedSubject {
     userNo: number,
 }
 
-interface ISignedIn extends IUserSignedInInfo {
+export interface ISignedIn extends IUserSignedInInfo {
     likedSubjects?: ILikedSubject[],
 }
 

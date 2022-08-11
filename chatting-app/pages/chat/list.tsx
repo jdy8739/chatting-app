@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
-import ClassifiedRooms from "../../components/list/ClassifiedRooms";
+import ClassifiedRooms from "../../components/list/Table";
 import { IMessageBody, IRoom } from "../../types/types";
 import webstomp, { Client } from "webstomp-client";
 import { CHATO_USERINFO, getCookie, getPinnedSubjectStorage, setPinnedSubjectStorage, toastConfig } from "../../utils/utils";
@@ -53,9 +53,12 @@ let socket: WebSocket;
 let stomp: Client;
 
 function ChattingList({ rooms }: { rooms: IRoom[] }) {
+    let pinnedTableLength: number = 0;
+    let notPinnedTableLength: number = 0;
+    let isTableShown: boolean;
     const dispatch = useDispatch();
     const [roomList, setRoomList] = useState<IClassifiedRoom>({});
-    const { userId } = useSelector(({ signInReducer: {userInfo} }: IUserInfoSelector) => userInfo);
+    const { userNo, userId } = useSelector(({ signInReducer: {userInfo} }: IUserInfoSelector) => userInfo);
     const subjectList = useSelector(({ likedSubjectReducer: { subjectList }}: ISubjectListSelector) => subjectList);
     const arrangeRoomList = (pinnedSubjects: (string[] | null)) => {
         const defaultRoomListObject: IClassifiedRoom = {};
@@ -286,7 +289,14 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
             stomp.disconnect(() => null, {});
         }
     }, []);
-    useEffect(() => { if (userId) arrangeRoomList(subjectList) }, [subjectList]);
+    useEffect(() => {
+        if (userId)
+            arrangeRoomList(subjectList);
+    }, [subjectList]);
+    useEffect(() => {
+        if (userNo === -1)
+            arrangeRoomList(getPinnedSubjectStorage());
+    }, [userNo]);
     return (
         <>
             <DragDropContext onDragEnd={onDragEnd}>
@@ -307,12 +317,15 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                                 `}
                             >
                                 {Object.keys(roomList).map((subject, index) => {
+                                    isTableShown = (value ? (roomList[subject].isPinned) : (!roomList[subject].isPinned));
+                                    if (value && (roomList[subject].isPinned)) pinnedTableLength++;
+                                    else if (!value && (!roomList[subject].isPinned)) notPinnedTableLength ++;
                                     return (
                                         <div
                                             key={subject}
-                                            style={(value ? (roomList[subject].isPinned) : (!roomList[subject].isPinned)) ? SHOW.VISIBLE : SHOW.INVISIBLE}
+                                            style={isTableShown ? SHOW.VISIBLE : SHOW.INVISIBLE}
                                         >
-                                            {(value ? (roomList[subject].isPinned) : (!roomList[subject].isPinned)) && 
+                                            {isTableShown && 
                                             <ClassifiedRooms
                                                 rooms={roomList[subject].list}
                                                 subject={subject}
@@ -324,6 +337,15 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                                         </div>
                                     )
                                 })}
+                                {value && (pinnedTableLength === 0) && 
+                                <div className="bg-box">
+                                    <div className="bg-box-title">PINNED</div>
+                                    <div>Put the table you want to pin</div>
+                                </div>}
+                                {!value && (notPinnedTableLength === 0) &&
+                                <div className="bg-box">
+                                    <div className="bg-box-title">UNPINNED</div>
+                                </div>}
                             </div>}
                         </Droppable>
                     )
@@ -340,18 +362,33 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                 }
                 .pinned {
                     width: 100vw;
+                    min-height: 400px;
                     background-color: #ffd17c;
                     transition: all 1s;
+                    position: relative;
                 }
                 .not_pinned {
                     width: 100vw;
                     margin-top: 0;
+                    position: relative;
+                    margin-bottom: 100px;
                 }
                 .draggingFromThisWith-pin {
                     background-color: violet;
                 }
                 .isDraggingOver-pin {
                     background-color: #37ffde;
+                }
+                .bg-box {
+                    position: absolute;
+                    top: 80px;
+                    width: 100%;
+                    text-align: center;
+                    opacity: 0.8;
+                    color: white;
+                }
+                .bg-box-title {
+                    font-size: 150px;
                 }
             `}</style>
         </>

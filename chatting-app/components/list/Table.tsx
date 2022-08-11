@@ -1,10 +1,10 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Draggable, Droppable } from "react-beautiful-dnd";
 import { SECTION } from "../../pages/chat/list";
 import { IRoom } from "../../types/types";
 import Room from "./Room";
 
-interface IClassifiedRoomsProps {
+interface ITable {
     rooms: IRoom[],
     subject: string,
     isPinned: boolean,
@@ -13,13 +13,13 @@ interface IClassifiedRoomsProps {
     subjectList: string[],
 }
 
-function ClassifiedRooms({
+function Table({
     rooms,
     subject,
     isPinned,
     toggleLikeList,
     index,
-    subjectList }: IClassifiedRoomsProps) {
+    subjectList }: ITable) {
     console.log('table rendered.');
     const updateRoomMoved = () => {
         toggleLikeList(isPinned ? SECTION.NOT_PINNED : SECTION.PINNED, subject, subjectList);
@@ -128,9 +128,12 @@ function ClassifiedRooms({
 }
 
 const judgeEqual = (
-    { subjectList: proSubjectList, isPinned: proIsPinned }: IClassifiedRoomsProps, 
-    { subjectList, isPinned }: IClassifiedRoomsProps) => {
+    { subjectList: proSubjectList, isPinned: proIsPinned }: ITable, 
+    { subjectList, isPinned }: ITable) => {
     return ((proSubjectList !== subjectList) && (proIsPinned === isPinned));
 }
 
-export default React.memo(ClassifiedRooms, judgeEqual);
+/* 위 함수를 shouldComponentUpdate에 적용시키면 테이블 고정, 고정 해제에는 불필요한 렌더링을 방지할 수
+있지만 타 사용자 채팅방 출입의 재렌더링에 대해서는 다른 테이블까지 모든 불필요한 렌더링을 하게되어 뺏음. */
+
+export default React.memo(Table);

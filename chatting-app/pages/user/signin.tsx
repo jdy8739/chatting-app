@@ -3,6 +3,8 @@ import { useRouter } from "next/router";
 import React, { useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
+import { ISignedIn } from "../../components/commons/NavBar";
+import { replaceList } from "../../lib/store/modules/likedSubjectReducer";
 import { IUserSignedInInfo, signIn } from "../../lib/store/modules/signInReducer";
 import { CHATO_USERINFO, clearPreviousRoomId, getCookie, signinAxios, toastConfig } from "../../utils/utils";
 
@@ -11,16 +13,21 @@ function Signin() {
     const dispatch = useDispatch();
     const idInputRef = useRef<HTMLInputElement>(null);
     const pwInputRef = useRef<HTMLInputElement>(null);
-    const reflectUserInfo = (userInfo: IUserSignedInInfo) => dispatch(signIn(userInfo));
+    const handleSignIn = (userInfo: IUserSignedInInfo) => dispatch(signIn(userInfo));
     const handleSigninSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const id = idInputRef.current?.value;
         const password = pwInputRef.current?.value;
         if (id && password) {
             try {
-                const { status, data }: { status: number, data: IUserSignedInInfo } = await signinAxios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/signin`, {id, password});
+                const { status, data }: { status: number, data: ISignedIn } = await signinAxios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/signin`, {id, password});
                 if (status === 200) {
-                    reflectUserInfo(data);
+                    const likedList: Array<string> = [];
+                    if (data.likedSubjects)
+                        data.likedSubjects.forEach(subject => likedList.push(subject.subject));
+                    dispatch(replaceList(likedList));
+                    delete data.likedSubjects;
+                    handleSignIn(data);
                     router.push('/chat/list');
                 }
             } catch (e) {};
