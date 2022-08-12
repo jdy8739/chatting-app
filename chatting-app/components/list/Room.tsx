@@ -2,14 +2,18 @@ import { AnimatePresence } from "framer-motion";
 import { useRouter } from "next/router";
 import React, { useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
+import { toast } from "react-toastify";
 import { IRoom } from "../../types/types";
+import { toastConfig } from "../../utils/utils";
 import Modal from "./Modal";
 
 function Room({ room, index }: { room: IRoom, index: number }) {
     const router = useRouter();
     const [isModalShown, setIsModalShown] = useState(false);
     const handleClickChatRoom = () => {
-        if (room.pwRequired) setIsModalShown(true);
+        if (room.nowParticipants === room.limitation) {
+            toast.error('The number of participant exceeds limit.', toastConfig)
+        } else if (room.pwRequired) setIsModalShown(true);
         else pushToChatRoom();
     }
     const pushToChatRoom = (password?: string) => {
@@ -20,6 +24,13 @@ function Room({ room, index }: { room: IRoom, index: number }) {
         }, `/chat/${roomId}`)
     }
     const hideModal = () => { setIsModalShown(false) };
+    const correctParticipantsNumber = (numberOfParticipants?: number) => {
+        if (!numberOfParticipants) return 0;
+        else if (numberOfParticipants < 0) return 0;
+        else if (numberOfParticipants > room.limitation) return room.limitation;
+        else return numberOfParticipants;
+    }
+    room.nowParticipants = correctParticipantsNumber(room.nowParticipants);
     return (
         <>
             <Draggable 
@@ -29,7 +40,10 @@ function Room({ room, index }: { room: IRoom, index: number }) {
             >
                 {(provided, snapshot) => (
                     <div 
-                        className={`element ${snapshot.isDragging ? 'isDragging' : 'isNotDragging'}`}
+                        className={`element
+                            ${snapshot.isDragging ? 'isDragging' : 'isNotDragging'}
+                            ${(room.nowParticipants === room.limitation) ? 'isFullRoom' : ''}
+                            `}
                         ref={provided.innerRef}
                         {...provided.draggableProps}
                         {...provided.dragHandleProps}
@@ -81,6 +95,9 @@ function Room({ room, index }: { room: IRoom, index: number }) {
                 }
                 .isNotDragging {
                     background-color: #f6d79f;
+                }
+                .isFullRoom {
+                    background-color: #b87676;
                 }
                 .element:hover {
                     background-color: orange;

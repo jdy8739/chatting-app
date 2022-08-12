@@ -14,6 +14,7 @@ public interface LikedSubjectRepository extends JpaRepository<LikedSubject, Long
     @Modifying
     @Query("delete from LikedSubject ls where ls.userNo = :userNo and ls.subject = :subject")
     void deleteLikedSubjectByUserNo(Long userNo, String subject);
+
     @Query("select ls from LikedSubject ls where ls.userNo = :userNo")
     List<LikedSubject> findLikedListByUserNo(Long userNo);
 }

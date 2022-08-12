@@ -369,6 +369,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                 }
                 .not_pinned {
                     width: 100vw;
+                    min-height: 400px;
                     margin-top: 0;
                     position: relative;
                     margin-bottom: 100px;

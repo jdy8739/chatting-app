@@ -35,7 +35,7 @@ function Modal({ roomId, query, hideModal, pushToChatRoom, addSubjectTable }: IM
             if (targetRef) {
                 targetRef.classList.add('wrong-pw');
                 timeOut = setTimeout(() => targetRef.classList.remove('wrong-pw'), 300);
-                toast.error('Password is not correct, or the number of participant exceeds limit.', toastConfig);
+                toast.error('Password is not correct.', toastConfig);
             }
         }
     }

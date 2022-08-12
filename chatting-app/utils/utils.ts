@@ -1,4 +1,4 @@
-import axios, { Axios, AxiosError } from "axios";
+import axios, { AxiosError } from "axios";
 import { toast } from "react-toastify";
 import { Cookies } from 'react-cookie';
 

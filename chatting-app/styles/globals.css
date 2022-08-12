@@ -120,9 +120,18 @@ h5 {
 
 .user-container > h4 {
   position: absolute;
+  color: white;
+  cursor: pointer;
+}
+
+.user-container > .user {
   right: 10px;
   top: 65px;
-  color: white;
+}
+
+.user-container > .banned {
+  right: 18px;
+  top: 135px;
 }
 
 .user-container:hover {

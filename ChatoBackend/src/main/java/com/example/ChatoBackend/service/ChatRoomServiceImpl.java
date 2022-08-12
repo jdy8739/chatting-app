@@ -1,7 +1,9 @@
 package com.example.ChatoBackend.service;
 
 import com.example.ChatoBackend.DTO.ParticipantDTO;
+import com.example.ChatoBackend.entity.BannedIp;
 import com.example.ChatoBackend.entity.ChatRoom;
+import com.example.ChatoBackend.repository.BannedIpRepository;
 import com.example.ChatoBackend.repository.ChatRoomRepository;
 import com.example.ChatoBackend.repository.MessageRepository;
 import com.example.ChatoBackend.store.ConnectedUserAndRoomInfoStore;
@@ -25,6 +27,9 @@ public class ChatRoomServiceImpl implements ChatRoomService {
 
     @Autowired
     ConnectedUserAndRoomInfoStore connectedUserAndRoomInfoStore;
+
+    @Autowired
+    BannedIpRepository bannedIpRepository;
 
     @Override
     public void saveChatRoom(ChatRoom chatRoom) throws SQLException {
@@ -117,7 +122,33 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         Optional<ChatRoom> optionalChatRoom = chatRoomRepository.findByRoomId(roomId);
         if (optionalChatRoom.isEmpty()) throw new NoSuchElementException();
         long roomOwner = optionalChatRoom.get().getOwner();
-        if (roomOwner == userNo) return true;
-        else return false;
+        return (roomOwner == userNo);
+    }
+
+    @Override
+    public boolean checkIfIsNotBannedIp(long roomId, String ipAddress) {
+        List<String> bannedIpList = bannedIpRepository.findIpAddressByRoomId(roomId);
+        if (bannedIpList.size() == 0) return true;
+        for (String ipAddressElem : bannedIpList) {
+            if (ipAddressElem.equals(ipAddress)) return false;
+        }
+        return true;
+    }
+
+    @Override
+    public List<BannedIp> findBannedIpByRoomId(long roomId) {
+        List<BannedIp> bannedIpList =  bannedIpRepository.findBannedIpByRoomId(roomId);
+        int count = 0;
+        for (BannedIp bannedIp : bannedIpList) {
+            String ipAddress = bannedIpList.get(count).getIpAddress().substring(0, 7);
+            bannedIp.setIpAddress(ipAddress);
+            count ++;
+        }
+        return bannedIpList;
+    }
+
+    @Override
+    public void unlockBannedUser(long bannedIpNo) {
+        bannedIpRepository.deleteBannedIpByBannedIpNo(bannedIpNo);
     }
 }

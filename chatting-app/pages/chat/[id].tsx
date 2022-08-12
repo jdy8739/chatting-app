@@ -54,8 +54,8 @@ let previousShowCnt = 0;
 let imageFile: ArrayBuffer;
 let timeOut: NodeJS.Timeout;
 
-const fetchRoomOwnerAndPreviousChat = async (id: number, count: number, password?: string) :Promise<IChatRoomInfo> => {
-    return await (await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/message/${id}?offset=${count}`, { password })).data;
+const fetchRoomOwnerAndPreviousChat = async (id: number, count: number, password?: string, ipAddress?: string) :Promise<IChatRoomInfo> => {
+    return await (await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/message/${id}?offset=${count}`, { password, ipAddress })).data;
 }
 
 function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwnerId }: IChatRoomProps) {
@@ -196,7 +196,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
     }
     const expelUser = async (sentence: string) => {
         try {
-            if (id === null) throw new Error();
+            if (!id) throw new Error();
             const {data: { ip }}: { data: Iipdata } = await axios.get(`https://api.ipdata.co?api-key=${process.env.NEXT_PUBLIC_IPDATA_API_KEY}`);
             axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/add_banned`, {
                 roomId: id,
@@ -398,7 +398,8 @@ export async function getServerSideProps({ params: { id }, query: { roomName, pa
     let ownerId: string;
     let previousChat: (IMessageBody[] | undefined);
     try {
-        const results = await fetchRoomOwnerAndPreviousChat(id, previousShowCnt, password);
+        const {data: { ip }}: { data: Iipdata } = await axios.get(`https://api.ipdata.co?api-key=${process.env.NEXT_PUBLIC_IPDATA_API_KEY}`);
+        const results = await fetchRoomOwnerAndPreviousChat(id, previousShowCnt, password, ip);
         owner = results.owner;
         ownerId = results.ownerId;
         previousChat = results.messageList?.reverse();
@@ -408,7 +409,7 @@ export async function getServerSideProps({ params: { id }, query: { roomName, pa
         return {
             redirect: {
                 permanent: false,
-                destination: "/chat/list",
+                destination: "/room_exception",
             },
             props: {}
         };

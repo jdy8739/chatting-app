@@ -2,6 +2,7 @@ package com.example.ChatoBackend.controller;
 
 import com.example.ChatoBackend.DTO.MessageDTO;
 import com.example.ChatoBackend.DTO.ParticipantDTO;
+import com.example.ChatoBackend.entity.BannedIp;
 import com.example.ChatoBackend.entity.ChatRoom;
 import com.example.ChatoBackend.entity.User;
 import com.example.ChatoBackend.jwt.JWTUtils;
@@ -72,9 +73,8 @@ public class RoomController {
         String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
         try {
             long roomId = Long.parseLong(map.get("targetRoomId"));
-            if (!chatRoomService.checkIfIsRoomOwner(roomId,
-                    userService.findUserInfoById(jwtUtils.getUserId(token)).getUserNo()))
-                throw new Exception();
+            long userNo = userService.findUserInfoById(jwtUtils.getUserId(token)).getUserNo();
+            if (!chatRoomService.checkIfIsRoomOwner(roomId, userNo)) throw new Exception();
             chatRoomService.changeSubject(roomId, map.get("destinationId"));
             messagingTemplate.convertAndSend("/sub/chat/room/list", map);
             return new ResponseEntity<>(HttpStatus.OK);
@@ -87,8 +87,7 @@ public class RoomController {
     public ResponseEntity<Boolean> checkPwValidation(@RequestBody Map<String, String> map) {
         Long roomId = Long.valueOf(map.get(ROOM_ID));
         String password = map.get("password");
-        Boolean isRoomAccessible = (chatRoomService.checkPwValidation(roomId, password) &&
-                        chatRoomService.checkRoomStatusOK(roomId));
+        Boolean isRoomAccessible = (chatRoomService.checkPwValidation(roomId, password));
         return new ResponseEntity<>(isRoomAccessible, HttpStatus.OK);
     }
 
@@ -101,15 +100,16 @@ public class RoomController {
         String roomOwnerId = null;
         List<MessageDTO> messageDTOList = null;
         if (Integer.parseInt(offset) == 0) {
-            if (!chatRoomService.checkPwCorrect(roomId, map.get("password"))) {
+            if (!chatRoomService.checkIfIsNotBannedIp(roomId, map.get("ipAddress"))) {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            } else if (!chatRoomService.checkPwCorrect(roomId, map.get("password"))) {
                 return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
             } else if (!chatRoomService.checkRoomStatusOK(roomId)) {
                 return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
-            }
-            try {
+            } else try {
                 roomOwner = chatRoomService.findRoomOwnerByRoomId(roomId);
                 roomOwnerId = userService.findUserIdByUserNo(roomOwner);
-            } catch (NullPointerException e) {};
+            } catch (NullPointerException ignored) {};
         }
         messageDTOList = messageService.getMessages(roomId, Integer.valueOf(offset));
         Map<String, Object> responseMap = new HashMap<>();
@@ -157,8 +157,8 @@ public class RoomController {
 
     @GetMapping("/content-pic/{roomId}/{msgNo}")
     public ResponseEntity<byte[]> getContentImage(
-            @PathVariable("roomId") String roomId,
-            @PathVariable("msgNo") String msgNo) {
+            @PathVariable("roomId") Long roomId,
+            @PathVariable("msgNo") Long msgNo) {
         byte[] imageByteArray = null;
         try {
             String path = "./images/rooms/" + roomId;
@@ -170,5 +170,34 @@ public class RoomController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return new ResponseEntity<>(imageByteArray, HttpStatus.OK);
+    }
+
+    @GetMapping("/banned_users/{roomId}")
+    public ResponseEntity<List<BannedIp>> getBannedUsers(
+            @PathVariable("roomId") long roomId,
+            HttpServletRequest req) {
+        String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
+        try {
+            long userNo = userService.findUserInfoById(jwtUtils.getUserId(token)).getUserNo();
+            if (!chatRoomService.checkIfIsRoomOwner(roomId, userNo)) throw new Exception();
+            else return new ResponseEntity<>(chatRoomService.findBannedIpByRoomId(roomId), HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+    }
+
+    @PostMapping("/unlock_ban")
+    public ResponseEntity<Void> unlockBannedUser(
+            @RequestBody Map<String, String> map,
+            HttpServletRequest req) {
+        String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
+        try {
+            long userNo = userService.findUserInfoById(jwtUtils.getUserId(token)).getUserNo();
+            if (!chatRoomService.checkIfIsRoomOwner(Long.parseLong(map.get("roomId")), userNo)) ;
+            else chatRoomService.unlockBannedUser((Long.parseLong(map.get("bannedIpNo"))));
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }

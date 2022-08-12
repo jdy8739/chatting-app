@@ -1,6 +1,7 @@
 package com.example.ChatoBackend.service;
 
 import com.example.ChatoBackend.DTO.ParticipantDTO;
+import com.example.ChatoBackend.entity.BannedIp;
 import com.example.ChatoBackend.entity.ChatRoom;
 import org.springframework.stereotype.Service;
 
@@ -33,4 +34,10 @@ public interface ChatRoomService {
     public List<ParticipantDTO> getParticipantListByRoomId(Long roomId);
 
     public boolean checkIfIsRoomOwner(long roomId, long userNo);
+
+    public boolean checkIfIsNotBannedIp(long roomId, String ipAddress);
+
+    public List<BannedIp> findBannedIpByRoomId(long roomId);
+
+    public void unlockBannedUser(long bannedIpNo);
 }

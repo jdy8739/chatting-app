@@ -1,6 +1,8 @@
 import axios from "axios";
+import { useEffect, useState } from "react";
 import { MASTER_PROTOCOL, RECEIVE_PROTOCOL, SEND_PROTOCOL } from "../../pages/chat/[id]";
 import { IMessageBody, IParticipants } from "../../types/types";
+import { CHATO_USERINFO, getCookie } from "../../utils/utils";
 
 interface IUserContainer { 
     roomId: number,
@@ -13,6 +15,13 @@ interface IUserContainer {
     shootChatMessage: (target: SEND_PROTOCOL, message: IMessageBody) => void,
 }
 
+interface IBannedUserList {
+    bannedIpNo: number,
+    roomId: number,
+    userName: string,
+    ipAddress: string,
+}
+
 function UserContainer({ 
     roomId,
     participants,
@@ -22,6 +31,9 @@ function UserContainer({
     roomOwnerId,
     setParticipants,
     shootChatMessage }: IUserContainer) {
+    console.log('user container updated.');
+    const [isBannedUserShown, setIsBannedUserShown] = useState(false);
+    const [bannedUserList, setBannedUserList] = useState<IBannedUserList[]>([]);
     const showUserContainerWindow = async () => {
         const results: IParticipants[] = await (await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/room/participants/${roomId}`)).data;
         setParticipants(results);
@@ -35,15 +47,35 @@ function UserContainer({
             message: participantId,
         });
     }
+    const fetchBannedUserList = async () => {
+        const { data: bannedUserList } = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/room/banned_users/${roomId}`, 
+        { headers: { 'authorization': `Bearer ${getCookie(CHATO_USERINFO)}` } });
+        setIsBannedUserShown(true);
+        setBannedUserList(bannedUserList);
+    }
+    const unlockThisUser = async (bannedIpNo: number) => {
+        const { status } = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/unlock_ban`, { bannedIpNo, roomId }, {
+            headers: { 'authorization': `Bearer ${getCookie(CHATO_USERINFO)}` }
+        })
+        if (status === 200) setBannedUserList(bannedUserList => {
+            return [...bannedUserList.filter(bannedUser => bannedUser.bannedIpNo !== bannedIpNo)];
+        })
+    }
     return (
         <>
             <div
                 className="user-container"
                 onMouseEnter={showUserContainerWindow}
             >
-                <h4>users</h4>
+                <h4 className="user"
+                    onClick={() => setIsBannedUserShown(false)}
+                >users</h4>
+                {(myUserNo === roomOwner) &&
+                <h4 className="banned"
+                    onClick={fetchBannedUserList}
+                >ban</h4>}
                 <div className="name-box">
-                    {participants.map((participant, i) => {
+                    {!isBannedUserShown ? participants.map((participant, i) => {
                         return (
                             <div key={i} className="profile">
                                 <div className="profile-img">
@@ -72,6 +104,27 @@ function UserContainer({
                                     width="30px"
                                     height="25px"
                                 />}
+                            </div>
+                        )
+                    }) : bannedUserList.map(bannedUser => {
+                        return (
+                            <div
+                                key={bannedUser.bannedIpNo}
+                                className="profile"
+                            >
+                                <h4>
+                                    {bannedUser.userName.length > 15 ? 
+                                    bannedUser.userName.slice(0, 9) : bannedUser.userName}
+                                    &emsp;
+                                    {bannedUser.ipAddress}
+                                </h4>
+                                <img
+                                    width="20px"
+                                    height="20px"
+                                    src='/out.png'
+                                    className="out-icon"
+                                    onClick={() => unlockThisUser(bannedUser.bannedIpNo)}
+                                />
                             </div>
                         )
                     })}
