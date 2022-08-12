@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { MASTER_PROTOCOL, RECEIVE_PROTOCOL, SEND_PROTOCOL } from "../../pages/chat/[id]";
 import { IMessageBody, IParticipants } from "../../types/types";
 import { CHATO_USERINFO, getCookie } from "../../utils/utils";
@@ -22,6 +22,10 @@ interface IBannedUserList {
     ipAddress: string,
 }
 
+let isContainerClosed = true;
+
+const MARK = {color: 'red'};
+
 function UserContainer({ 
     roomId,
     participants,
@@ -34,8 +38,9 @@ function UserContainer({
     console.log('user container updated.');
     const [isBannedUserShown, setIsBannedUserShown] = useState(false);
     const [bannedUserList, setBannedUserList] = useState<IBannedUserList[]>([]);
-    const showUserContainerWindow = async () => {
+    const fetchNowParticipants = async () => {
         const results: IParticipants[] = await (await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/room/participants/${roomId}`)).data;
+        isContainerClosed = false;
         setParticipants(results);
     }
     const banThisParticipant = (participantId: string) => { 
@@ -61,11 +66,15 @@ function UserContainer({
             return [...bannedUserList.filter(bannedUser => bannedUser.bannedIpNo !== bannedIpNo)];
         })
     }
+    useEffect(() => {
+        return () => { isContainerClosed = true; };
+    }, []);
     return (
         <>
             <div
                 className="user-container"
-                onMouseEnter={showUserContainerWindow}
+                onMouseEnter={fetchNowParticipants}
+                onMouseLeave={() => isContainerClosed = true}
             >
                 <h4 className="user"
                     onClick={() => setIsBannedUserShown(false)}
@@ -87,7 +96,7 @@ function UserContainer({
                                     />
                                 </div>
                                 {participant.nickName ? participant.nickName : participant.id.slice(0, 9)}
-                                <span style={{color: 'red'}}>{(participant.id === myId) ? '(me)' : ''}</span>
+                                <span style={MARK}>{(participant.id === myId) ? '(me)' : ''}</span>
                                 {(participant.id !== myId) && 
                                 (myUserNo === roomOwner) &&
                                 <img
@@ -97,7 +106,7 @@ function UserContainer({
                                     className="out-icon"
                                     onClick={() => banThisParticipant(participant.id)}
                                 />}
-                                &emsp;
+                                &emsp; &emsp;
                                 {(participant.id === roomOwnerId) &&
                                 <img
                                     src="/crown.png"
@@ -134,4 +143,6 @@ function UserContainer({
     )
 }
 
-export default UserContainer;
+const judgeEqual = () => isContainerClosed;
+
+export default React.memo(UserContainer, judgeEqual);

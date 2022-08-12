@@ -187,13 +187,13 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
             setTargetChatNumber(-1);
         }
     }, [])
-    const shootChatMessage = (target: SEND_PROTOCOL, message: IMessageBody) => {
+    const shootChatMessage = useCallback((target: SEND_PROTOCOL, message: IMessageBody) => {
         if (socket && stomp) {
             stomp.send(`/pub/chat/${target}`, 
             JSON.stringify(message), 
             { sampleHeader: 'sampleHeader' });
         }
-    }
+    }, [])
     const expelUser = async (sentence: string) => {
         try {
             if (!id) throw new Error();
