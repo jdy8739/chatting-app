@@ -1,8 +1,10 @@
 package com.example.ChatoBackend.service;
 
+import com.example.ChatoBackend.entity.BannedIp;
 import com.example.ChatoBackend.entity.ChatRoom;
 import com.example.ChatoBackend.entity.LikedSubject;
 import com.example.ChatoBackend.entity.User;
+import com.example.ChatoBackend.repository.BannedIpRepository;
 import com.example.ChatoBackend.repository.ChatRoomRepository;
 import com.example.ChatoBackend.repository.LikedSubjectRepository;
 import com.example.ChatoBackend.repository.UserRepository;
@@ -33,11 +35,13 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     ChatRoomRepository chatRoomRepository;
-
     @Autowired
     LikedSubjectRepository likedSubjectRepository;
     @Autowired
     PasswordEncoder passwordEncoder;
+
+    @Autowired
+    BannedIpRepository bannedIpRepository;
 
     @Override
     public void saveUser(User user) {
@@ -210,5 +214,10 @@ public class UserServiceImpl implements UserService {
     public void toggleSubjectLike(Long userNo, String subject, boolean isAddLike) {
         if (isAddLike) likedSubjectRepository.deleteLikedSubjectByUserNo(userNo, subject);
         else likedSubjectRepository.save(new LikedSubject(userNo, subject));
+    }
+
+    @Override
+    public void saveBannedIpAddress(Long roomId, String ipAddress, String userName) {
+        bannedIpRepository.save(new BannedIp(roomId, ipAddress, userName));
     }
 }

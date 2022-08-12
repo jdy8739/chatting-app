@@ -318,7 +318,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                             >
                                 {Object.keys(roomList).map((subject, index) => {
                                     isTableShown = (value ? (roomList[subject].isPinned) : (!roomList[subject].isPinned));
-                                    if (value && (roomList[subject].isPinned)) pinnedTableLength++;
+                                    if (value && (roomList[subject].isPinned)) pinnedTableLength ++;
                                     else if (!value && (!roomList[subject].isPinned)) notPinnedTableLength ++;
                                     return (
                                         <div

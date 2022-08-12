@@ -33,4 +33,6 @@ public interface UserService {
     public Long findUserNoByUserId(String id);
 
     public void toggleSubjectLike(Long userNo, String subject, boolean isAddLike);
+
+    public void saveBannedIpAddress(Long roomId, String apAddress, String userName);
 }

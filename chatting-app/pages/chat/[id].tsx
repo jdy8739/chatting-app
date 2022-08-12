@@ -7,7 +7,7 @@ import webstomp, { Client } from "webstomp-client";
 import Seo from "../../components/commons/Seo";
 import MessageComponent from "../../components/[id]/MessageComponent";
 import UserContainer from "../../components/[id]/UserContainer";
-import { IMessageBody, IParticipants } from "../../types/types";
+import { Iipdata, IMessageBody, IParticipants } from "../../types/types";
 import { CHATO_USERINFO, generateRandonUserId, getCookie, getNowTime, toastConfig } from "../../utils/utils";
 import { IUserInfoSelector } from "./list";
 
@@ -194,9 +194,19 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
             { sampleHeader: 'sampleHeader' });
         }
     }
-    const expelUser = (sentence: string) => {
-        toast.error(sentence, toastConfig);
-        router.push('/chat/list');
+    const expelUser = async (sentence: string) => {
+        try {
+            if (id === null) throw new Error();
+            const {data: { ip }}: { data: Iipdata } = await axios.get(`https://api.ipdata.co?api-key=${process.env.NEXT_PUBLIC_IPDATA_API_KEY}`);
+            axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/add_banned`, {
+                roomId: id,
+                ipAddress: ip,
+                userName: currentUserName,
+            })
+        } catch (e) {} finally {
+            toast.error(sentence, toastConfig);
+            router.push('/chat/list');
+        }
     }
     const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.currentTarget.files) {
@@ -394,13 +404,13 @@ export async function getServerSideProps({ params: { id }, query: { roomName, pa
         previousChat = results.messageList?.reverse();
         previousChat?.forEach(chat => {if (chat.isDeleted) chat.message = ''});
     } catch (e) {
-        console.log(`Failed to fetch previous chat of room id ${id}.`);
+        console.log(`Failed to enter the chat room id ${id}.`);
         return {
             redirect: {
                 permanent: false,
                 destination: "/chat/list",
             },
-            props: {},
+            props: {}
         };
     }
     return {

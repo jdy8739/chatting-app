@@ -178,4 +178,13 @@ public class UserController {
         userService.toggleSubjectLike(userNo, subject, isAddLike);
         return new ResponseEntity<Void>(HttpStatus.OK);
     }
+
+    @PostMapping("/add_banned")
+    public ResponseEntity<Void> addBannedIp(@RequestBody Map<String, Object> map) {
+        Long roomId = Long.parseLong((String) map.get("roomId"));
+        String ipAddress = (String) map.get("ipAddress");
+        String userName = (String) map.get("userName");
+        userService.saveBannedIpAddress(roomId, ipAddress, userName);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 }
