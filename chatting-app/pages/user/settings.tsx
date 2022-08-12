@@ -152,14 +152,14 @@ function Settings() {
                     <label
                         htmlFor="pic"
                         style={{ justifyContent: 'center' }}>
+                        {(picBlobString || userInfo?.profilePicUrl) ?
                         <img
-                            className="profile-img"
+                            className="profile-img big-img"
                             style={{ 
                                 backgroundImage: `url(${picBlobString ? picBlobString : userInfo?.profilePicUrl})`,
-                                width: '150px',
-                                height: '150px',
                             }}
-                        />
+                        /> : <div className="profile-img big-img"></div>
+                        }
                         <button
                             className="del-btn"
                             type="button"
@@ -240,6 +240,10 @@ function Settings() {
             <style>{`
                 img {
                     border-radius: 50%;
+                }
+                .big-img {
+                    width: 150px;
+                    height: 150px;
                 }
                 span {
                     cursor: pointer;

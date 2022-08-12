@@ -18,6 +18,8 @@ export interface ISignedIn extends IUserSignedInInfo {
     likedSubjects?: ILikedSubject[],
 }
 
+const FLEX_GROW = { flexGrow: '1' };
+
 function NavBar() {
     const router = useRouter();
     const dispatch = useDispatch();
@@ -53,7 +55,7 @@ function NavBar() {
     return (
         <>
             <div className="bar-bg">
-                <div className="bar-inner">
+                <div className="bar-inner bar-left">
                     <h1>ChaTo</h1>
                     &emsp;
                     <Link href="/chat/list">
@@ -63,9 +65,11 @@ function NavBar() {
                         <button className={router.pathname === '/chat/create' ? 'clicked' : ''}>make chat</button>
                     </Link>
                     <button>search chat</button>
-                    <div style={{ flexGrow: '1' }}></div>
+                </div>
+                {/* <div style={FLEX_GROW}></div> */}
+                <div className="bar-inner bar-right">
                     {(userInfo.userId) ?
-                    <>  
+                    <>
                         <div className="profile-img">
                             <img
                                 width="100%"
@@ -95,20 +99,22 @@ function NavBar() {
                     top: 0;
                     left: 0;
                     width: 100vw;
+                    max-width: 2000px;
                     height: 65px;
                     background-color: white;
                     box-shadow: 0px 5px 30px rgba(0, 0, 0, 0.15);
                     padding: 0px 25px;
                     z-index: 100;
+                    display: flex;
                 }
                 .bar-inner {
-                    width: 100%;
-                    max-width: 2000px;
+                    width: 50%;
                     height: 100%;
-                    display: flex;
-                    justify-content: center;
+                    display: inherit;
                     align-items: center;
-                    margin: auto;
+                }
+                .bar-right {
+                    justify-content: right;
                 }
                 .clicked {
                     color: orange;
@@ -123,6 +129,23 @@ function NavBar() {
                     font-weight: bold;
                     cursor: pointer;
                     margin-right: 15px;
+                }
+                @media (max-width: 768px) {
+                    .bar-bg {
+                        height: 130px;
+                    }
+                    .bar-inner {
+                        width: 100%;
+                        justify-content: center;
+                        position: absolute;
+                        height: 50%;
+                    }
+                    .bar-left {
+                        top: 0;
+                    }
+                    .bar-right {
+                        bottom: 0;
+                    }
                 }
             `}</style>
         </>

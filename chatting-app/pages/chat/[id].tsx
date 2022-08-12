@@ -260,9 +260,6 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
         stomp.debug = () => null;
         if (!getCookie(CHATO_USERINFO))
             startAndSubscribeChatting();
-        /* currentUserId = participants[0];
-        setPreviousRoomId(id);
-        setParticipants([{ id: currentUserId, nickName: '' }]); */
         return () => {
             stomp.disconnect(() => null, {});
             currentUserName = '';
@@ -270,7 +267,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
             clearTimeout(timeOut);
         }
     }, []);
-    useEffect(() => {if (userNo !== -1) startAndSubscribeChatting();}, [userNo]);
+    useEffect(() => {if (userNo !== -1) startAndSubscribeChatting()}, [userNo]);
     return (
         <>
             <Seo title={`Chato room ${roomName}`} />

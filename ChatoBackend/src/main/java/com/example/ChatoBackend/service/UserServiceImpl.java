@@ -34,9 +34,8 @@ public class UserServiceImpl implements UserService {
     UserRepository userRepository;
 
     @Autowired
-    ChatRoomRepository chatRoomRepository;
-    @Autowired
     LikedSubjectRepository likedSubjectRepository;
+
     @Autowired
     PasswordEncoder passwordEncoder;
 

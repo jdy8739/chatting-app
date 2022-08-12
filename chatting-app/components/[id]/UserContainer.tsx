@@ -24,7 +24,10 @@ interface IBannedUserList {
 
 let isContainerClosed = true;
 
-const MARK = {color: 'red'};
+const STYLE = {
+    MARK: {color: 'orange'},
+    NONE: {}
+};
 
 function UserContainer({ 
     roomId,
@@ -53,12 +56,14 @@ function UserContainer({
         });
     }
     const fetchBannedUserList = async () => {
+        isContainerClosed = false;
         const { data: bannedUserList } = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/room/banned_users/${roomId}`, 
         { headers: { 'authorization': `Bearer ${getCookie(CHATO_USERINFO)}` } });
         setIsBannedUserShown(true);
         setBannedUserList(bannedUserList);
     }
     const unlockThisUser = async (bannedIpNo: number) => {
+        isContainerClosed = false;
         const { status } = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/unlock_ban`, { bannedIpNo, roomId }, {
             headers: { 'authorization': `Bearer ${getCookie(CHATO_USERINFO)}` }
         })
@@ -77,10 +82,12 @@ function UserContainer({
                 onMouseLeave={() => isContainerClosed = true}
             >
                 <h4 className="user"
+                    style={!isBannedUserShown ? STYLE.MARK : STYLE.NONE}
                     onClick={() => setIsBannedUserShown(false)}
                 >users</h4>
                 {(myUserNo === roomOwner) &&
                 <h4 className="banned"
+                    style={isBannedUserShown ? STYLE.MARK : STYLE.NONE}
                     onClick={fetchBannedUserList}
                 >ban</h4>}
                 <div className="name-box">
@@ -92,11 +99,10 @@ function UserContainer({
                                         width="100%"
                                         height="100%"
                                         src={`${process.env.NEXT_PUBLIC_API_URL}/user/profile-pic/${participant.id}`} 
-                                        alt="/"
                                     />
                                 </div>
                                 {participant.nickName ? participant.nickName : participant.id.slice(0, 9)}
-                                <span style={MARK}>{(participant.id === myId) ? '(me)' : ''}</span>
+                                <span style={STYLE.MARK}>{(participant.id === myId) ? '(me)' : ''}</span>
                                 {(participant.id !== myId) && 
                                 (myUserNo === roomOwner) &&
                                 <img
@@ -133,6 +139,7 @@ function UserContainer({
                                     src='/out.png'
                                     className="out-icon"
                                     onClick={() => unlockThisUser(bannedUser.bannedIpNo)}
+                                    alt="popai"
                                 />
                             </div>
                         )

@@ -55,16 +55,14 @@ public class UserController {
 
     @GetMapping("/profile-pic/{id}")
     public ResponseEntity<byte[]> getProfileImage(
-            @PathVariable("id") String id) {
+            @PathVariable("id") String id) throws IOException {
         byte[] imageByteArray = null;
-        try {
-            String path = "./images/users/" + id;
-            File file = new File(path + "/" + id + ".jpg");
+        String path = "./images/users/" + id;
+        File file = new File(path + "/" + id + ".jpg");
+        if (file.exists()) imageByteArray = Files.readAllBytes(file.toPath());
+        else {
+            file = new File("./images/users/default-avatar.jpg");
             imageByteArray = Files.readAllBytes(file.toPath());
-        } catch (NoSuchFileException e) {
-            return new ResponseEntity<>(null, HttpStatus.OK);
-        } catch (IOException e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return new ResponseEntity<>(imageByteArray, HttpStatus.OK);
     }
