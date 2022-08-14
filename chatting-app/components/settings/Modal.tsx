@@ -1,14 +1,8 @@
 import React, { useEffect, useRef } from "react";
-import { IUserInfo } from "../../pages/user/settings";
-import { AnimatePresence, motion } from "framer-motion";
-import { modalBgVariant, toastConfig } from "../../utils/utils";
+import { EXECUTE, IUserInfo } from "../../pages/user/settings";
+import { motion } from "framer-motion";
+import { modalBgVariant } from "../../utils/utils";
 import { useRouter } from "next/router";
-import { toast } from "react-toastify";
-
-enum EXECUTE {
-    ALTER_USER_INFO = 1,
-    WITHDRAW = 2,
-}
 
 interface IModal {
     alteredUserInfo: IUserInfo
@@ -50,7 +44,7 @@ function Modal({ handleUserSettingsSubmit, handleUserWithdraw, setProtocol, prot
     return (
         <motion.div
             className="modal-bg"
-            onClick={() => setProtocol(0)}
+            onClick={() => setProtocol(EXECUTE.DEFAULT)}
             variants={modalBgVariant}
             initial="initial"
             animate="animate"

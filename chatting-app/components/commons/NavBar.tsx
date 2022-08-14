@@ -100,6 +100,7 @@ function NavBar() {
                     left: 0;
                     width: 100vw;
                     max-width: 2000px;
+                    min-width: 290px;
                     height: 65px;
                     background-color: white;
                     box-shadow: 0px 5px 30px rgba(0, 0, 0, 0.15);

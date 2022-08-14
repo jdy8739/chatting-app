@@ -30,13 +30,15 @@ function MessageComponent({
     roomId,
     isNumberMatches }: IMessageComponent) {
     console.log('rendered. ');
+    const isMyMessage = (msg.writerNo === userNo);
+    const isSameTimeMessage = (prevTime !== msg.time);
     const checkIsEligibleToDelete = () => {
-        return (checkIfIsMyChat(msg.writer) || (msg.writerNo === userNo) || (roomOwner === userNo));
+        return (checkIfIsMyChat(msg.writer) || isMyMessage || (roomOwner === userNo));
     }
     return (
         <div
             className={`chat-box ${
-                (checkIfIsMyChat(msg.writer) || (msg.writerNo === userNo))
+                (checkIfIsMyChat(msg.writer) || isMyMessage)
                     ? 'my-chat-box' : 'others-chat-box'}`}
         >   
             {(index === 0) ? <ChatInfo writer={msg.writer} /> :
@@ -49,8 +51,8 @@ function MessageComponent({
             <span className="master-chat">{msg.message}</span> :
             <>
                 {(index !== 0) && 
-                (prevTime !== msg.time) &&
-                (((userNo < 0) && checkIfIsMyChat(msg.writer)) || (msg.writerNo === userNo)) &&
+                isSameTimeMessage &&
+                (((userNo < 0) && checkIfIsMyChat(msg.writer)) || isMyMessage) &&
                 <ChatTimeComponent
                     time={(msg.time || '')}
                 />}
@@ -58,7 +60,7 @@ function MessageComponent({
                     onDoubleClick={() => 
                         checkIsEligibleToDelete() ? handleChatDblClick(index) : null}
                     className={`chat 
-                        ${(checkIfIsMyChat(msg.writer) || (msg.writerNo === userNo))
+                        ${(checkIfIsMyChat(msg.writer) || isMyMessage)
                             ? 'my-chat' : 'others-chat'}
                         ${msg.isDeleted ? 'deleted-chat' : ''}
                     `}
@@ -67,7 +69,8 @@ function MessageComponent({
                     isNumberMatches &&
                     <span
                         onClick={() => deleteChat(roomId, msg.msgNo)}
-                        className="delete-btn">
+                        className="delete-btn"
+                    >
                         x
                     </span>}
                     <ChatContent 
@@ -79,8 +82,8 @@ function MessageComponent({
                     />
                 </span>
                 {(index !== 0) && 
-                (prevTime !== msg.time) && 
-                (!checkIfIsMyChat(msg.writer) && (msg.writerNo !== userNo)) &&
+                isSameTimeMessage && 
+                (!checkIfIsMyChat(msg.writer) && !isMyMessage) &&
                 <ChatTimeComponent 
                     time={msg.time || ''}
                 />

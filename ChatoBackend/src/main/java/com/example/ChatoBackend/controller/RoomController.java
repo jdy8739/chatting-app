@@ -42,6 +42,9 @@ import java.util.*;
 public class RoomController {
 
     private final String ROOM_ID = "roomId";
+
+    private  final String MASTER = "MASTER";
+
     @Autowired
     private final SimpMessagingTemplate messagingTemplate;
     @Autowired
@@ -73,8 +76,9 @@ public class RoomController {
         String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
         try {
             long roomId = Long.parseLong(map.get("targetRoomId"));
-            long userNo = userService.findUserInfoById(jwtUtils.getUserId(token)).getUserNo();
-            if (!chatRoomService.checkIfIsRoomOwner(roomId, userNo)) throw new Exception();
+            String id = jwtUtils.getUserId(token);
+            long userNo = userService.findUserInfoById(id).getUserNo();
+            if (!chatRoomService.checkIfIsRoomOwner(roomId, userNo) && !id.equals(MASTER)) throw new Exception();
             chatRoomService.changeSubject(roomId, map.get("destinationId"));
             messagingTemplate.convertAndSend("/sub/chat/room/list", map);
             return new ResponseEntity<>(HttpStatus.OK);
@@ -134,9 +138,9 @@ public class RoomController {
             HttpServletRequest req) {
         String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
         try {
-            if (!chatRoomService.checkIfIsRoomOwner(roomId,
-                    userService.findUserInfoById(jwtUtils.getUserId(token)).getUserNo()))
-                throw new Exception();
+            String id = jwtUtils.getUserId(token);
+            long userNo = userService.findUserInfoById(id).getUserNo();
+            if (!chatRoomService.checkIfIsRoomOwner(roomId, userNo) && !id.equals(MASTER)) throw new Exception();
             chatRoomService.deleteRoom(roomId);
             messageService.deleteRoom(roomId);
             Map<String, Integer> map = new HashMap<>();

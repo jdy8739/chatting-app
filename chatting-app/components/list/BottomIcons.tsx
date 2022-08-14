@@ -9,7 +9,10 @@ function BottomIcons({ setRoomList }: { setRoomList: Dispatch<SetStateAction<ICl
     const addSubjectTable = (newTableName: string) => {
         setIsModalShown(false);
         setRoomList(roomList => {
-            return {
+            if (Object.keys(roomList).some(tableName => {
+                if (tableName === newTableName) return true;
+            })) return roomList;
+            else return {
                 ...roomList,
                 [newTableName]: { list: [], isPinned: false },
             }

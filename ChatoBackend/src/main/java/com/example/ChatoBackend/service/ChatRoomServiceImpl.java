@@ -109,9 +109,7 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     public List<ParticipantDTO> getParticipantListByRoomId(Long roomId) {
         Set<String[]> set = connectedUserAndRoomInfoStore.participantsUserMap.get(roomId);
         List<ParticipantDTO> participantList = new ArrayList<>();
-        Iterator<String[]> iterator = set.iterator();
-        while (iterator.hasNext()) {
-            String[] participant = iterator.next();
+        for (String[] participant : set) {
             participantList.add(new ParticipantDTO(participant[0], participant[1]));
         }
         return participantList;
@@ -121,8 +119,8 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     public boolean checkIfIsRoomOwner(long roomId, long userNo) {
         Optional<ChatRoom> optionalChatRoom = chatRoomRepository.findByRoomId(roomId);
         if (optionalChatRoom.isEmpty()) throw new NoSuchElementException();
-        long roomOwner = optionalChatRoom.get().getOwner();
-        return (roomOwner == userNo);
+        Long roomOwner = optionalChatRoom.get().getOwner();
+        return roomOwner != null && (roomOwner == userNo);
     }
 
     @Override

@@ -17,16 +17,29 @@ export interface IUserInfo {
     profilePicUrl?: string,
 }
 
+export enum EXECUTE {
+    DEFAULT = 0,
+    ALTER_USER_INFO = 1,
+    WITHDRAW = 2,
+}
+
 let userProfilePic: File | undefined;
 
 let tmpPicUrl = '';
+
+const STYLE = {
+    HEIGHT: { height: '480px' },
+    JUSTIFY_CENTER: { justifyContent: 'center' },
+    PAD_LEFT: { paddingLeft: '60px' },
+    MARGIN: { margin: '40px 0' },
+}
 
 function Settings() {
     const router = useRouter();
     const dispatch = useDispatch();
     const [userInfo, setUserInfo] = useState<IUserInfo>();
     const [picBlobString, setPicBlobString] = useState('');
-    const [protocol, setProtocol] = useState(0);
+    const [protocol, setProtocol] = useState(EXECUTE.DEFAULT);
     const { userNo } = useSelector(({ signInReducer: {userInfo} }: IUserInfoSelector) => userInfo);
     const handleSignIn = (userInfo: IUserSignedInInfo) => dispatch(signIn(userInfo));
     const handleSignOut = () => dispatch(signOut());
@@ -118,9 +131,9 @@ function Settings() {
     const handleUserWithdraw = (inputPassword: string) :Promise<boolean> => {
         return new Promise(async (success, fail) => {
             try {
-                const { status } = await signupAxios.put(`${process.env.NEXT_PUBLIC_API_URL}/user/withdraw`, { inputPassword }, { headers: {
-                    'authorization': `Bearer ${getCookie(CHATO_USERINFO)}`,
-                }});
+                const { status } = await signupAxios.put(`${process.env.NEXT_PUBLIC_API_URL}/user/withdraw`, 
+                { inputPassword }, 
+                { headers: { 'authorization': `Bearer ${getCookie(CHATO_USERINFO)}` }});
                 if (status === 200) {
                     toast.success('Your id has been removed.', toastConfig);
                     removeCookie(CHATO_USERINFO, {path: '/'});
@@ -143,15 +156,15 @@ function Settings() {
     return (
         <>
             <form
-                onSubmit={handleSubmit(() => setProtocol(1))}
+                onSubmit={handleSubmit(() => setProtocol(EXECUTE.ALTER_USER_INFO))}
                 className="submit-form"
-                style={{ height: '480px' }}
+                style={STYLE.HEIGHT}
             >
                 <h4 className="title">User Information Settings</h4>
                 <div className="profile-image-box">
                     <label
                         htmlFor="pic"
-                        style={{ justifyContent: 'center' }}>
+                        style={STYLE.JUSTIFY_CENTER}>
                         {(picBlobString || userInfo?.profilePicUrl) ?
                         <img
                             className="profile-img big-img"
@@ -172,7 +185,7 @@ function Settings() {
                     <input
                         id="pic"
                         type="file"
-                        style={{ paddingLeft: '60px' }}
+                        style={STYLE.PAD_LEFT}
                         {...register('profilePicUrl', {
                             onChange: handleFileChange
                         })}
@@ -215,12 +228,12 @@ function Settings() {
                     <div></div>
                     <span
                         className="withdraw"
-                        onClick={() => setProtocol(2)}
+                        onClick={() => setProtocol(EXECUTE.WITHDRAW)}
                     >withdrawal</span>
                 </label>
                 <button
                     className="submit-btn"
-                    style={{ margin: '40px 0' }}
+                    style={STYLE.MARGIN}
                 >submit</button>
             </form>
             <AnimatePresence>

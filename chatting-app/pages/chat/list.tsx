@@ -62,17 +62,22 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     const subjectList = useSelector(({ likedSubjectReducer: { subjectList }}: ISubjectListSelector) => subjectList);
     const arrangeRoomList = (pinnedSubjects: (string[] | null)) => {
         const defaultRoomListObject: IClassifiedRoom = {};
+        // let remains: Array<string>;
+        // remains = [...pinnedSubjects];
         rooms.forEach(room => arrangeEachRoom(room, defaultRoomListObject));
+        const remainsSubject: IClassifiedRoom = {};
         if (pinnedSubjects) {
+            console.log(defaultRoomListObject);
             Object.keys(defaultRoomListObject).forEach(subject => {
                 checkIfSubjectPinned(subject, defaultRoomListObject, pinnedSubjects);
             });
+            // remains.forEach(subject => remainsSubject[subject] = {list: [], isPinned: true});
         }
-        setRoomList(defaultRoomListObject);
+        setRoomList({...defaultRoomListObject, ...remainsSubject});
     }
     const arrangeEachRoom = (room: IRoom, roomList: IClassifiedRoom) => {
         const subject = room.subject;
-        if (!Object.hasOwn(roomList, subject)) 
+        if (!Object.hasOwn(roomList, subject))
             roomList[subject] = { 
                 list: [room],
                 isPinned: false,
@@ -80,9 +85,9 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         else roomList[subject]['list'].push(room);
     }
     const checkIfSubjectPinned = (targetSubject: string, roomList: IClassifiedRoom, pinnedSubjects: string[]) => {
-        if (pinnedSubjects.some(subject => (subject === targetSubject)))
+        if (pinnedSubjects.some(subject => (subject === targetSubject))) {
             roomList[targetSubject].isPinned = true;
-        else roomList[targetSubject].isPinned = false;
+        } else roomList[targetSubject].isPinned = false;
     }
     const onDragEnd = ({ destination, source, draggableId }: DropResult) => {
         const destinationId = destination?.droppableId;
@@ -90,7 +95,8 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         const isDestinationAboutPin = (destinationId === SECTION.PINNED || destinationId === SECTION.NOT_PINNED);
         const isSourceAboutPin = (sourceId === SECTION.PINNED || sourceId === SECTION.NOT_PINNED);
         if (isSourceAboutPin) {
-            if (isDestinationAboutPin) toggleLikeList(destinationId, draggableId, subjectList);
+            if (sourceId === destinationId) return;
+            else if (isDestinationAboutPin) toggleLikeList(destinationId, draggableId, subjectList);
             else if (destinationId === SECTION.TRASH_CAN) return;
             return;
         } else if (destination) {
@@ -280,11 +286,6 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         stomp.debug = () => null;
         if (!getCookie(CHATO_USERINFO))
             arrangeRoomList(getPinnedSubjectStorage());        
-        /* const previousRoomId = getPreviousRoomId();
-        if (previousRoomId) {
-            console.log(previousRoomId);
-            updateRoomParticipants({ roomId: +previousRoomId, isEnter: false });
-        } */
         return () => {
             stomp.disconnect(() => null, {});
         }
