@@ -52,6 +52,8 @@ const SHOW = {
 let socket: WebSocket;
 let stomp: Client;
 
+let renderingCount = 0;
+
 function ChattingList({ rooms }: { rooms: IRoom[] }) {
     let pinnedTableLength: number = 0;
     let notPinnedTableLength: number = 0;
@@ -268,8 +270,8 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         const token = getCookie(CHATO_USERINFO);
         if (!token) {
             setPinnedSubjectStorage(subject);
-            updateTableMoved(destination, subject);
         } else toggleSubjectToServer(token, subject, subjectList);
+        updateTableMoved(destination, subject);
     }, [])
     const toggleSubjectToServer = async (token: string, subject: string, subjectList: string[]) => {
         const checkIfExists = (subjectElem: string) => (subjectElem === subject);
@@ -292,10 +294,11 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
             arrangeRoomList(getPinnedSubjectStorage());        
         return () => {
             stomp.disconnect(() => null, {});
+            renderingCount = 0;
         }
     }, []);
     useEffect(() => {
-        if (userId)
+        if (userId && renderingCount++ === 0)
             arrangeRoomList(subjectList);
     }, [subjectList]);
     useEffect(() => {
