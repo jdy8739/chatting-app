@@ -17,4 +17,12 @@ public interface LikedSubjectRepository extends JpaRepository<LikedSubject, Long
 
     @Query("select ls from LikedSubject ls where ls.userNo = :userNo")
     List<LikedSubject> findLikedListByUserNo(Long userNo);
+
+    @Query("select count(ls) from LikedSubject ls WHERE ls.userNo = :userNo")
+    int getLikedSubjectCountPerUser(Long userNo);
+
+    @Transactional
+    @Modifying
+    @Query(value = " delete from liked_subject where user_no = :userNo limit 1;", nativeQuery = true)
+    void deleteTop1ByUserNo(Long userNo);
 }

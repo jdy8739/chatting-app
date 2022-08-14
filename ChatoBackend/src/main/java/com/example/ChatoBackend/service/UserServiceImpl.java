@@ -212,7 +212,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public void toggleSubjectLike(Long userNo, String subject, boolean isAddLike) {
         if (isAddLike) likedSubjectRepository.deleteLikedSubjectByUserNo(userNo, subject);
-        else likedSubjectRepository.save(new LikedSubject(userNo, subject));
+        else {
+            int count = likedSubjectRepository.getLikedSubjectCountPerUser(userNo);
+            if (count > 7) likedSubjectRepository.deleteTop1ByUserNo(userNo);
+            likedSubjectRepository.save(new LikedSubject(userNo, subject));
+        }
     }
 
     @Override

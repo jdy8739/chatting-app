@@ -204,4 +204,9 @@ public class RoomController {
         }
         return new ResponseEntity<>(HttpStatus.OK);
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<ChatRoom>> searchChatRooms(@RequestParam String keyword) {
+        return new ResponseEntity<>(chatRoomService.searchChatRooms(keyword), HttpStatus.OK);
+    }
 }

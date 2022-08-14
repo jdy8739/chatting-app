@@ -298,7 +298,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         }
     }, []);
     useEffect(() => {
-        if (userId && renderingCount++ === 0)
+        if (userId && ((renderingCount++ === 0) || (subjectList.length === 8)))
             arrangeRoomList(subjectList);
     }, [subjectList]);
     useEffect(() => {

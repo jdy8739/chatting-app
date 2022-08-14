@@ -1,6 +1,7 @@
 package com.example.ChatoBackend.repository;
 
 import com.example.ChatoBackend.entity.BannedIp;
+import com.example.ChatoBackend.entity.ChatRoom;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

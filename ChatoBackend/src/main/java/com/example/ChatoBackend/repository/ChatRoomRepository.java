@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
@@ -31,4 +32,6 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
     @Modifying
     @Query("update ChatRoom cr set cr.nowParticipants = cr.nowParticipants - 1 where cr.roomId = :roomId")
     void decreaseParticipantsCount(Long roomId);
+
+    List<ChatRoom> findByRoomNameContaining(String keyword);
 }

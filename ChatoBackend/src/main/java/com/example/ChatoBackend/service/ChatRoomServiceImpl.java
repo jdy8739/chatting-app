@@ -149,4 +149,9 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     public void unlockBannedUser(long bannedIpNo) {
         bannedIpRepository.deleteBannedIpByBannedIpNo(bannedIpNo);
     }
+
+    @Override
+    public List<ChatRoom> searchChatRooms(String keyword) {
+        return chatRoomRepository.findByRoomNameContaining(keyword);
+    }
 }

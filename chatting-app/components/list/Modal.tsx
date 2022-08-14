@@ -29,7 +29,10 @@ function Modal({ roomId, query, hideModal, pushToChatRoom, addSubjectTable }: IM
             roomId: roomId,
             password: inputRef.current?.value,
         });
-        if (data && pushToChatRoom) pushToChatRoom(inputRef.current?.value);
+        if (data && pushToChatRoom) {
+            pushToChatRoom(inputRef.current?.value);
+            hideModal();
+        }
         else {
             const targetRef = modalRef.current;
             if (targetRef) {

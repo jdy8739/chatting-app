@@ -40,4 +40,6 @@ public interface ChatRoomService {
     public List<BannedIp> findBannedIpByRoomId(long roomId);
 
     public void unlockBannedUser(long bannedIpNo);
+
+    public List<ChatRoom> searchChatRooms(String keyword);
 }

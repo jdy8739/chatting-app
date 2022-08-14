@@ -1,12 +1,14 @@
 import axios from "axios";
+import { AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { replaceList, truncateList } from "../../lib/store/modules/likedSubjectReducer";
 import { IUserSignedInInfo, signIn, signOut } from "../../lib/store/modules/signInReducer";
 import { IUserInfoSelector } from "../../pages/chat/list";
 import { CHATO_USERINFO, getCookie, removeCookie } from "../../utils/utils";
+import SearchModal from "./SearchModal";
 
 interface ILikedSubject {
     likedSubjectNo: number,
@@ -18,10 +20,9 @@ export interface ISignedIn extends IUserSignedInInfo {
     likedSubjects?: ILikedSubject[],
 }
 
-const FLEX_GROW = { flexGrow: '1' };
-
 function NavBar() {
     const router = useRouter();
+    const [isSearchModalShown, setIsSearhModalShown] = useState(false);
     const dispatch = useDispatch();
     const userInfo = useSelector(({signInReducer: { userInfo }}: IUserInfoSelector) => userInfo);
     const handleSignIn = (userInfo: IUserSignedInInfo) => dispatch(signIn(userInfo));
@@ -49,6 +50,7 @@ function NavBar() {
         dispatch(truncateList());
         router.push('/chat/list');
     }
+    const hideSearchModal = () => setIsSearhModalShown(false);
     useEffect(() => {
         fetchUserInfo();
     }, []);
@@ -64,9 +66,10 @@ function NavBar() {
                     <Link href="/chat/create">
                         <button className={router.pathname === '/chat/create' ? 'clicked' : ''}>make chat</button>
                     </Link>
-                    <button>search chat</button>
+                    <button
+                        onClick={() => setIsSearhModalShown(true)}
+                    >search chat</button>
                 </div>
-                {/* <div style={FLEX_GROW}></div> */}
                 <div className="bar-inner bar-right">
                     {(userInfo.userId) ?
                     <>
@@ -93,6 +96,12 @@ function NavBar() {
                     </Link>
                 </div>
             </div>
+            {isSearchModalShown &&
+            <AnimatePresence>
+                <SearchModal
+                    hideSearchModal={hideSearchModal}
+                />
+            </AnimatePresence>}
             <style>{`
                 .bar-bg {
                     position: fixed;
