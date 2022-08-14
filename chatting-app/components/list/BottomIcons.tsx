@@ -1,10 +1,10 @@
 import { AnimatePresence } from "framer-motion";
 import React, { Dispatch, SetStateAction, useState } from "react";
 import { Droppable } from "react-beautiful-dnd";
-import { IClassifiedRoom, SECTION } from "../../pages/chat/list";
+import { ITable, SECTION } from "../../pages/chat/list";
 import Modal from "./Modal";
 
-function BottomIcons({ setRoomList }: { setRoomList: Dispatch<SetStateAction<IClassifiedRoom>> }) {
+function BottomIcons({ setRoomList }: { setRoomList: Dispatch<SetStateAction<ITable>> }) {
     const [isModalShown, setIsModalShown] = useState(false);
     const addSubjectTable = (newTableName: string) => {
         setIsModalShown(false);

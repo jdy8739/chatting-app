@@ -30,7 +30,7 @@ export interface IUserInfoSelector {
     } 
 }
 
-export interface IClassifiedRoom {
+export interface ITable {
     [key: string]: { 
         list: IRoom[], isPinned: boolean,
     }
@@ -57,25 +57,21 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     let notPinnedTableLength: number = 0;
     let isTableShown: boolean;
     const dispatch = useDispatch();
-    const [roomList, setRoomList] = useState<IClassifiedRoom>({});
+    const [roomList, setRoomList] = useState<ITable>({});
     const { userNo, userId } = useSelector(({ signInReducer: {userInfo} }: IUserInfoSelector) => userInfo);
     const subjectList = useSelector(({ likedSubjectReducer: { subjectList }}: ISubjectListSelector) => subjectList);
     const arrangeRoomList = (pinnedSubjects: (string[] | null)) => {
-        const defaultRoomListObject: IClassifiedRoom = {};
-        // let remains: Array<string>;
-        // remains = [...pinnedSubjects];
+        const defaultRoomListObject: ITable = {};
         rooms.forEach(room => arrangeEachRoom(room, defaultRoomListObject));
-        const remainsSubject: IClassifiedRoom = {};
         if (pinnedSubjects) {
-            console.log(defaultRoomListObject);
             Object.keys(defaultRoomListObject).forEach(subject => {
                 checkIfSubjectPinned(subject, defaultRoomListObject, pinnedSubjects);
             });
-            // remains.forEach(subject => remainsSubject[subject] = {list: [], isPinned: true});
+            makeVacantTableIfPinned(defaultRoomListObject, pinnedSubjects);
         }
-        setRoomList({...defaultRoomListObject, ...remainsSubject});
+        setRoomList({...defaultRoomListObject});
     }
-    const arrangeEachRoom = (room: IRoom, roomList: IClassifiedRoom) => {
+    const arrangeEachRoom = (room: IRoom, roomList: ITable) => {
         const subject = room.subject;
         if (!Object.hasOwn(roomList, subject))
             roomList[subject] = { 
@@ -84,10 +80,17 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
             };
         else roomList[subject]['list'].push(room);
     }
-    const checkIfSubjectPinned = (targetSubject: string, roomList: IClassifiedRoom, pinnedSubjects: string[]) => {
+    const checkIfSubjectPinned = (targetSubject: string, roomList: ITable, pinnedSubjects: string[]) => {
         if (pinnedSubjects.some(subject => (subject === targetSubject))) {
             roomList[targetSubject].isPinned = true;
         } else roomList[targetSubject].isPinned = false;
+    }
+    const makeVacantTableIfPinned = (defaultRoomListObject: ITable, pinnedSubjects: string[]) => {
+        pinnedSubjects.forEach(subject => {
+            if (!Object.hasOwn(defaultRoomListObject, subject)) {
+                defaultRoomListObject[subject] = {list: [], isPinned: true};
+            }
+        })
     }
     const onDragEnd = ({ destination, source, draggableId }: DropResult) => {
         const destinationId = destination?.droppableId;
@@ -133,6 +136,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                 return room.roomId === Number(targetRoomId);
             }) : sourceIndex;
             const targetRoom = roomList[sourceId].list[targetRoomIndex];
+            targetRoom.subject = destinationId;
             roomList[sourceId].list.splice(targetRoomIndex, 1);
             if (!Object.hasOwn(roomList, destinationId)) {
                 return {
@@ -248,7 +252,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
             };
         })
     }
-    const findSubjectAndRoomIndexByRoomId = (roomId: number, roomList: IClassifiedRoom) => {
+    const findSubjectAndRoomIndexByRoomId = (roomId: number, roomList: ITable) => {
         let targetKey = '';
         let targetIndex = -1;
         Object.keys(roomList).some(key => {

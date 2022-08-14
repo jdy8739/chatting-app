@@ -8,7 +8,7 @@ import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import Modal from "../../components/settings/Modal";
 import { IUserSignedInInfo, signIn, signOut } from "../../lib/store/modules/signInReducer";
-import { CHATO_USERINFO, clearPreviousRoomId, getCookie, ID_REGEX, removeCookie, setCookie, signupAxios, toastConfig } from "../../utils/utils";
+import { CHATO_USERINFO, clearPreviousRoomId, getCookie, ID_REGEX, removeCookie, signupAxios, toastConfig } from "../../utils/utils";
 import { IUserInfoSelector } from "../chat/list";
 
 export interface IUserInfo {
