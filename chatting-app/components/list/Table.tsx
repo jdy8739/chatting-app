@@ -76,7 +76,7 @@ function Table({
                     </Droppable>
                 </div>}
             </Draggable>
-            <style>{`
+            <style jsx>{`
                 .table {
                     background-color: white;
                     width: 305px;

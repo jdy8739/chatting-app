@@ -172,7 +172,7 @@ function CreateChat() {
                     style={{ marginTop: '45px' }}
                 >submit</button>
             </form>
-            <style>{`
+            <style jsx>{`
                 input[type=range]{
                     -webkit-appearance: none;
                 }

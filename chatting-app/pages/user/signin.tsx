@@ -79,7 +79,7 @@ function Signin() {
                     style={{ width: '100%', marginTop: '45px' }}
                 >submit</button>
             </form>
-            <style>{`
+            <style jsx>{`
                 input {
                     width: 230px;
                 }

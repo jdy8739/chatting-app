@@ -81,7 +81,7 @@ function Room({ room, index }: { room: IRoom, index: number }) {
                     pushToChatRoom={pushToChatRoom}
                 />}
             </AnimatePresence>
-            <style>{`
+            <style jsx>{`
                 .element {
                     padding: 12px;
                     margin: 5px;

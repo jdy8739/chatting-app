@@ -205,7 +205,7 @@ function SingUp() {
                     className="submit-btn submit"
                 >submit</button>
             </form>
-            <style>{`
+            <style jsx>{`
                 .submit {
                     position: absolute;
                     bottom: -80px;

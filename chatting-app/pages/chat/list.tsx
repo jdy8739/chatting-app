@@ -358,11 +358,11 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                         </Droppable>
                     )
                 })}
-                <BottomIcons 
+                <BottomIcons
                     setRoomList={setRoomList}
                 />
             </DragDropContext>
-            <style>{`
+            <style jsx>{`
                 .grid-box {
                     display: grid;
                     grid-template-columns: repeat(auto-fill, 335px);

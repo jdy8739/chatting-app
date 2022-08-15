@@ -90,7 +90,7 @@ function SearchModal({ hideSearchModal }: { hideSearchModal: () => void }) {
                     </DragDropContext>
                 </div>
             </motion.div>
-            <style>{`
+            <style jsx>{`
                 .big-modal {
                     height: 500px;
                 }

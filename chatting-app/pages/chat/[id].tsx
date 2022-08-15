@@ -324,7 +324,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
                     />
                     <button className="submit-button">submit</button>
                 </form>
-                <style>{`
+                <style jsx>{`
                     .chat-form { 
                         width: 100%;
                         display: flex;

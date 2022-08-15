@@ -104,7 +104,7 @@ function NavBar() {
                     hideSearchModal={hideSearchModal}
                 />
             </AnimatePresence>}
-            <style>{`
+            <style jsx>{`
                 .bar-bg {
                     position: fixed;
                     top: 0;

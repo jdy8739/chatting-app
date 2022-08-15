@@ -18,7 +18,7 @@ function RoomException() {
                 <h4>Otherwise maybe You might be on the ban list of this room!</h4>
                 <p>This page will redirect to chat list page soon.</p>
             </div>
-            <style>{`
+            <style jsx>{`
                 .alert {
                     margin-top: 300px;
                     text-align: center;

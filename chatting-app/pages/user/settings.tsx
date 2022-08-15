@@ -250,7 +250,7 @@ function Settings() {
                     protocol={protocol}
                 />}
             </AnimatePresence>
-            <style>{`
+            <style jsx>{`
                 img {
                     border-radius: 50%;
                 }

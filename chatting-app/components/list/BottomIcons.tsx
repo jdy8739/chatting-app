@@ -51,7 +51,7 @@ function BottomIcons({ setRoomList }: { setRoomList: Dispatch<SetStateAction<ITa
                     addSubjectTable={addSubjectTable}
                 />}
             </AnimatePresence>
-            <style>{`
+            <style jsx>{`
                 .icons {
                     position: fixed;
                     right: 30px;

@@ -7,27 +7,28 @@ const Home: NextPage = () => {
     <div>
       <Seo title={'Hello Chato ;)'}></Seo>
       <div className='greetings'>
-        <h1>Hello Chato ;)</h1>
+        <h1 className='hello'>Hello Chato ;)</h1>
         <Link href="/chat/list">
-          <button>start chatting &rarr;</button>
+          <button className='start'>start chatting &rarr;</button>
         </Link>
       </div>
-      <style>{`
+      <style jsx>{`
         .greetings {
           margin-top: 220px;
           text-align: center;
         }
-        .greetings > h1 {
+        .hello {
+          color: orange;
           font-size: 82px;
         }
-        .greetings > button {
+        .start {
           width: 190px;
           height: 80px;
           font-size: 20px;
           background-color: rgb(0, 219, 146);
           color: white;
         }
-        .greetings > button:hover {
+        .start:hover {
           background-color: transparent;
           color: rgb(0, 219, 146);
           border: 1px solid rgb(0, 219, 146);
