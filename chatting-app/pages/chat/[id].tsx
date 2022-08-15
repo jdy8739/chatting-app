@@ -160,13 +160,12 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
             })
         }
     };
-    const handleChatDblClick = useCallback((index: number) => {
-        /* targetChatNumber이 변경되지않음. */
-        if (index === targetChatNumber) {
+    const handleChatDblClick = useCallback((index: number, isNumberMatches: boolean) => {
+        /* targetChatNumber이 변경되지않음. (해결)*/
+        if (isNumberMatches) {
             clearTimeout(timeOut);
             setTargetChatNumber(-1);
         } else {
-            console.log(index + ' ' + targetChatNumber);
             setTargetChatNumber(index);
             clearTimeout(timeOut);
             timeOut = setTimeout(() => {

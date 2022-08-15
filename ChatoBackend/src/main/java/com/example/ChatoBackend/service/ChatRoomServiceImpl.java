@@ -11,6 +11,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.ParameterMetaData;
 import java.sql.SQLException;
 import java.util.*;
@@ -97,6 +102,7 @@ public class ChatRoomServiceImpl implements ChatRoomService {
 
     @Override
     public void deleteRoom(Long roomId) {
+        deleteRoomPicture(roomId);
         chatRoomRepository.deleteByRoomId(roomId);
     }
 
@@ -153,5 +159,20 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     @Override
     public List<ChatRoom> searchChatRooms(String keyword) {
         return chatRoomRepository.findByRoomNameContaining(keyword);
+    }
+
+    private void deleteRoomPicture(long roomId) {
+        String path = "./images/rooms/" + roomId;
+        File roomDir = new File(path);
+        if (roomDir.exists()) {
+            try {
+                Files.walk(roomDir.toPath())
+                        .sorted(Comparator.reverseOrder())
+                        .map(Path :: toFile)
+                        .forEach((file) -> file.delete());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

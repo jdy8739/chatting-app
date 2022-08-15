@@ -19,10 +19,14 @@ function SearchModal({ hideSearchModal }: { hideSearchModal: () => void }) {
     const stopProppagation = (e: React.MouseEvent<HTMLDivElement>) => e.stopPropagation();
     const startSearch = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (inputRef.current) {
+        const value = inputRef.current?.value;
+        if (value !== '') {
             const { data: searchedRooms }: { data: IRoom[] } = 
-                await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/room/search?keyword=${inputRef.current.value}`);
-            if (searchedRooms.length === 0) toast.error('No rooms have been found. :(', toastConfig);
+                await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/room/search?keyword=${value}`);
+            if (searchedRooms.length === 0) {
+                toast.error('No rooms have been found. :(', toastConfig);
+                setSearchedRooms([]);
+            }
             else setSearchedRooms(searchedRooms);
         }
     }
@@ -57,6 +61,7 @@ function SearchModal({ hideSearchModal }: { hideSearchModal: () => void }) {
                         <input ref={inputRef}/>
                         <button>search</button>
                     </form>
+                    <br></br>
                     <DragDropContext onDragEnd={() => {}}>
                         <Droppable
                             droppableId="none"
@@ -88,6 +93,15 @@ function SearchModal({ hideSearchModal }: { hideSearchModal: () => void }) {
             <style>{`
                 .big-modal {
                     height: 500px;
+                }
+                input {
+                    border: 1px solid green;
+                    border-radius: 4px;
+                    padding: 6px;
+                }
+                h3 {
+                    color: orange;
+                    font-weight: bold;
                 }
             `}</style>
         </>

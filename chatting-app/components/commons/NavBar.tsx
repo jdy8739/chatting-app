@@ -67,6 +67,8 @@ function NavBar() {
                         <button className={router.pathname === '/chat/create' ? 'clicked' : ''}>make chat</button>
                     </Link>
                     <button
+                        disabled={router.pathname === '/chat/[id]'}
+                        className={(router.pathname === '/chat/[id]') ? 'disabled' : ''}
                         onClick={() => setIsSearhModalShown(true)}
                     >search chat</button>
                 </div>
@@ -156,6 +158,9 @@ function NavBar() {
                     .bar-right {
                         bottom: 0;
                     }
+                }
+                .disabled {
+                    color: gray;
                 }
             `}</style>
         </>

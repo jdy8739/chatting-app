@@ -398,6 +398,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                 }
                 .bg-box-title {
                     font-size: 150px;
+                    text-shadow: 1px 1px 2px gray;
                 }
             `}</style>
         </>

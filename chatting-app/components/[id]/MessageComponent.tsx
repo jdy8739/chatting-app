@@ -9,7 +9,7 @@ interface IMessageComponent {
     prevTime?: string,
     checkIfIsMyChat: <T>(arg: T) => (boolean | undefined),
     deleteChat: (id: number, msgNo: number) => Promise<void>,
-    handleChatDblClick: (index: number) => void,
+    handleChatDblClick: (index: number, isNumberMatches: boolean) => void,
     userNo: number,
     roomOwner: (number | null),
     roomId: number,
@@ -58,7 +58,7 @@ function MessageComponent({
                 />}
                 <span
                     onDoubleClick={() => 
-                        checkIsEligibleToDelete() ? handleChatDblClick(index) : null}
+                        checkIsEligibleToDelete() ? handleChatDblClick(index, isNumberMatches) : null}
                     className={`chat 
                         ${(checkIfIsMyChat(msg.writer) || isMyMessage)
                             ? 'my-chat' : 'others-chat'}
@@ -142,7 +142,7 @@ memo 함수의 두 번째 인자로 함수를 넣어주면 된다.
 vue.js의 watch와 비슷함.
 */
 
-const judgeEqual = ({ index: prevIndex }: { index: number }, { index }: { index: number }) => {
+const judgeEqual = ({ index: prevIndex }: IMessageComponent, { index }: IMessageComponent) => {
     return (prevIndex !== index);
 }
 
