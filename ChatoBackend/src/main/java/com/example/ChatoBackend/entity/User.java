@@ -32,6 +32,9 @@ public class User {
     @Column(length = 50)
     private String profilePicUrl;
 
+    @Column(length = 100)
+    private String refreshToken;
+
     public User() {}
 
     public User(String id, String nickName, String password, String url) {

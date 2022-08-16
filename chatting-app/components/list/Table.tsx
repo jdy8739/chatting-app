@@ -20,7 +20,7 @@ function Table({
     toggleLikeList,
     index,
     subjectList }: ITable) {
-    console.log('table rendered.');
+    /* console.log('table rendered.'); */
     const updateRoomMoved = () => {
         toggleLikeList(isPinned ? SECTION.NOT_PINNED : SECTION.PINNED, subject, subjectList);
     }

@@ -4,7 +4,7 @@ import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import ClassifiedRooms from "../../components/list/Table";
 import { IMessageBody, IRoom } from "../../types/types";
 import webstomp, { Client } from "webstomp-client";
-import { CHATO_USERINFO, getCookie, getPinnedSubjectStorage, setPinnedSubjectStorage, toastConfig } from "../../utils/utils";
+import { CHATO_TOKEN, getAccessToken, getPinnedSubjectStorage, roomRequestAxios, setPinnedSubjectStorage, toastConfig } from "../../utils/utils";
 import { toast } from "react-toastify";
 import { MASTER_PROTOCOL, SEND_PROTOCOL } from "./[id]";
 import BottomIcons from "../../components/list/BottomIcons";
@@ -127,7 +127,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                 ...roomList,
                 [draggableId]: {
                     list: roomList[draggableId].list,
-                    isPinned: (destination === SECTION.PINNED) ? true : false,
+                    isPinned: (destination === SECTION.PINNED),
                 }
             }
         })
@@ -172,7 +172,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     const deleteRoom = (sourceId: string, index: number) => {
         const targetRoomId = roomList[sourceId].list[index].roomId;
         axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/room/delete/${targetRoomId}`, {
-            headers: { 'authorization': `Bearer ${getCookie(CHATO_USERINFO)}` }
+            headers: { 'authorization': `Bearer ${getAccessToken(CHATO_TOKEN)}` }
         })
         .then(() => {
             sendRoomDeleteMessage({
@@ -190,7 +190,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     }
     const changeToNewSubject = (roomMovedInfo: IRoomMoved) => {
         axios.put(`${process.env.NEXT_PUBLIC_API_URL}/room/change_subject`, roomMovedInfo, {
-            headers: { 'authorization': `Bearer ${getCookie(CHATO_USERINFO)}` }
+            headers: { 'authorization': `Bearer ${getAccessToken(CHATO_TOKEN)}` }
         }).catch(() => toast.error('You are not authorized!', toastConfig));
     }
     const subscribeRoomParticipants = () => {
@@ -267,17 +267,16 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         return [targetKey, targetIndex];
     }
     const toggleLikeList = useCallback((destination: SECTION, subject: string, subjectList: string[]) => {
-        const token = getCookie(CHATO_USERINFO);
-        if (!token) {
+        if (!getAccessToken(CHATO_TOKEN)) {
             setPinnedSubjectStorage(subject);
-        } else toggleSubjectToServer(token, subject, subjectList);
+        } else toggleSubjectToServer(subject, subjectList);
         updateTableMoved(destination, subject);
     }, [])
-    const toggleSubjectToServer = async (token: string, subject: string, subjectList: string[]) => {
+    const toggleSubjectToServer = async (subject: string, subjectList: string[]) => {
         const checkIfExists = (subjectElem: string) => (subjectElem === subject);
         const isAddLike = subjectList.some(checkIfExists);
-        const { status } = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/manage_subject_like`, 
-        { subject, isAddLike }, { headers: {'authorization': `Bearer ${token}`} });
+        const { status } = await roomRequestAxios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/manage_subject_like`, 
+        { subject, isAddLike });
         if (status === 200) {
             if (isAddLike) dispatch(removeInList(subject));
             else dispatch(addInList(subject));
@@ -290,7 +289,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
             subscribeRoomParticipants();
         });
         stomp.debug = () => null;
-        if (!getCookie(CHATO_USERINFO))
+        if (!getAccessToken(CHATO_TOKEN))
             arrangeRoomList(getPinnedSubjectStorage());        
         return () => {
             stomp.disconnect(() => null, {});

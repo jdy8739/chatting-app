@@ -3,6 +3,8 @@ package com.example.ChatoBackend.controller;
 import com.example.ChatoBackend.entity.User;
 import com.example.ChatoBackend.jwt.JWTUtils;
 import com.example.ChatoBackend.service.UserServiceImpl;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.http.fileupload.impl.FileSizeLimitExceededException;
@@ -19,6 +21,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
+import java.text.ParseException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -72,10 +76,9 @@ public class UserController {
         try {
             Map<String, Object> userInfoMap =
                     userService.signin(siginMap.get("id"), siginMap.get("password"));
-            HttpHeaders httpHeaders = new HttpHeaders();
-            httpHeaders.set("Access-Control-Expose-Headers", "*");
-            httpHeaders.add(HttpHeaders.COOKIE, jwtUtils.makeJWT(siginMap.get("id")));
-            return new ResponseEntity<>(userInfoMap, httpHeaders, HttpStatus.OK);
+            userInfoMap.put("accessToken", jwtUtils.makeJWT(siginMap.get("id")));
+            userInfoMap.put("refreshToken", jwtUtils.createRefreshToken());
+            return new ResponseEntity<>(userInfoMap, HttpStatus.OK);
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } catch (BadCredentialsException e) {
@@ -111,7 +114,7 @@ public class UserController {
     }
 
     @PutMapping("/alter")
-    public ResponseEntity<Void> alter(
+    public ResponseEntity<String> alter(
             @RequestParam String id,
             @RequestParam String nickName,
             @RequestParam String isUseProfilePic,
@@ -141,10 +144,7 @@ public class UserController {
         } catch (RuntimeException e) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.set("Access-Control-Expose-Headers", "*");
-        httpHeaders.add(HttpHeaders.COOKIE, jwtUtils.makeJWT(id));
-        return new ResponseEntity<>(httpHeaders, HttpStatus.OK);
+        return new ResponseEntity<>(jwtUtils.makeJWT(id), HttpStatus.OK);
     }
 
     @PutMapping("/withdraw")
@@ -184,5 +184,22 @@ public class UserController {
         String userName = (String) map.get("userName");
         userService.saveBannedIpAddress(roomId, ipAddress, userName);
         return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @GetMapping("/reissue_token")
+    public ResponseEntity<String> reissueTokens(
+            HttpServletRequest req) {
+        try {
+            String refreshToken = String.valueOf(req.getHeader("refresh_token"));
+            if (!jwtUtils.checkIfIsValidRefreshToken(refreshToken)) throw new JwtException("");
+            else {
+                String accessToken = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
+                String id = jwtUtils.getUserIdFromExpiredToken(accessToken);
+                // id로 DB에 저장된 리프레시 토큰과 일치하는지 검사. 일치한다면 엑세스 토큰을 다시 준다.
+                return new ResponseEntity<>(jwtUtils.makeJWT(id), HttpStatus.OK);
+            }
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
     }
 }

@@ -21,7 +21,7 @@ function Room({ room, index }: { room: IRoom, index: number }) {
         router.push({
             pathname: `/chat/${roomId}`,
             query: { roomName: room.roomName, password: password },
-        }, `/chat/${roomId}`)
+        }, `/chat/${roomId}`);
     }
     const hideModal = () => { setIsModalShown(false) };
     const correctParticipantsNumber = (numberOfParticipants?: number) => {

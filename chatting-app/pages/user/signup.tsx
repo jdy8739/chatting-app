@@ -1,9 +1,9 @@
 import { useRouter } from "next/router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import Seo from "../../components/commons/Seo";
-import { CHATO_USERINFO, getCookie, ID_REGEX, PW_REGEX, signupAxios, toastConfig } from "../../utils/utils";
+import { CHATO_TOKEN, getAccessToken, ID_REGEX, PW_REGEX, signupAxios, toastConfig } from "../../utils/utils";
 
 interface ISignUpForm {
 	id: string,
@@ -64,7 +64,7 @@ function SingUp() {
     useEffect(() => {
         setIsRendered(true);
         // clearPreviousRoomId();
-        if (getCookie(CHATO_USERINFO)) {
+        if (getAccessToken(CHATO_TOKEN)) {
             toast.error('Please sign out ahead of sign up.', toastConfig);
             router.push('/chat/list');
         }

@@ -8,7 +8,7 @@ import Seo from "../../components/commons/Seo";
 import MessageComponent from "../../components/[id]/MessageComponent";
 import UserContainer from "../../components/[id]/UserContainer";
 import { Iipdata, IMessageBody, IParticipants } from "../../types/types";
-import { CHATO_USERINFO, generateRandonUserId, getCookie, getNowTime, toastConfig } from "../../utils/utils";
+import { CHATO_TOKEN, generateRandonUserId, getAccessToken, getNowTime, toastConfig } from "../../utils/utils";
 import { IUserInfoSelector } from "./list";
 
 export enum SEND_PROTOCOL {
@@ -257,7 +257,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
         socket = new WebSocket('ws://localhost:5000/stomp/chat');
         stomp = webstomp.over(socket);
         stomp.debug = () => null;
-        if (!getCookie(CHATO_USERINFO))
+        if (!getAccessToken(CHATO_TOKEN))
             startAndSubscribeChatting();
         return () => {
             stomp.disconnect(() => null, {});

@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 import { ISignedIn } from "../../components/commons/NavBar";
 import { replaceList } from "../../lib/store/modules/likedSubjectReducer";
 import { IUserSignedInInfo, signIn } from "../../lib/store/modules/signInReducer";
-import { CHATO_USERINFO, clearPreviousRoomId, getCookie, signinAxios, toastConfig } from "../../utils/utils";
+import { CHATO_TOKEN, clearPreviousRoomId, getAccessToken, signinAxios, toastConfig } from "../../utils/utils";
 
 function Signin() {
     const router = useRouter();
@@ -20,14 +20,14 @@ function Signin() {
         const password = pwInputRef.current?.value;
         if (id && password) {
             try {
-                const { status, data }: { status: number, data: ISignedIn } = await signinAxios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/signin`, {id, password});
+                const { status, data: userData }: { status: number, data: ISignedIn } = await signinAxios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/signin`, {id, password});
                 if (status === 200) {
                     const likedList: Array<string> = [];
-                    if (data.likedSubjects)
-                        data.likedSubjects.forEach(subject => likedList.push(subject.subject));
+                    if (userData.likedSubjects)
+                    userData.likedSubjects.forEach(subject => likedList.push(subject.subject));
                     dispatch(replaceList(likedList));
-                    delete data.likedSubjects;
-                    handleSignIn(data);
+                    delete userData.likedSubjects;
+                    handleSignIn(userData);
                     router.push('/chat/list');
                 }
             } catch (e) {};
@@ -35,7 +35,7 @@ function Signin() {
     }
     useEffect(() => {
         clearPreviousRoomId();
-        if (getCookie(CHATO_USERINFO)) {
+        if (getAccessToken(CHATO_TOKEN)) {
             toast.error('You are already singed in.', toastConfig);
             router.push('/chat/list');
         }

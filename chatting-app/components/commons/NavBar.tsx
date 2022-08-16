@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { replaceList, truncateList } from "../../lib/store/modules/likedSubjectReducer";
 import { IUserSignedInInfo, signIn, signOut } from "../../lib/store/modules/signInReducer";
 import { IUserInfoSelector } from "../../pages/chat/list";
-import { CHATO_USERINFO, getCookie, removeCookie } from "../../utils/utils";
+import { CHATO_TOKEN, getAccessToken, removeCookie } from "../../utils/utils";
 import SearchModal from "./SearchModal";
 
 interface ILikedSubject {
@@ -18,6 +18,8 @@ interface ILikedSubject {
 
 export interface ISignedIn extends IUserSignedInInfo {
     likedSubjects?: ILikedSubject[],
+    accessToken: string,
+    refreshToken: string,
 }
 
 function NavBar() {
@@ -28,7 +30,7 @@ function NavBar() {
     const handleSignIn = (userInfo: IUserSignedInInfo) => dispatch(signIn(userInfo));
     const handleSignOut = () => dispatch(signOut());
     const fetchUserInfo = async () => {
-        const token: string = (getCookie(CHATO_USERINFO));
+        const token: (string | null) = (getAccessToken(CHATO_TOKEN));
         if (token) {
             axios.get(`${process.env.NEXT_PUBLIC_API_URL}/user/get-userInfo`, {
                 headers: { 'authorization': `Bearer ${token}` }
@@ -41,11 +43,11 @@ function NavBar() {
                 delete data.likedSubjects;
                 handleSignIn(data);
             })
-            .catch(() => removeCookie(CHATO_USERINFO, {path: '/'}));
+            .catch(() => removeCookie(CHATO_TOKEN, {path: '/'}));
         }
     }
     const removeSignedInUserInfo = () => {
-        removeCookie(CHATO_USERINFO, { path: '/' });
+        removeCookie(CHATO_TOKEN, { path: '/' });
         handleSignOut();
         dispatch(truncateList());
         router.push('/chat/list');

@@ -8,7 +8,7 @@ import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import Modal from "../../components/settings/Modal";
 import { IUserSignedInInfo, signIn, signOut } from "../../lib/store/modules/signInReducer";
-import { CHATO_USERINFO, clearPreviousRoomId, getCookie, ID_REGEX, removeCookie, signupAxios, toastConfig } from "../../utils/utils";
+import { CHATO_TOKEN, clearPreviousRoomId, getAccessToken, ID_REGEX, removeCookie, signupAxios, toastConfig } from "../../utils/utils";
 import { IUserInfoSelector } from "../chat/list";
 
 export interface IUserInfo {
@@ -59,7 +59,7 @@ function Settings() {
             tmpPicUrl = userInfo.profilePicUrl || '';
         } catch (e) {
             toast.error('This is not an available user info.', toastConfig);
-            removeCookie(CHATO_USERINFO, {path: '/'});
+            removeCookie(CHATO_TOKEN, {path: '/'});
             dispatch(signOut());
             router.push('/chat/list');
         }
@@ -105,7 +105,7 @@ function Settings() {
                 const { status } = await signupAxios.put(`${process.env.NEXT_PUBLIC_API_URL}/user/alter`, formData, {
                     headers: { 
                         'Content-Type': 'multipart/form-data',
-                        'authorization': `Bearer ${getCookie(CHATO_USERINFO)}`,
+                        'authorization': `Bearer ${getAccessToken(CHATO_TOKEN)}`,
                     }
                 });
                 if (status === 200) {
@@ -133,10 +133,10 @@ function Settings() {
             try {
                 const { status } = await signupAxios.put(`${process.env.NEXT_PUBLIC_API_URL}/user/withdraw`, 
                 { inputPassword }, 
-                { headers: { 'authorization': `Bearer ${getCookie(CHATO_USERINFO)}` }});
+                { headers: { 'authorization': `Bearer ${getAccessToken(CHATO_TOKEN)}` }});
                 if (status === 200) {
                     toast.success('Your id has been removed.', toastConfig);
-                    removeCookie(CHATO_USERINFO, {path: '/'});
+                    removeCookie(CHATO_TOKEN, {path: '/'});
                     handleSignIn({ userNo: -1, userId: '', userNickName: '' });
                     success(true);
                 }
@@ -145,7 +145,7 @@ function Settings() {
     }
     useEffect(() => {
         clearPreviousRoomId();
-        const token = getCookie(CHATO_USERINFO);
+        const token = getAccessToken(CHATO_TOKEN);
         if (!token) router.push('/chat/list');
         else fetchUserInfo(token);
         return () => {

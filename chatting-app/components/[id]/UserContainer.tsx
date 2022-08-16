@@ -2,7 +2,7 @@ import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { MASTER_PROTOCOL, RECEIVE_PROTOCOL, SEND_PROTOCOL } from "../../pages/chat/[id]";
 import { IMessageBody, IParticipants } from "../../types/types";
-import { CHATO_USERINFO, getCookie } from "../../utils/utils";
+import { CHATO_TOKEN, getAccessToken } from "../../utils/utils";
 
 interface IUserContainer { 
     roomId: number,
@@ -38,7 +38,7 @@ function UserContainer({
     roomOwnerId,
     setParticipants,
     shootChatMessage }: IUserContainer) {
-    console.log('user container updated.');
+    /* console.log('user container updated.'); */
     const [isBannedUserShown, setIsBannedUserShown] = useState(false);
     const [bannedUserList, setBannedUserList] = useState<IBannedUserList[]>([]);
     const fetchNowParticipants = async () => {
@@ -58,14 +58,14 @@ function UserContainer({
     const fetchBannedUserList = async () => {
         isContainerClosed = false;
         const { data: bannedUserList } = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/room/banned_users/${roomId}`, 
-        { headers: { 'authorization': `Bearer ${getCookie(CHATO_USERINFO)}` } });
+        { headers: { 'authorization': `Bearer ${getAccessToken(CHATO_TOKEN)}` } });
         setIsBannedUserShown(true);
         setBannedUserList(bannedUserList);
     }
     const unlockThisUser = async (bannedIpNo: number) => {
         isContainerClosed = false;
         const { status } = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/unlock_ban`, { bannedIpNo, roomId }, {
-            headers: { 'authorization': `Bearer ${getCookie(CHATO_USERINFO)}` }
+            headers: { 'authorization': `Bearer ${getAccessToken(CHATO_TOKEN)}` }
         })
         if (status === 200) setBannedUserList(bannedUserList => {
             return [...bannedUserList.filter(bannedUser => bannedUser.bannedIpNo !== bannedIpNo)];

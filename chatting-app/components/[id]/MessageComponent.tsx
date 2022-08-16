@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { MASTER_PROTOCOL } from "../../pages/chat/[id]";
 import { IMessageBody } from "../../types/types";
 
@@ -29,7 +29,7 @@ function MessageComponent({
     roomOwner,
     roomId,
     isNumberMatches }: IMessageComponent) {
-    console.log('rendered. ');
+    /* console.log('rendered. '); */
     const isMyMessage = (msg.writerNo === userNo);
     const isSameTimeMessage = (prevTime !== msg.time);
     const checkIsEligibleToDelete = () => {

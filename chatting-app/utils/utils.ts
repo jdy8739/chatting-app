@@ -1,6 +1,7 @@
-import axios, { AxiosError } from "axios";
+import axios, { AxiosError, AxiosResponse } from "axios";
 import { toast } from "react-toastify";
 import { Cookies } from 'react-cookie';
+import { ISignedIn } from "../components/commons/NavBar";
 
 const cookies = new Cookies();
 
@@ -15,24 +16,32 @@ export const setCookie = (name: string, value: string, options: ICookieOpt) => {
 	return cookies.set(name, value, options);
 };
 
-export const getCookie = (name: string) :string => {
-	return cookies.get(name);
+export const getAccessToken = (name: string) :string | null => {
+	const tokens: string[] = cookies.get(name);
+	if (tokens) return tokens[0];
+	else return null;
+};
+
+export const getRefreshToken = (name: string) :string | null => {
+	const tokens: string[] = cookies.get(name);
+	if (tokens) return tokens[1];
+	else return null;
 };
 
 export const removeCookie = (name: string, options: ICookieOpt) => {
 	return cookies.remove(name, options);
 };
 
-export const CHATO_USERINFO = "CHATO_USERINFO";
+export const CHATO_TOKEN = "CHATO_TOKEN";
 
 export const ID_REGEX = /^(?!.*[!#$%&’'*+/=?^_`])[a-zA-Z0-9]+$/;
 
 export const PW_REGEX = /^(?=.*[~`!@#$%^&*()--+={}\[\]|\\:;"'<>,.?/_₹])/;
 
 export const generateRandonUserId = () => {
-    let a = new Uint32Array(3);
-    window.crypto.getRandomValues(a);
-    return (performance.now().toString(36)+Array.from(a).map(A => A.toString(36)).join("")).replace(/\./g,"");
+    let bytes = new Uint32Array(3);
+    window.crypto.getRandomValues(bytes);
+    return (performance.now().toString(36)+Array.from(bytes).map(byte => byte.toString(36)).join("")).replace(/\./g,"");
 };
 
 export const getPreviousRoomId = () :string | null => {
@@ -63,11 +72,7 @@ export const signupAxios = axios.create();
 
 signupAxios.interceptors.response.use(
     response => {
-		const token = response.headers['cookie'];
-		if (token) {
-			bakeCookie(token);
-			toast.success('Your info has been altered successfully!', toastConfig);
-		}
+		toast.success('Your info has been altered successfully!', toastConfig);
 		return response;
 	},
     error => {
@@ -91,10 +96,18 @@ const handleErrors = ({ request }: AxiosError) => {
 export const signinAxios = axios.create();
 
 signinAxios.interceptors.response.use(
-    response => {
-		const token = response.headers['cookie'];
-		if (token) bakeCookie(token);
+    (response: { data: Partial<ISignedIn> }) => {
 		toast.success('Hello! Welcome To Chato', toastConfig);
+		const accessToken = response.data.accessToken;
+		const refreshToken = response.data.refreshToken;
+		if (accessToken && refreshToken) {
+			bakeCookie(accessToken, refreshToken);
+			delete response.data.refreshToken;
+		} else if (accessToken) {
+			const refreshToken = getRefreshToken(CHATO_TOKEN);
+			if (refreshToken) bakeCookie(accessToken, refreshToken);
+		}
+		delete response.data.accessToken;
 		return response;
 	},
     (error: AxiosError) => {
@@ -106,6 +119,77 @@ signinAxios.interceptors.response.use(
         return Promise.reject();
     }
 )
+
+export const roomRequestAxios = axios.create();
+
+roomRequestAxios.interceptors.request.use(
+	request => {
+		if (request.headers)
+			request.headers['authorization'] = `Bearer ${getAccessToken(CHATO_TOKEN)}`;
+		return request;
+	},
+	error => error,
+)
+
+export let userNoForAxios = -1;
+
+roomRequestAxios.interceptors.response.use(
+	(response: AxiosResponse) => response,
+	async (error: AxiosError) => {
+		console.log(error);
+		if (error.response?.status === 401) {
+			console.log(error);
+			const targetUrl = error.config.url;
+			const method = error.config.method;
+			const body = error.config.data;
+			const env = error.config.env?.FormData;
+			// refreshToken 요청
+			const { status, data: accessToken }: { status: number, data: string } = 
+				await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/user/reissue_token`, {
+				headers: {
+					'refresh_token': `Bearer ${getRefreshToken(CHATO_TOKEN)}`,
+					'authorization': `Bearer ${getAccessToken(CHATO_TOKEN)}`,
+				}
+			})
+			if (status === 200 && (accessToken)) {
+				const refreshToken = getRefreshToken(CHATO_TOKEN);
+				if (refreshToken) bakeCookie(accessToken, refreshToken);
+				const result = await resendRequest(method, targetUrl, body, env);
+				if (result) return new Response();
+				// 해당 방관련 재요청
+				// 상태가 200이 아니면 재로그인 페이지로
+			}
+		}
+		return error;
+	}
+)
+
+type Tenv = (new (...args: any[]) => object) | undefined;
+
+const resendRequest = (method?: string, url?: string, body?: JSON, env?: Tenv) :Promise<boolean> => {
+	return new Promise(async (success, fail) => {
+		try {
+			if (method && url) {
+				const contentType = { 'Content-Type': 'application/json' };
+				switch (method) {
+					case 'get':
+						await roomRequestAxios.get(url, { headers: contentType });
+						break;
+					case 'post':
+						await roomRequestAxios.post(url, (env && env?.length > 0) ? env : body, { headers: contentType });
+						break;
+					case 'put':
+						await roomRequestAxios.put(url, (env && env?.length > 0) ? env : body, { headers: contentType });
+						break;
+					case 'delete':
+						await roomRequestAxios.delete(url, { headers: contentType });
+						break;
+				}
+			}
+			success(true);
+		} catch (e) { fail(false); };
+	})
+}
 
 export const modalBgVariant = {
     initial: {
@@ -125,11 +209,11 @@ export const getNowTime = () :string => {
 	return time;
 }
 
-const bakeCookie = (token: string) => {
+export const bakeCookie = (accessToken: string, refreshToken: string) => {
 	const now = new Date();
 	setCookie(
-		CHATO_USERINFO,
-		JSON.stringify(token),
+		CHATO_TOKEN,
+		JSON.stringify([accessToken, refreshToken]),
 		{
 			path: '/',
 			expires: new Date(now.setMinutes(now.getMinutes() + 180)),
