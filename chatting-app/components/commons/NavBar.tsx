@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { replaceList, truncateList } from "../../lib/store/modules/likedSubjectReducer";
 import { IUserSignedInInfo, signIn, signOut } from "../../lib/store/modules/signInReducer";
 import { IUserInfoSelector } from "../../pages/chat/list";
-import { CHATO_TOKEN, getAccessToken, removeCookie } from "../../utils/utils";
+import { CHATO_TOKEN, getAccessToken, removeCookie, requestWithTokenAxios } from "../../utils/utils";
 import SearchModal from "./SearchModal";
 
 interface ILikedSubject {
@@ -32,18 +32,18 @@ function NavBar() {
     const fetchUserInfo = async () => {
         const token: (string | null) = (getAccessToken(CHATO_TOKEN));
         if (token) {
-            axios.get(`${process.env.NEXT_PUBLIC_API_URL}/user/get-userInfo`, {
-                headers: { 'authorization': `Bearer ${token}` }
-            })
+            requestWithTokenAxios.get(`${process.env.NEXT_PUBLIC_API_URL}/user/get-userInfo`)
             .then(({ data }: { data: ISignedIn }) => {
-                const likedList: Array<string> = [];
-                if (data.likedSubjects)
-                    data.likedSubjects.forEach(subject => likedList.push(subject.subject));
-                dispatch(replaceList(likedList));
-                delete data.likedSubjects;
-                handleSignIn(data);
+                if (data) {
+                    const likedList: Array<string> = [];
+                    if (data.likedSubjects)
+                        data.likedSubjects.forEach(subject => likedList.push(subject.subject));
+                    dispatch(replaceList(likedList));
+                    delete data.likedSubjects;
+                    handleSignIn(data);
+                }
             })
-            .catch(() => removeCookie(CHATO_TOKEN, {path: '/'}));
+            /* .catch(() => removeCookie(CHATO_TOKEN, {path: '/'})); */
         }
     }
     const removeSignedInUserInfo = () => {

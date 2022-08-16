@@ -120,9 +120,9 @@ signinAxios.interceptors.response.use(
     }
 )
 
-export const roomRequestAxios = axios.create();
+export const requestWithTokenAxios = axios.create();
 
-roomRequestAxios.interceptors.request.use(
+requestWithTokenAxios.interceptors.request.use(
 	request => {
 		if (request.headers)
 			request.headers['authorization'] = `Bearer ${getAccessToken(CHATO_TOKEN)}`;
@@ -131,34 +131,37 @@ roomRequestAxios.interceptors.request.use(
 	error => error,
 )
 
-export let userNoForAxios = -1;
-
-roomRequestAxios.interceptors.response.use(
+requestWithTokenAxios.interceptors.response.use(
 	(response: AxiosResponse) => response,
 	async (error: AxiosError) => {
 		console.log(error);
-		if (error.response?.status === 401) {
+		const status = error.response?.status;
+		if (status === 401) {
 			console.log(error);
 			const targetUrl = error.config.url;
 			const method = error.config.method;
 			const body = error.config.data;
 			const env = error.config.env?.FormData;
-			// refreshToken 요청
-			const { status, data: accessToken }: { status: number, data: string } = 
+			const { status: accessTokenRequestStatus, data: accessToken }: { status: number, data: string } = 
 				await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/user/reissue_token`, {
 				headers: {
 					'refresh_token': `Bearer ${getRefreshToken(CHATO_TOKEN)}`,
 					'authorization': `Bearer ${getAccessToken(CHATO_TOKEN)}`,
 				}
 			})
-			if (status === 200 && (accessToken)) {
+			if (accessTokenRequestStatus === 200 && (accessToken)) {
 				const refreshToken = getRefreshToken(CHATO_TOKEN);
 				if (refreshToken) bakeCookie(accessToken, refreshToken);
-				const result = await resendRequest(method, targetUrl, body, env);
-				if (result) return new Response();
-				// 해당 방관련 재요청
+				const resendResult = await resendRequest(method, targetUrl, body, env);
+				if (resendResult) {
+					return { data: resendResult };
+				}
+			} else if (accessTokenRequestStatus !== 200) {
+				// 리프레시 토큰도 만료됐을 때.
 				// 상태가 200이 아니면 재로그인 페이지로
 			}
+		} else if (status === 403) {
+			toast.error('You are not authorized!', toastConfig);
 		}
 		return error;
 	}
@@ -166,28 +169,29 @@ roomRequestAxios.interceptors.response.use(
 
 type Tenv = (new (...args: any[]) => object) | undefined;
 
-const resendRequest = (method?: string, url?: string, body?: JSON, env?: Tenv) :Promise<boolean> => {
+const resendRequest = (method?: string, url?: string, body?: JSON, env?: Tenv) :Promise<unknown> => {
 	return new Promise(async (success, fail) => {
+		let result: unknown;
 		try {
 			if (method && url) {
 				const contentType = { 'Content-Type': 'application/json' };
 				switch (method) {
 					case 'get':
-						await roomRequestAxios.get(url, { headers: contentType });
+						result = await (await requestWithTokenAxios.get(url, { headers: contentType })).data;
 						break;
 					case 'post':
-						await roomRequestAxios.post(url, (env && env?.length > 0) ? env : body, { headers: contentType });
+						result = await (await requestWithTokenAxios.post(url, (env && env?.length > 0) ? env : body, { headers: contentType })).data;
 						break;
 					case 'put':
-						await roomRequestAxios.put(url, (env && env?.length > 0) ? env : body, { headers: contentType });
+						result = await (await requestWithTokenAxios.put(url, (env && env?.length > 0) ? env : body, { headers: contentType })).data;
 						break;
 					case 'delete':
-						await roomRequestAxios.delete(url, { headers: contentType });
+						result = await (await requestWithTokenAxios.delete(url, { headers: contentType })).data;
 						break;
 				}
 			}
-			success(true);
-		} catch (e) { fail(false); };
+			success(result);
+		} catch (e) { fail(); };
 	})
 }
 

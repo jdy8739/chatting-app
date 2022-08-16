@@ -20,9 +20,6 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.text.ParseException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -89,13 +86,12 @@ public class UserController {
     /* 로그인, 새로고침 시 클라이언트 redux에 회원 정보 저장 용도 */
     @GetMapping("/get-userInfo")
     public ResponseEntity<Map<String, Object>> getUserSignedInInfo(HttpServletRequest req) {
+        String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
         try {
-            String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
-            Map<String, Object> userInfoMap =
-                    userService.getUserInfo(jwtUtils.getUserId(token));
-            return new ResponseEntity<>(userInfoMap, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>(
+                    userService.getUserInfo(jwtUtils.getUserId(token)), HttpStatus.OK);
+        } catch (NoSuchElementException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 
@@ -106,8 +102,6 @@ public class UserController {
         try {
             return new ResponseEntity<>(
                     userService.findUserInfoById(jwtUtils.getUserId(token)), HttpStatus.OK);
-        } catch (MalformedJwtException e) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -121,10 +115,7 @@ public class UserController {
             @RequestParam (required = false) MultipartFile userProfilePic,
             @RequestParam String inputPassword,
             HttpServletRequest req) {
-
         String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
-        if (token == null) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-
         boolean isUserPicRemains = Boolean.parseBoolean(isUseProfilePic);
         String userId;
         try {
@@ -135,8 +126,6 @@ public class UserController {
             String newProfilePicUrl = null;
             if (userProfilePic != null) newProfilePicUrl = userService.saveProfilePic(id, userProfilePic);
             userService.updateUser(id, userId, nickName, newProfilePicUrl, isUserPicRemains);
-        } catch (MalformedJwtException e) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         } catch (FileSizeLimitExceededException e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         } catch (IOException e) {
@@ -152,16 +141,11 @@ public class UserController {
             @RequestBody Map<String, String> map,
             HttpServletRequest req) {
         String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
-        if (token == null) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         String userId;
-        try {
-            userId = jwtUtils.getUserId(token);
-            if (!userService.checkPasswordMatches(userId, map.get("inputPassword")))
-                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-            userService.withdraw(userId);
-        } catch (MalformedJwtException e) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-        }
+        userId = jwtUtils.getUserId(token);
+        if (!userService.checkPasswordMatches(userId, map.get("inputPassword")))
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        userService.withdraw(userId);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 

@@ -1,6 +1,7 @@
 package com.example.ChatoBackend.advice;
 
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,11 @@ public class Advice {
 
     @ExceptionHandler(ExpiredJwtException.class)
     public ResponseEntity<Void> handleExpiredJwtException() {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+    }
+
+    @ExceptionHandler(MalformedJwtException.class)
+    public ResponseEntity<Void> handleMalformedJwtException() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
     }
 }

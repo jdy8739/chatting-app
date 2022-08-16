@@ -4,7 +4,7 @@ import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import ClassifiedRooms from "../../components/list/Table";
 import { IMessageBody, IRoom } from "../../types/types";
 import webstomp, { Client } from "webstomp-client";
-import { CHATO_TOKEN, getAccessToken, getPinnedSubjectStorage, roomRequestAxios, setPinnedSubjectStorage, toastConfig } from "../../utils/utils";
+import { CHATO_TOKEN, getAccessToken, getPinnedSubjectStorage, requestWithTokenAxios, setPinnedSubjectStorage } from "../../utils/utils";
 import { toast } from "react-toastify";
 import { MASTER_PROTOCOL, SEND_PROTOCOL } from "./[id]";
 import BottomIcons from "../../components/list/BottomIcons";
@@ -171,9 +171,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     }
     const deleteRoom = (sourceId: string, index: number) => {
         const targetRoomId = roomList[sourceId].list[index].roomId;
-        axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/room/delete/${targetRoomId}`, {
-            headers: { 'authorization': `Bearer ${getAccessToken(CHATO_TOKEN)}` }
-        })
+        requestWithTokenAxios.delete(`${process.env.NEXT_PUBLIC_API_URL}/room/delete/${targetRoomId}`)
         .then(() => {
             sendRoomDeleteMessage({
                 msgNo: 0,
@@ -183,15 +181,12 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                 writerNo: null,
             })
         })
-        .catch(() => toast.error('You are not authorized!', toastConfig));
     }
     const sendRoomDeleteMessage = (message: IMessageBody) => {
         if (socket && stomp) stomp.send(`/pub/chat/${SEND_PROTOCOL.DELETE}`, JSON.stringify(message));
     }
     const changeToNewSubject = (roomMovedInfo: IRoomMoved) => {
-        axios.put(`${process.env.NEXT_PUBLIC_API_URL}/room/change_subject`, roomMovedInfo, {
-            headers: { 'authorization': `Bearer ${getAccessToken(CHATO_TOKEN)}` }
-        }).catch(() => toast.error('You are not authorized!', toastConfig));
+        requestWithTokenAxios.put(`${process.env.NEXT_PUBLIC_API_URL}/room/change_subject`, roomMovedInfo)
     }
     const subscribeRoomParticipants = () => {
         stomp.subscribe('/sub/chat/room/list', ({ body }: { body: string }) => {
@@ -275,7 +270,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     const toggleSubjectToServer = async (subject: string, subjectList: string[]) => {
         const checkIfExists = (subjectElem: string) => (subjectElem === subject);
         const isAddLike = subjectList.some(checkIfExists);
-        const { status } = await roomRequestAxios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/manage_subject_like`, 
+        const { status } = await requestWithTokenAxios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/manage_subject_like`, 
         { subject, isAddLike });
         if (status === 200) {
             if (isAddLike) dispatch(removeInList(subject));
