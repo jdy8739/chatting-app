@@ -17,6 +17,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.naming.AuthenticationException;
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.nio.file.Files;
@@ -71,10 +72,11 @@ public class UserController {
     @PostMapping("/signin")
     public ResponseEntity<Map<String, Object>> signin(@RequestBody Map<String, String> siginMap) {
         try {
+            String refreshToken = jwtUtils.createRefreshToken();
             Map<String, Object> userInfoMap =
-                    userService.signin(siginMap.get("id"), siginMap.get("password"));
+                    userService.signin(siginMap.get("id"), siginMap.get("password"), refreshToken);
             userInfoMap.put("accessToken", jwtUtils.makeJWT(siginMap.get("id")));
-            userInfoMap.put("refreshToken", jwtUtils.createRefreshToken());
+            userInfoMap.put("refreshToken", refreshToken);
             return new ResponseEntity<>(userInfoMap, HttpStatus.OK);
         } catch (NoSuchElementException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -99,6 +101,7 @@ public class UserController {
     @GetMapping("/info")
     public ResponseEntity<User> getUserWholeInfo(HttpServletRequest req) {
         String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
+        log.info("" + jwtUtils.getUserId(token));
         try {
             return new ResponseEntity<>(
                     userService.findUserInfoById(jwtUtils.getUserId(token)), HttpStatus.OK);
@@ -117,9 +120,8 @@ public class UserController {
             HttpServletRequest req) {
         String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
         boolean isUserPicRemains = Boolean.parseBoolean(isUseProfilePic);
-        String userId;
+        String userId = jwtUtils.getUserId(token);
         try {
-            userId = jwtUtils.getUserId(token);
             if (!userService.checkPasswordMatches(userId, inputPassword)) {
                 return new ResponseEntity<>(HttpStatus.FORBIDDEN);
             }
@@ -141,8 +143,7 @@ public class UserController {
             @RequestBody Map<String, String> map,
             HttpServletRequest req) {
         String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
-        String userId;
-        userId = jwtUtils.getUserId(token);
+        String userId = jwtUtils.getUserId(token);
         if (!userService.checkPasswordMatches(userId, map.get("inputPassword")))
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         userService.withdraw(userId);
@@ -179,11 +180,19 @@ public class UserController {
             else {
                 String accessToken = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
                 String id = jwtUtils.getUserIdFromExpiredToken(accessToken);
-                // id로 DB에 저장된 리프레시 토큰과 일치하는지 검사. 일치한다면 엑세스 토큰을 다시 준다.
-                return new ResponseEntity<>(jwtUtils.makeJWT(id), HttpStatus.OK);
+                if (userService.checkIfIsValidRefreshToken(jwtUtils.extractToken(refreshToken), id))
+                    return new ResponseEntity<>(jwtUtils.makeJWT(id), HttpStatus.OK);
+                else throw new AuthenticationException();
             }
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
+    }
+
+    @GetMapping("/signout")
+    public ResponseEntity<Void> manageSubjectLike(HttpServletRequest req) {
+        String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
+        userService.signout(jwtUtils.getUserId(token));
+        return new ResponseEntity<Void>(HttpStatus.OK);
     }
 }

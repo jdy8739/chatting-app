@@ -1,4 +1,3 @@
-import axios from "axios";
 import { AnimatePresence } from "framer-motion";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
@@ -7,8 +6,9 @@ import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import Modal from "../../components/settings/Modal";
+import { truncateList } from "../../lib/store/modules/likedSubjectReducer";
 import { IUserSignedInInfo, signIn, signOut } from "../../lib/store/modules/signInReducer";
-import { CHATO_TOKEN, clearPreviousRoomId, getAccessToken, ID_REGEX, removeCookie, signupAxios, toastConfig } from "../../utils/utils";
+import { CHATO_TOKEN, clearPreviousRoomId, getAccessToken, ID_REGEX, removeCookie, requestWithTokenAxios, toastConfig } from "../../utils/utils";
 import { IUserInfoSelector } from "../chat/list";
 
 export interface IUserInfo {
@@ -49,19 +49,16 @@ function Settings() {
         setValue, 
         getValues,
         handleSubmit } = useForm<IUserInfo>();
-    const fetchUserInfo = async (token: string) => {
-        try {
-            const { data: userInfo }: { data: IUserInfo } = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/user/info`, {
-                headers: { 'authorization': `Bearer ${token}` }
-            });
+    const fetchUserInfo = async () => {
+        const { status, data: userInfo }: { status: number, data: IUserInfo } =
+                await requestWithTokenAxios.get(`${process.env.NEXT_PUBLIC_API_URL}/user/info`);
+        if (status === 200) {
             setInputRefValue(userInfo);
             setUserInfo(userInfo);
             tmpPicUrl = userInfo.profilePicUrl || '';
-        } catch (e) {
+        } else if (status === 401) {
             toast.error('This is not an available user info.', toastConfig);
-            removeCookie(CHATO_TOKEN, {path: '/'});
-            dispatch(signOut());
-            router.push('/chat/list');
+            handleTokenException();
         }
     }
     const setInputRefValue = ({ id, nickName }: IUserInfo) => {
@@ -70,7 +67,7 @@ function Settings() {
     }
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.currentTarget.files;
-        if (!files) return;
+        if (!files || (files.length === 0)) return;
         userProfilePic = files[0];
         if (files[0].type.includes('image') === false) {
             toast.error('You need to upload a image file only.', toastConfig);
@@ -102,13 +99,9 @@ function Settings() {
             formData.append('inputPassword', inputPassword);
             for (let key in updatedUserIndo) formData.append(key, updatedUserIndo[key]);
             try {
-                const { status } = await signupAxios.put(`${process.env.NEXT_PUBLIC_API_URL}/user/alter`, formData, {
-                    headers: { 
-                        'Content-Type': 'multipart/form-data',
-                        'authorization': `Bearer ${getAccessToken(CHATO_TOKEN)}`,
-                    }
-                });
+                const { status } = await requestWithTokenAxios.put(`${process.env.NEXT_PUBLIC_API_URL}/user/alter`, formData);
                 if (status === 200) {
+                    toast.success('Your info has been altered successfully!', toastConfig);
                     if (userInfo?.id === data.id) handleSignOut();
                     setTimeout(() => {
                         handleSignIn({
@@ -118,7 +111,7 @@ function Settings() {
                         });
                     }, 500);
                     success(true);
-                }
+                } else if (status === 401) handleTokenException();
             } catch (e) { fail(false); };
         })
     }
@@ -131,23 +124,28 @@ function Settings() {
     const handleUserWithdraw = (inputPassword: string) :Promise<boolean> => {
         return new Promise(async (success, fail) => {
             try {
-                const { status } = await signupAxios.put(`${process.env.NEXT_PUBLIC_API_URL}/user/withdraw`, 
-                { inputPassword }, 
-                { headers: { 'authorization': `Bearer ${getAccessToken(CHATO_TOKEN)}` }});
+                const { status } =
+                    await requestWithTokenAxios.put(`${process.env.NEXT_PUBLIC_API_URL}/user/withdraw`, { inputPassword });
                 if (status === 200) {
                     toast.success('Your id has been removed.', toastConfig);
                     removeCookie(CHATO_TOKEN, {path: '/'});
                     handleSignIn({ userNo: -1, userId: '', userNickName: '' });
                     success(true);
-                }
+                } else if (status === 401) handleTokenException();
             } catch (e) { fail(false); };
         })
+    }
+    const handleTokenException = () => {
+        removeCookie(CHATO_TOKEN, {path: '/'});
+        dispatch(signOut());
+        dispatch(truncateList());
+        router.push('/chat/list');
     }
     useEffect(() => {
         clearPreviousRoomId();
         const token = getAccessToken(CHATO_TOKEN);
         if (!token) router.push('/chat/list');
-        else fetchUserInfo(token);
+        else fetchUserInfo();
         return () => {
             userProfilePic = undefined;
             tmpPicUrl = '';

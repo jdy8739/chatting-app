@@ -13,7 +13,7 @@ public interface UserService {
 
     public String saveProfilePic(String id, MultipartFile profilePicBinary) throws IOException;
 
-    public Map<String, Object> signin(String id, String password);
+    public Map<String, Object> signin(String id, String password, String refreshToken);
 
     public User findUserInfoById(String id);
 
@@ -35,4 +35,8 @@ public interface UserService {
     public void toggleSubjectLike(Long userNo, String subject, boolean isAddLike);
 
     public void saveBannedIpAddress(Long roomId, String apAddress, String userName);
+
+    public boolean checkIfIsValidRefreshToken(String refreshToken, String id);
+
+    public void signout(String id);
 }

@@ -33,24 +33,34 @@ function NavBar() {
         const token: (string | null) = (getAccessToken(CHATO_TOKEN));
         if (token) {
             requestWithTokenAxios.get(`${process.env.NEXT_PUBLIC_API_URL}/user/get-userInfo`)
-            .then(({ data }: { data: ISignedIn }) => {
-                if (data) {
+            .then(({ status, data }: { status: number, data: ISignedIn }) => {
+                if (status === 200) {
                     const likedList: Array<string> = [];
                     if (data.likedSubjects)
                         data.likedSubjects.forEach(subject => likedList.push(subject.subject));
                     dispatch(replaceList(likedList));
                     delete data.likedSubjects;
                     handleSignIn(data);
-                }
+                } else if (status === 401) handleTokenException();
             })
             /* .catch(() => removeCookie(CHATO_TOKEN, {path: '/'})); */
         }
     }
-    const removeSignedInUserInfo = () => {
+    const doCommonTasks = () => {
         removeCookie(CHATO_TOKEN, { path: '/' });
         handleSignOut();
         dispatch(truncateList());
-        router.push('/chat/list');
+    }
+    const handleTokenException = () => {
+        doCommonTasks();
+        router.push('/chat/signin');
+    }
+    const signOutAndClearUserInfo = async () => {
+        const { status } = await requestWithTokenAxios.get(`${process.env.NEXT_PUBLIC_API_URL}/user/signout`);
+        if (status === 200) {
+            doCommonTasks();
+            router.push('/chat/list');
+        } else if (status === 401) handleTokenException();
     }
     const hideSearchModal = () => setIsSearhModalShown(false);
     useEffect(() => {
@@ -85,7 +95,7 @@ function NavBar() {
                             />
                         </div>
                         <div id="user-id" onClick={() => router.push('/user/settings')}>{userInfo.userId}</div>
-                        <button onClick={removeSignedInUserInfo}>sign out</button>
+                        <button onClick={signOutAndClearUserInfo}>sign out</button>
                     </> :
                     <>
                         <Link href="/user/signup">

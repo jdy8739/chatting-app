@@ -26,4 +26,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("select u.userNo from User u where u.id = :id")
     Long findUserNoByUserId(String id);
+
+    @Transactional
+    @Modifying
+    @Query("update User u set u.refreshToken = :refreshToken where u.userNo = :userNo")
+    void setRefreshTokenByUserNo(String refreshToken, Long userNo);
+
+    @Query("select u.refreshToken from User u where u.id = :id")
+    String findRefreshTokenIdByUserId(String id);
 }

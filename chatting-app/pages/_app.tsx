@@ -120,12 +120,12 @@ function MyApp({ Component, pageProps }: AppProps) {
         }
         
         .user-container {
-          width: 300px;
+          width: 350px;
           height: 100vh;
           background-color: rgb(68, 68, 68, 0.7);
           position: fixed;
           top: 0px;
-          left: -235px;
+          left: -285px;
           transition: all 1s;
           opacity: 0.9;
           z-index: 10;
@@ -148,12 +148,12 @@ function MyApp({ Component, pageProps }: AppProps) {
         }
         
         .user-container:hover {
-          transform: translateX(235px);
+          transform: translateX(285px);
           opacity: 1;
         }
         
         .name-box {
-          width: 235px;
+          width: 285px;
           height: 100vh;
           padding-top: 65px;
         }

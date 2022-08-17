@@ -71,25 +71,21 @@ export const toastConfig = {
 export const signupAxios = axios.create();
 
 signupAxios.interceptors.response.use(
-    response => {
-		toast.success('Your info has been altered successfully!', toastConfig);
-		return response;
-	},
+    response => response,
     error => {
-		handleErrors(error);
+		handleErrors(error.status);
         return Promise.reject(error);
 })
 
-const handleErrors = ({ request }: AxiosError) => {
-	const status = request.status;
+const handleErrors = (status: number) => {
 	if (status === 500) {
 		toast.error('Please upload your pic in smaller sizes.', toastConfig);
 	} else if (status === 400) {
 		toast.error('There might be some errors on the server. Please try later. :(', toastConfig);
 	} else if (status === 409) {
 		toast.error('Id is duplicate. Please try another id.', toastConfig);
-	} else if (status === 401) {
-		toast.error('Unauthorized. Please sign in again.', toastConfig);
+	} else if (status === 403) {
+		toast.error('You are not authorized!', toastConfig);
 	}
 }
 
@@ -132,12 +128,17 @@ requestWithTokenAxios.interceptors.request.use(
 )
 
 requestWithTokenAxios.interceptors.response.use(
-	(response: AxiosResponse) => response,
+	(response: AxiosResponse) => {
+		const data = response.data;
+		if (typeof data === 'string' && data.length > 50) {
+			const refreshToken = getRefreshToken(CHATO_TOKEN);
+			if (refreshToken) bakeCookie(data, refreshToken);
+		}
+		return response;
+	},
 	async (error: AxiosError) => {
-		console.log(error);
 		const status = error.response?.status;
 		if (status === 401) {
-			console.log(error);
 			const targetUrl = error.config.url;
 			const method = error.config.method;
 			const body = error.config.data;
@@ -153,16 +154,14 @@ requestWithTokenAxios.interceptors.response.use(
 				const refreshToken = getRefreshToken(CHATO_TOKEN);
 				if (refreshToken) bakeCookie(accessToken, refreshToken);
 				const resendResult = await resendRequest(method, targetUrl, body, env);
-				if (resendResult) {
-					return { data: resendResult };
-				}
+				if (resendResult) return {
+					status: 200,
+					data: resendResult,
+				};
 			} else if (accessTokenRequestStatus !== 200) {
-				// 리프레시 토큰도 만료됐을 때.
-				// 상태가 200이 아니면 재로그인 페이지로
+				return { status: 401 };
 			}
-		} else if (status === 403) {
-			toast.error('You are not authorized!', toastConfig);
-		}
+		} else if (status) handleErrors(status);
 		return error;
 	}
 )
@@ -177,21 +176,25 @@ const resendRequest = (method?: string, url?: string, body?: JSON, env?: Tenv) :
 				const contentType = { 'Content-Type': 'application/json' };
 				switch (method) {
 					case 'get':
-						result = await (await requestWithTokenAxios.get(url, { headers: contentType })).data;
+						result = 
+						await (await requestWithTokenAxios.get(url, { headers: contentType })).data;
 						break;
 					case 'post':
-						result = await (await requestWithTokenAxios.post(url, (env && env?.length > 0) ? env : body, { headers: contentType })).data;
+						result = 
+						await (await requestWithTokenAxios.post(url, (env && env?.length > 0) ? env : body, { headers: contentType })).data;
 						break;
 					case 'put':
-						result = await (await requestWithTokenAxios.put(url, (env && env?.length > 0) ? env : body, { headers: contentType })).data;
+						result = 
+						await (await requestWithTokenAxios.put(url, (env && env?.length > 0) ? env : body, { headers: contentType })).data;
 						break;
 					case 'delete':
-						result = await (await requestWithTokenAxios.delete(url, { headers: contentType })).data;
+						result =
+						await (await requestWithTokenAxios.delete(url, { headers: contentType })).data;
 						break;
 				}
 			}
-			success(result);
-		} catch (e) { fail(); };
+			success(result || true);
+		} catch (e) { fail(false); };
 	})
 }
 

@@ -4,13 +4,13 @@ import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import ClassifiedRooms from "../../components/list/Table";
 import { IMessageBody, IRoom } from "../../types/types";
 import webstomp, { Client } from "webstomp-client";
-import { CHATO_TOKEN, getAccessToken, getPinnedSubjectStorage, requestWithTokenAxios, setPinnedSubjectStorage } from "../../utils/utils";
-import { toast } from "react-toastify";
+import { CHATO_TOKEN, getAccessToken, getPinnedSubjectStorage, removeCookie, requestWithTokenAxios, setPinnedSubjectStorage } from "../../utils/utils";
 import { MASTER_PROTOCOL, SEND_PROTOCOL } from "./[id]";
 import BottomIcons from "../../components/list/BottomIcons";
 import { useSelector, useDispatch } from "react-redux";
-import { IUserSignedInInfo } from "../../lib/store/modules/signInReducer";
-import { addInList, removeInList } from "../../lib/store/modules/likedSubjectReducer";
+import { IUserSignedInInfo, signOut } from "../../lib/store/modules/signInReducer";
+import { addInList, removeInList, truncateList } from "../../lib/store/modules/likedSubjectReducer";
+import { useRouter } from "next/router";
 
 export enum SECTION {
     PINNED = "pinned",
@@ -58,6 +58,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     let pinnedTableLength: number = 0;
     let notPinnedTableLength: number = 0;
     let isTableShown: boolean;
+    const router = useRouter();
     const dispatch = useDispatch();
     const [roomList, setRoomList] = useState<ITable>({});
     const { userNo, userId } = useSelector(({ signInReducer: {userInfo} }: IUserInfoSelector) => userInfo);
@@ -172,14 +173,16 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     const deleteRoom = (sourceId: string, index: number) => {
         const targetRoomId = roomList[sourceId].list[index].roomId;
         requestWithTokenAxios.delete(`${process.env.NEXT_PUBLIC_API_URL}/room/delete/${targetRoomId}`)
-        .then(() => {
-            sendRoomDeleteMessage({
-                msgNo: 0,
-                roomId: String(targetRoomId),
-                message: MASTER_PROTOCOL.DISBANDED,
-                writer: MASTER_PROTOCOL.MASTER,
-                writerNo: null,
-            })
+        .then(({ status }) => {
+            if (status === 200) {
+                sendRoomDeleteMessage({
+                    msgNo: 0,
+                    roomId: String(targetRoomId),
+                    message: MASTER_PROTOCOL.DISBANDED,
+                    writer: MASTER_PROTOCOL.MASTER,
+                    writerNo: null,
+                })
+            } else if (status === 401) handleTokenException();
         })
     }
     const sendRoomDeleteMessage = (message: IMessageBody) => {
@@ -187,6 +190,9 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     }
     const changeToNewSubject = (roomMovedInfo: IRoomMoved) => {
         requestWithTokenAxios.put(`${process.env.NEXT_PUBLIC_API_URL}/room/change_subject`, roomMovedInfo)
+        .then(({ status }) => {
+            if (status === 401) handleTokenException();
+        })
     }
     const subscribeRoomParticipants = () => {
         stomp.subscribe('/sub/chat/room/list', ({ body }: { body: string }) => {
@@ -275,7 +281,13 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         if (status === 200) {
             if (isAddLike) dispatch(removeInList(subject));
             else dispatch(addInList(subject));
-        }
+        } else if (status === 401) handleTokenException();
+    }
+    const handleTokenException = () => {
+        removeCookie(CHATO_TOKEN, { path: '/' });
+        dispatch(signOut());
+        dispatch(truncateList());
+        router.push('/user/signin');
     }
     useEffect(() => {
         socket = new WebSocket(`ws://localhost:5000/stomp/chat`);

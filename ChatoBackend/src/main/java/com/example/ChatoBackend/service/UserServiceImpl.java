@@ -72,13 +72,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Map<String, Object> signin(String id, String password) {
+    public Map<String, Object> signin(String id, String password, String refreshToken) {
         Optional<User> optionalUser = userRepository.findById(id);
         if (optionalUser.isEmpty()) throw new NoSuchElementException();
         User user = optionalUser.get();
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new BadCredentialsException("Password not matches.");
-        } else return assembleUserInfo(user);
+        } else {
+            userRepository.setRefreshTokenByUserNo(refreshToken, user.getUserNo());
+            return assembleUserInfo(user);
+        }
     }
 
     @Override
@@ -222,5 +225,17 @@ public class UserServiceImpl implements UserService {
     @Override
     public void saveBannedIpAddress(Long roomId, String ipAddress, String userName) {
         bannedIpRepository.save(new BannedIp(roomId, ipAddress, userName));
+    }
+
+    @Override
+    public boolean checkIfIsValidRefreshToken(String refreshToken, String id) {
+        String targetToken = userRepository.findRefreshTokenIdByUserId(id);
+        return (refreshToken.equals(targetToken));
+    }
+
+    @Override
+    public void signout(String id) {
+        Long userNo = userRepository.findUserNoByUserId(id);
+        userRepository.setRefreshTokenByUserNo(null, userNo);
     }
 }

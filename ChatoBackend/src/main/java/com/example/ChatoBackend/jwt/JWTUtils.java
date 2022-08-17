@@ -36,7 +36,7 @@ public class JWTUtils {
         }
     }
 
-    private String extractToken(String authorizationHeader) {
+    public String extractToken(String authorizationHeader) {
         return authorizationHeader.substring(BEARER.length());
     }
 
@@ -46,7 +46,7 @@ public class JWTUtils {
                 .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
                 .setIssuer("fresh")
                 .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + Duration.ofMinutes(1).toMillis()))
+                .setExpiration(new Date(now.getTime() + Duration.ofMinutes(15).toMillis()))
                 .claim("id", id)
                 .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
                 .compact();

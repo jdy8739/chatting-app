@@ -136,7 +136,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
             return;
         } else 
             setMessages(messages => [...messages, newMessageInfo]);
-            window.scrollTo(0, document.body.scrollHeight);
+            /* window.scrollTo(0, document.body.scrollHeight); */
     };
     const updateParticipantsList = (targetUser: IParticipants, isUserOut: boolean) => {
         setParticipants(participants => {
@@ -280,7 +280,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
             <UserContainer
                 roomId={id}
                 participants={participants}
-                myId={userId}
+                myId={(userId || currentUserName)}
                 myUserNo={userNo}
                 roomOwner={roomOwner}
                 roomOwnerId={roomOwnerId}
