@@ -36,7 +36,11 @@ function SingUp() {
 			);
         } else {
             const formData = new FormData();
-            for (let key in data) formData.append(key, data[key]);
+            const values: {[key: string]: (string | Blob | null)} = {...data};
+            for (let key in values) {
+                const value = values[key];
+                if (value !== null) formData.append(key, value);
+            }
             if (userProfilePic && getValues().userProfilePic) {
                 formData.append('userProfilePic', userProfilePic);
             }

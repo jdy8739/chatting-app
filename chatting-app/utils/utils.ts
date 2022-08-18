@@ -106,8 +106,8 @@ signinAxios.interceptors.response.use(
 		delete response.data.accessToken;
 		return response;
 	},
-    (error: AxiosError) => {
-        const status = error.response?.status;
+    ({ response }: AxiosError) => {
+        const status = response?.status;
         if (status === 404)
             toast.error('No such Id in our record.', toastConfig);
         else if (status === 400)
@@ -124,7 +124,7 @@ requestWithTokenAxios.interceptors.request.use(
 			request.headers['authorization'] = `Bearer ${getAccessToken(CHATO_TOKEN)}`;
 		return request;
 	},
-	error => error,
+	({ response }: AxiosError) => response,
 )
 
 requestWithTokenAxios.interceptors.response.use(
@@ -136,13 +136,13 @@ requestWithTokenAxios.interceptors.response.use(
 		}
 		return response;
 	},
-	async (error: AxiosError) => {
-		const status = error.response?.status;
+	async ({ response, config }: AxiosError) => {
+		const status = response?.status;
 		if (status === 401) {
-			const targetUrl = error.config.url;
-			const method = error.config.method;
-			const body = error.config.data;
-			const env = error.config.env?.FormData;
+			const targetUrl = config.url;
+			const method = config.method;
+			const body = config.data;
+			const env = config.env?.FormData;
 			const { status: accessTokenRequestStatus, data: accessToken }: { status: number, data: string } = 
 				await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/user/reissue_token`, {
 				headers: {
@@ -153,48 +153,47 @@ requestWithTokenAxios.interceptors.response.use(
 			if (accessTokenRequestStatus === 200 && (accessToken)) {
 				const refreshToken = getRefreshToken(CHATO_TOKEN);
 				if (refreshToken) bakeCookie(accessToken, refreshToken);
-				const resendResult = await resendRequest(method, targetUrl, body, env);
-				if (resendResult) return {
+				const result = await resendRequest(method, targetUrl, body, env);
+				if (result?.status === 200) return {
 					status: 200,
-					data: resendResult,
-				};
+					data: result.config.data,
+				} 
+				else return { status: result?.status }
 			} else if (accessTokenRequestStatus !== 200) {
 				return { status: 401 };
 			}
-		} else if (status) handleErrors(status);
-		return error;
+		} else if (status === 403) toast.error('Unmatched password!', toastConfig);
+		return response;
 	}
 )
 
 type Tenv = (new (...args: any[]) => object) | undefined;
 
-const resendRequest = (method?: string, url?: string, body?: JSON, env?: Tenv) :Promise<unknown> => {
+type result = (AxiosResponse | AxiosError | undefined);
+
+const resendRequest = (method?: string, url?: string, body?: JSON, env?: Tenv) :Promise<result> => {
 	return new Promise(async (success, fail) => {
-		let result: unknown;
+		let result: result = undefined;
 		try {
 			if (method && url) {
 				const contentType = { 'Content-Type': 'application/json' };
 				switch (method) {
 					case 'get':
-						result = 
-						await (await requestWithTokenAxios.get(url, { headers: contentType })).data;
+						result = (await requestWithTokenAxios.get(url, { headers: contentType }));
 						break;
 					case 'post':
-						result = 
-						await (await requestWithTokenAxios.post(url, (env && env?.length > 0) ? env : body, { headers: contentType })).data;
+						result = (await requestWithTokenAxios.post(url, (env && env?.length > 0) ? env : body, { headers: contentType }));
 						break;
 					case 'put':
-						result = 
-						await (await requestWithTokenAxios.put(url, (env && env?.length > 0) ? env : body, { headers: contentType })).data;
+						result = (await requestWithTokenAxios.put(url, (env && env?.length > 0) ? env : body, { headers: contentType }));
 						break;
 					case 'delete':
-						result =
-						await (await requestWithTokenAxios.delete(url, { headers: contentType })).data;
+						result = (await requestWithTokenAxios.delete(url, { headers: contentType }));
 						break;
 				}
 			}
-			success(result || true);
-		} catch (e) { fail(false); };
+			success(result);
+		} catch (e) { fail(result); };
 	})
 }
 

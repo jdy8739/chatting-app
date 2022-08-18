@@ -25,4 +25,9 @@ public interface LikedSubjectRepository extends JpaRepository<LikedSubject, Long
     @Modifying
     @Query(value = "delete from liked_subject where user_no = :userNo limit 1;", nativeQuery = true)
     void deleteTop1ByUserNo(Long userNo);
+
+    @Transactional
+    @Modifying
+    @Query("delete from LikedSubject ls where ls.userNo = :userNo")
+    void deleteByUserNo(Long userNo);
 }

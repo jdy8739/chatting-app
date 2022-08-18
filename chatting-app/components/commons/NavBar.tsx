@@ -35,12 +35,14 @@ function NavBar() {
             requestWithTokenAxios.get(`${process.env.NEXT_PUBLIC_API_URL}/user/get-userInfo`)
             .then(({ status, data }: { status: number, data: ISignedIn }) => {
                 if (status === 200) {
-                    const likedList: Array<string> = [];
-                    if (data.likedSubjects)
-                        data.likedSubjects.forEach(subject => likedList.push(subject.subject));
-                    dispatch(replaceList(likedList));
-                    delete data.likedSubjects;
-                    handleSignIn(data);
+                    if (data) {
+                        const likedList: Array<string> = [];
+                        if (data.likedSubjects)
+                            data.likedSubjects.forEach(subject => likedList.push(subject.subject));
+                        dispatch(replaceList(likedList));
+                        delete data.likedSubjects;
+                        handleSignIn(data);
+                    }
                 } else if (status === 401) handleTokenException();
             })
             /* .catch(() => removeCookie(CHATO_TOKEN, {path: '/'})); */

@@ -92,12 +92,16 @@ function Settings() {
     }
     const handleUserSettingsSubmit = async (data: IUserInfo, inputPassword: string) :Promise<boolean> => {
         return new Promise(async (success, fail) => {
-            const updatedUserIndo = {...data, userProfilePic: data.profilePicUrl ? data.profilePicUrl[0] : null};
+            const updatedUserIndo: {[key: string]: (string | Blob | null)} = 
+                {...data, userProfilePic: data.profilePicUrl ? data.profilePicUrl[0] : null};
             delete updatedUserIndo.profilePicUrl;
             const formData = new FormData();
             formData.append('isUseProfilePic', checkIsPicChosen());
             formData.append('inputPassword', inputPassword);
-            for (let key in updatedUserIndo) formData.append(key, updatedUserIndo[key]);
+            for (let key in updatedUserIndo) {
+                const value = updatedUserIndo[key];
+                if (value !== null) formData.append(key, value);
+            }
             try {
                 const { status } = await requestWithTokenAxios.put(`${process.env.NEXT_PUBLIC_API_URL}/user/alter`, formData);
                 if (status === 200) {
@@ -111,7 +115,9 @@ function Settings() {
                         });
                     }, 500);
                     success(true);
-                } else if (status === 401) handleTokenException();
+                } else if (status === 401) {
+                    handleTokenException();
+                } else if (status === 403) throw new Error();
             } catch (e) { fail(false); };
         })
     }
@@ -131,7 +137,9 @@ function Settings() {
                     removeCookie(CHATO_TOKEN, {path: '/'});
                     handleSignIn({ userNo: -1, userId: '', userNickName: '' });
                     success(true);
-                } else if (status === 401) handleTokenException();
+                } else if (status === 401) {
+                    handleTokenException();
+                } else if (status === 403) throw new Error();
             } catch (e) { fail(false); };
         })
     }

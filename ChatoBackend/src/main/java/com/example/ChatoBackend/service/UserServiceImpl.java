@@ -174,6 +174,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void withdraw(String id) {
         deletePrevFile(id);
+        likedSubjectRepository.deleteByUserNo(userRepository.findUserNoByUserId(id));
         userRepository.deleteById(id);
     }
 

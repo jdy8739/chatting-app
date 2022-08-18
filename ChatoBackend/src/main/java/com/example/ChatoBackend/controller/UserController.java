@@ -101,7 +101,6 @@ public class UserController {
     @GetMapping("/info")
     public ResponseEntity<User> getUserWholeInfo(HttpServletRequest req) {
         String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
-        log.info("" + jwtUtils.getUserId(token));
         try {
             return new ResponseEntity<>(
                     userService.findUserInfoById(jwtUtils.getUserId(token)), HttpStatus.OK);
