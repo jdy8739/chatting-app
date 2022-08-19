@@ -3,9 +3,12 @@ server:
 
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/chatodb?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
-    username: chato
-    password: chato
+    # url: jdbc:mysql://localhost:3306/chatodb?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+    # username: chato
+    # password: chato
+    url: jdbc:mysql://chatodatabase.csvoscejacsn.ap-northeast-2.rds.amazonaws.com:3306/chato_database
+    username: jdy8739
+    password: wjdehdud0886!
     driver-class-name: com.mysql.cj.jdbc.Driver
     dialect: org.hibernate.dialect.MySQL8Dialect
     hikari:
