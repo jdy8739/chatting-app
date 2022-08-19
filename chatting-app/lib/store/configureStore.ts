@@ -14,6 +14,6 @@ const makeStore = () => {
   return store;
 };
 
-const wrapper = createWrapper(makeStore, { debug: isProduction });
+const wrapper = createWrapper(makeStore, { debug: !isProduction });
 
 export default wrapper;

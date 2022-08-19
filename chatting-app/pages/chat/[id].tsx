@@ -258,7 +258,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
         stomp.connect({}, () => { subscribeNewMessage(); });
     }
     useEffect(() => {
-        socket = new WebSocket('ws://localhost:5000/stomp/chat');
+        socket = new WebSocket(`${process.env.NEXT_PUBLIC_SOCKET_URL}/stomp/chat`);
         stomp = webstomp.over(socket);
         stomp.debug = () => null;
         if (!getAccessToken(CHATO_TOKEN))

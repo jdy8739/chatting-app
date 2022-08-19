@@ -290,7 +290,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         router.push('/user/signin');
     }
     useEffect(() => {
-        socket = new WebSocket(`ws://localhost:5000/stomp/chat`);
+        socket = new WebSocket(`${process.env.NEXT_PUBLIC_SOCKET_URL}/stomp/chat`);
         stomp = webstomp.over(socket);
         stomp.connect({}, () => {
             subscribeRoomParticipants();
