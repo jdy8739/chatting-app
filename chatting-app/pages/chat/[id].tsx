@@ -126,7 +126,8 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
     const updateMessageList = (newMessageInfo: IMessageBody) => {
         const message = newMessageInfo.message;
         const target = Number(message);
-        if ((newMessageInfo.writer === MASTER_PROTOCOL.MASTER) && !window.isNaN(target)) {
+        const isSentFromMaster = (newMessageInfo.writer === MASTER_PROTOCOL.MASTER);
+        if (isSentFromMaster && !window.isNaN(target)) {
             setMessages(messages => {
                 const copied = [...messages];
                 const targetIndex = copied.findIndex(chat => chat.msgNo === target);
@@ -134,10 +135,13 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
                 return copied;
             })
             return;
-        } else 
-            setMessages(messages => [...messages, newMessageInfo]);
-            /* window.scrollTo(0, document.body.scrollHeight); */
+        } else setMessages(messages => [...messages, newMessageInfo]);
+        if (!isSentFromMaster) scrollViewDown();
     };
+    const scrollViewDown = () => {
+        const scrollDown = (document.body.scrollHeight - document.documentElement.scrollTop < 1000);
+        if (scrollDown) window.scrollTo(0, document.body.scrollHeight);
+    }
     const updateParticipantsList = (targetUser: IParticipants, isUserOut: boolean) => {
         setParticipants(participants => {
             if (isUserOut) {
@@ -348,6 +352,17 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
                         font-size: 7px;
                         color: gray;
                     }
+                    .picture-submit {
+                        border: 1px solid rgb(0, 219, 146);
+                    }
+                    input[type=file]::-webkit-file-upload-button {
+                        border: 1px solid rgb(0, 219, 146);
+                        border-radius: 12px;
+                        padding: 10px;
+                        background-color: transparent;
+                    }
+                `}</style>
+                <style>{`
                     .previous-chat-show {
                         width: 100vw;
                         height: 100px;
@@ -361,22 +376,6 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
                         justify-content: center;
                         color: #c0c0c0;
                         z-index: 10;
-                    }
-                    .content-img {
-                        max-width: 300px;
-                        height: auto;
-                        padding: 14px;
-                        border-radius: inherit;
-                        background-color: inherit;
-                    }
-                    .picture-submit {
-                        border: 1px solid rgb(0, 219, 146);
-                    }
-                    input[type=file]::-webkit-file-upload-button {
-                        border: 1px solid rgb(0, 219, 146);
-                        border-radius: 12px;
-                        padding: 10px;
-                        background-color: transparent;
                     }
                 `}</style>
             </div>

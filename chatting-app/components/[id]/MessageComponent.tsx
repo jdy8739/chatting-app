@@ -17,6 +17,14 @@ interface IMessageComponent {
     isDeleted?: boolean,
 }
 
+const imageStyle = {
+    maxWidth: '300px',
+    height: 'auto',
+    padding: '14px',
+    borderRadius: 'inherit',
+    backgroundColor: 'inherit',
+}
+
 function MessageComponent({ 
     msg,
     index,
@@ -128,7 +136,7 @@ function ChatContent({ isDeleted, isPicture, content, roomId, msgNo }: IMessageC
             {(isPicture && !isDeleted) ? 
             <img
                 src={`${process.env.NEXT_PUBLIC_API_URL}/room/content-pic/${roomId}/${msgNo}`}
-                className="content-img"
+                style={imageStyle}
             /> :
             <span>{isDeleted ? 'deleted message' : content}</span>}
         </>
