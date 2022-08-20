@@ -40,7 +40,7 @@ import java.util.*;
 @Controller
 @RequestMapping("/room")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://54.180.107.192", allowedHeaders = "*")
+@CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*") // http://54.180.107.192
 public class RoomController {
 
     private final String ROOM_ID = "roomId";
@@ -100,12 +100,14 @@ public class RoomController {
             @RequestParam(value = "offset") String offset,
             @RequestBody Map<String, String> map) {
         long roomOwner = 0;
+        String tmpUserNo = map.get("userNo");
+        Long userNo = (tmpUserNo == null) ? null : Long.parseLong(tmpUserNo);
         String roomOwnerId = null;
         List<MessageDTO> messageDTOList = null;
         if (Integer.parseInt(offset) == 0) {
             if (!chatRoomService.checkIfIsNotBannedIp(roomId, map.get("ipAddress"))) {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            } else if (!chatRoomService.checkPwCorrect(roomId, map.get("password"))) {
+            } else if (!chatRoomService.checkPwCorrect(roomId, map.get("password"), userNo)) {
                 return new ResponseEntity<>(HttpStatus.FORBIDDEN);
             } else if (!chatRoomService.checkRoomStatusOK(roomId)) {
                 return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);

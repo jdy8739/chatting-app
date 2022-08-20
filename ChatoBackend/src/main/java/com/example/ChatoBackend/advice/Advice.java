@@ -21,4 +21,9 @@ public class Advice {
     public ResponseEntity<Void> handleMalformedJwtException() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
     }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Void> handleIllegalArgumentException() {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+    }
 }

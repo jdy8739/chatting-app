@@ -120,8 +120,9 @@ export const requestWithTokenAxios = axios.create();
 
 requestWithTokenAxios.interceptors.request.use(
 	request => {
-		if (request.headers)
-			request.headers['authorization'] = `Bearer ${getAccessToken(CHATO_TOKEN)}`;
+		const accessToken = getAccessToken(CHATO_TOKEN);
+		if (request.headers && accessToken)
+			request.headers['authorization'] = `Bearer ${accessToken}`;
 		return request;
 	},
 	({ response }: AxiosError) => response,
@@ -154,15 +155,16 @@ requestWithTokenAxios.interceptors.response.use(
 				const refreshToken = getRefreshToken(CHATO_TOKEN);
 				if (refreshToken) bakeCookie(accessToken, refreshToken);
 				const result = await resendRequest(method, targetUrl, body, env);
-				if (result?.status === 200) return {
+				
+				if (result?.status === 200 && 'data' in result) return {
 					status: 200,
-					data: result.config.data,
-				} 
+					data: result.data,
+				}
 				else return { status: result?.status }
 			} else if (accessTokenRequestStatus !== 200) {
 				return { status: 401 };
 			}
-		} else if (status === 403) toast.error('Unmatched password!', toastConfig);
+		} else toast.error('It cannot be done!', toastConfig);
 		return response;
 	}
 )

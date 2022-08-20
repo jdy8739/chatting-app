@@ -29,9 +29,9 @@ export interface IRoom {
     nowParticipants?: number,
     pwRequired: boolean,
     password?: string,
-    owner: string
+    owner: number | null,
     subject: string,
-    isLiked?: boolean,
+    isMyRoom?: boolean,
 }
 
 export interface IMessageBody {

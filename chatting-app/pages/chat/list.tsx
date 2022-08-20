@@ -82,6 +82,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                 isPinned: false,
             };
         else roomList[subject]['list'].push(room);
+        if (room.owner === userNo) room.isMyRoom = true;
     }
     const checkIfSubjectPinned = (targetSubject: string, roomList: ITable, pinnedSubjects: string[]) => {
         if (pinnedSubjects.some(subject => (subject === targetSubject))) {
@@ -203,6 +204,8 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                 updateRoomDeleted(messageObj);
             else if (Object.hasOwn(messageObj, 'destinationId'))
                 updateRoomMoved(messageObj);
+            else if (Object.hasOwn(messageObj, 'isChanged'))
+                updateRoomInfoChange(messageObj);
             else updateRoomCreated(messageObj);
         });
     };
@@ -253,6 +256,44 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                     isPinned: roomList[targetKey].isPinned,
                 }
             };
+        })
+    }
+    const updateRoomInfoChange = (info: { roomId: number, target: string | number }) => {
+        // 타겟 룸
+        // 비번 변경인지 또는 인원 변경인지
+        // 목표 비번 또는 인원
+        // message가 숫자면 인원 변경, 문자면 비번설정으로 수정.
+        setRoomList(roomList => {
+            let target: IRoom | undefined;
+            let targetIndex = 0;
+            Object.keys(roomList).some(subject => {
+                const targetRoom = roomList[subject].list.find((room, index) => {
+                    if ((room.roomId === info.roomId)) {
+                        targetIndex = index;
+                        return true;
+                    }
+                });
+                if (targetRoom) {
+                    if (typeof info.target === 'string') {
+                        targetRoom.pwRequired = true;
+                    } else if (typeof info.target === 'number') {
+                        targetRoom.limitation = info.target;
+                    }
+                    target = {...targetRoom};
+                    roomList[subject].list[targetIndex] = target;
+                    return true;
+                }
+            })
+            if (!target) return roomList;
+            else return {
+                ...roomList,
+                [target.subject]: {
+                    list: [
+                        ...roomList[target.subject].list,
+                    ],
+                    isPinned: roomList[target.subject].isPinned,
+                }
+            }
         })
     }
     const findSubjectAndRoomIndexByRoomId = (roomId: number, roomList: ITable) => {

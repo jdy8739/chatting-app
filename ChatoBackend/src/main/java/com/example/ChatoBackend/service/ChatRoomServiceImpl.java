@@ -58,11 +58,15 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     }
 
     @Override
-    public boolean checkPwCorrect(Long roomId, String password) {
+    public boolean checkPwCorrect(Long roomId, String password, Long userNo) {
         Optional<ChatRoom> optChatRoom = chatRoomRepository.findByRoomId(roomId);
         if (optChatRoom.isPresent()) {
-            if (optChatRoom.get().isPwRequired()) {
-                if (password != null && password.equals(optChatRoom.get().getPassword()))
+            ChatRoom chatRoom = optChatRoom.get();
+            Long owner = chatRoom.getOwner();
+            if (owner != null && owner.equals(userNo)) {
+                return true;
+            } else if (chatRoom.isPwRequired()) {
+                if (password != null && password.equals(chatRoom.getPassword()))
                     return true;
             } else return true;
         }

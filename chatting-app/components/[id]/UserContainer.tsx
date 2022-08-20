@@ -135,7 +135,7 @@ function UserContainer({
                                 />}
                             </div>
                         )
-                    }) : bannedUserList.map(bannedUser => {
+                    }) : (bannedUserList) && bannedUserList.map(bannedUser => {
                         return (
                             <div
                                 key={bannedUser.bannedIpNo}

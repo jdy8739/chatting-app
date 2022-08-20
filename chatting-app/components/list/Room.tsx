@@ -2,25 +2,30 @@ import { AnimatePresence } from "framer-motion";
 import { useRouter } from "next/router";
 import React, { useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
+import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
+import { IUserInfoSelector } from "../../pages/chat/list";
 import { IRoom } from "../../types/types";
 import { toastConfig } from "../../utils/utils";
 import Modal from "./Modal";
 
+const FlexGrow = { flexGrow: '1' };
+
 function Room({ room, index }: { room: IRoom, index: number }) {
     const router = useRouter();
     const [isModalShown, setIsModalShown] = useState(false);
+    const { userNo } = useSelector(({ signInReducer: {userInfo} }: IUserInfoSelector) => userInfo);
     const handleClickChatRoom = () => {
         if (room.nowParticipants === room.limitation) {
             toast.error('The number of participant exceeds limit.', toastConfig)
-        } else if (room.pwRequired) setIsModalShown(true);
+        } else if (room.pwRequired && room.owner !== userNo) setIsModalShown(true);
         else pushToChatRoom();
     }
     const pushToChatRoom = (password?: string) => {
         const roomId = room.roomId;
         router.push({
             pathname: `/chat/${roomId}`,
-            query: { roomName: room.roomName, password: password },
+            query: { roomName: room.roomName, password, userNo },
         }, `/chat/${roomId}`);
     }
     const hideModal = () => { setIsModalShown(false) };
@@ -40,9 +45,10 @@ function Room({ room, index }: { room: IRoom, index: number }) {
             >
                 {(provided, snapshot) => (
                     <div 
-                        className={`element
-                            ${snapshot.isDragging ? 'isDragging' : 'isNotDragging'}
+                        className={`element isNotDragging
                             ${(room.nowParticipants === room.limitation) ? 'isFullRoom' : ''}
+                            ${snapshot.isDragging ? room.isMyRoom ? 'my-room-isDragging' : 'isDragging' : ''}
+                            ${room.isMyRoom ? 'my-room' : ''}
                             `}
                         ref={provided.innerRef}
                         {...provided.draggableProps}
@@ -61,7 +67,7 @@ function Room({ room, index }: { room: IRoom, index: number }) {
                                 height="25px"
                             />
                             <p>{`${room.nowParticipants}/${room.limitation}`}</p>
-                            <div style={{ flexGrow: '1' }}></div>
+                            <div style={FlexGrow}></div>
                             {room.pwRequired && 
                             <img
                                 src="/lock_icon.png"
@@ -89,12 +95,19 @@ function Room({ room, index }: { room: IRoom, index: number }) {
                     transition: all 1s;
                     position: relative;
                 }
+                .isNotDragging {
+                    background-color: #f6d79f;
+                }
                 .isDragging {
                     background-color: rgb(0, 219, 146);
                     box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.4);
                 }
-                .isNotDragging {
-                    background-color: #f6d79f;
+                .my-room {
+                    background-color: #ffc1f7;
+                }
+                .my-room-isDragging {
+                    background-color: rgb(182, 165, 230);
+                    box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.4);
                 }
                 .isFullRoom {
                     background-color: #b87676;

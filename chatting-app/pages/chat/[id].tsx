@@ -5,10 +5,11 @@ import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import webstomp, { Client } from "webstomp-client";
 import Seo from "../../components/commons/Seo";
+import InputInterface from "../../components/[id]/InputInterface";
 import MessageComponent from "../../components/[id]/MessageComponent";
 import UserContainer from "../../components/[id]/UserContainer";
 import { Iipdata, IMessageBody, IParticipants } from "../../types/types";
-import { CHATO_TOKEN, generateRandonUserId, getAccessToken, getNowTime, toastConfig } from "../../utils/utils";
+import { CHATO_TOKEN, generateRandonUserId, getAccessToken, toastConfig } from "../../utils/utils";
 import { IUserInfoSelector } from "./list";
 
 export enum SEND_PROTOCOL {
@@ -20,6 +21,7 @@ export enum SEND_PROTOCOL {
 export enum RECEIVE_PROTOCOL {
     SUBSCRIBE = 0,
     BAN = 2,
+    CHANGE = 3,
 }
 
 export enum MASTER_PROTOCOL {
@@ -27,7 +29,7 @@ export enum MASTER_PROTOCOL {
     DISBANDED = "disbanded",
 }
 
-enum LIMIT {
+export enum LIMIT {
     CHAT_REMAIN_NUMBER = 10,
     STMOP_MESSAGE_SIZE = 500000,
 }
@@ -46,68 +48,46 @@ interface IChatRoomInfo {
     ownerId: string,
     messageList?: IMessageBody[] | undefined,
 }
+
+interface IFetchMessagesProps {
+    id: number, 
+    userNo: number | null, 
+    count: number, 
+    password?: string, 
+    ipAddress?: string,
+}
   
 let socket: WebSocket;
 let stomp: Client;
 let currentUserName: string = '';
 let previousShowCnt = 0;
-let imageFile: ArrayBuffer;
 let timeOut: NodeJS.Timeout;
 
-const fetchRoomOwnerAndPreviousChat = async (id: number, count: number, password?: string, ipAddress?: string) :Promise<IChatRoomInfo> => {
-    return await (await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/message/${id}?offset=${count}`, { password, ipAddress })).data;
+const fetchRoomOwnerAndPreviousChat = async ({id, userNo, count, password, ipAddress}: IFetchMessagesProps) :Promise<IChatRoomInfo> => {
+    return await (await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/message/${id}?offset=${count}`, { password, ipAddress, userNo })).data;
 }
 
 function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwnerId }: IChatRoomProps) {
-    let newMessage: string;
     const router = useRouter();
     const [messages, setMessages] = useState<IMessageBody[]>(previousChat);
     const [isAllChatShown, setIsAllChatShown] = useState(previousChat.length < LIMIT.CHAT_REMAIN_NUMBER);
     const [targetChatNumber, setTargetChatNumber] = useState(-1);
     const [participants, setParticipants] = useState<IParticipants[]>([]);
     const { userNo, userId, userNickName } = useSelector(({ signInReducer: {userInfo} }: IUserInfoSelector) => userInfo);
-    const textAreaRef = useRef<HTMLTextAreaElement>(null);
-    const handleChatSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        sendChat();
-    };
-    const handleTextAreaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.keyCode === 13) sendChat();
-    }
-    const sendChat = () => {
-        if (textAreaRef.current?.value === '') return;
-        if (textAreaRef.current) {
-            newMessage = textAreaRef.current.value;
-            textAreaRef.current.value = '';
-        }
-        if (socket && stomp) {
-            shootChatMessage(SEND_PROTOCOL.MESSEGE, {
-                msgNo: 0,
-                roomId: String(id), 
-                message: newMessage,
-                writer: currentUserName,
-                writerNo: (userNo > 0) ? userNo : null,
-                time: getNowTime(),
-            });
-            textAreaRef.current?.setSelectionRange(0, 0);
-        }
-    }
     const subscribeNewMessage = () => {
         stomp.subscribe(`/sub/chat/room/${id}`, ({ body }: { body: string }) => {
             const newMessage: IMessageBody = JSON.parse(body);
             const isSentFromMaster = (newMessage.writer === MASTER_PROTOCOL.MASTER);
             if (isSentFromMaster && newMessage.message === MASTER_PROTOCOL.DISBANDED) {
                 expelUser('This room is disbanded.');
-                return;
+            } else {
+                const msgNo = newMessage.msgNo;
+                const isParticipantsListChanged = (msgNo >= RECEIVE_PROTOCOL.SUBSCRIBE) && (msgNo <= RECEIVE_PROTOCOL.BAN);
+                if (isSentFromMaster && isParticipantsListChanged)
+                    reflectNewMessageAndUser(newMessage);
+                else updateMessageList(newMessage);
             }
-            const msgNo = newMessage.msgNo;
-            const participantsListChanged = (
-                (msgNo !== null) && (msgNo >= RECEIVE_PROTOCOL.SUBSCRIBE) && (msgNo <= RECEIVE_PROTOCOL.BAN)
-            );
-            if (isSentFromMaster && participantsListChanged)
-                reflectNewMessageAndUser(newMessage);
-            else updateMessageList(newMessage);
-        }, { roomId: String(id), userId: (userId || currentUserName) })
+        }, { roomId: String(id), userId: (userId || currentUserName) });
     }
     const reflectNewMessageAndUser = (newMessage: IMessageBody) => {
         const msgNo = newMessage.msgNo;
@@ -155,7 +135,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
     const showPreviousChat = async () => {
         setTargetChatNumber(-1);
         previousShowCnt += 1;
-        const { messageList: newMessages } = await fetchRoomOwnerAndPreviousChat(id, previousShowCnt, password);
+        const { messageList: newMessages } = await fetchRoomOwnerAndPreviousChat({id, userNo, count: previousShowCnt, password});
         if (newMessages) {
             if (newMessages.length < LIMIT.CHAT_REMAIN_NUMBER) setIsAllChatShown(true);
             setMessages(messages => {
@@ -163,7 +143,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
                 return copied;
             })
         }
-    };
+    }
     const handleChatDblClick = useCallback((index: number, isNumberMatches: boolean) => {
         /* targetChatNumber이 변경되지않음. (해결)*/
         if (isNumberMatches) {
@@ -209,41 +189,6 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
         } catch (e) {} finally {
             toast.error(sentence, toastConfig);
             router.push('/chat/list');
-        }
-    }
-    const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.currentTarget.files) {
-            const targetFile = e.currentTarget.files[0];
-            const fileReader = new FileReader();
-            fileReader.onload = (readerEvent) => {
-                const result = readerEvent.target?.result;
-                if (result && typeof result !== 'string') {
-                    imageFile = new Uint8Array(result);
-                }
-            }
-            fileReader.readAsArrayBuffer(targetFile);
-        }
-    }
-    const shootBinaryImageMessage = () => {
-        if (!imageFile) {
-            toast.error('No picture has been chosen.', toastConfig);
-        } else if (imageFile.byteLength > LIMIT.STMOP_MESSAGE_SIZE) {
-            toast.error('The picture size exceeds the limit.', toastConfig);
-        } else {
-            const headers = { 
-                'content-type': 'application/octet-stream',
-                'image-size': (imageFile.byteLength),
-                'room-id': id,
-                'writer': currentUserName,
-                'writer-no': (userNo > 0) ? userNo : null,
-                'time': getNowTime(),
-            }
-            Object.freeze(headers);
-            if (socket && stomp) {
-                stomp.send(`/pub/chat/${SEND_PROTOCOL.BINARY}`,
-                imageFile,
-                headers)
-            }
         }
     }
     const checkIfIsMyChat = useCallback(function <T>(arg: T) {
@@ -310,30 +255,16 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
                         isNumberMatches={(targetChatNumber === i)}
                     />)
                 )}
-                <input
-                    type="file"
-                    onChange={handleOnChange}
+                <InputInterface
+                    socket={socket}
+                    stomp={stomp}
+                    roomId={id}
+                    isMyRoom={(roomOwner === userNo)}
+                    userNo={userNo}
+                    currentUserName={currentUserName}
+                    shootChatMessage={shootChatMessage}
                 />
-                <button
-                    className="picture-submit"
-                    onClick={shootBinaryImageMessage}
-                >send picture</button>
-                <form 
-                    onSubmit={handleChatSubmit}
-                    className="chat-form"
-                >
-                    <textarea 
-                        ref={textAreaRef}
-                        onKeyDown={handleTextAreaKeyDown}
-                    />
-                    <button className="submit-button">submit</button>
-                </form>
                 <style jsx>{`
-                    .chat-form { 
-                        width: 100%;
-                        display: flex;
-                        margin-top: 30px;
-                    }
                     textarea { 
                         width: 80%;
                         min-height: 100px;
@@ -341,12 +272,6 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
                         border-radius: 12px;
                         padding: 12px;
                         resize: vertical;
-                    }
-                    .submit-button {
-                        width: 20%;
-                        margin: 0;
-                        font-size: 20px;
-                        font-weight: bold;
                     }
                     .time {
                         font-size: 7px;
@@ -385,16 +310,17 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
 
 interface IServerProps { 
     params: {id: number}, 
-    query: {roomName?: string, password?: string} 
+    query: {roomName?: string, password?: string, userNo: number | null} 
 }
 
-export async function getServerSideProps({ params: { id }, query: { roomName, password }}: IServerProps) {
+export async function getServerSideProps({ params: { id }, query: { roomName, password, userNo }}: IServerProps) {
     let owner: (number | null);
     let ownerId: string;
     let previousChat: (IMessageBody[] | undefined);
     try {
+        if (!userNo) userNo = null;
         const {data: { ip }}: { data: Iipdata } = await axios.get(`https://api.ipdata.co?api-key=${process.env.NEXT_PUBLIC_IPDATA_API_KEY}`);
-        const results = await fetchRoomOwnerAndPreviousChat(id, previousShowCnt, password, ip);
+        const results = await fetchRoomOwnerAndPreviousChat({id, userNo, count: previousShowCnt, password, ipAddress: ip});
         owner = results.owner;
         ownerId = results.ownerId;
         previousChat = results.messageList?.reverse();
