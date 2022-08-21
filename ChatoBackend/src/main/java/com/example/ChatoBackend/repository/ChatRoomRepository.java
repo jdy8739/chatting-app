@@ -34,4 +34,22 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
     void decreaseParticipantsCount(Long roomId);
 
     List<ChatRoom> findByRoomNameContaining(String keyword);
+
+    @Transactional
+    @Modifying
+    @Query("update ChatRoom cr set cr.pwRequired = true, cr.password = :password where cr.roomId = :roomId")
+    void turnOnPwRequiredByRoomId(String password, Long roomId);
+
+    @Transactional
+    @Modifying
+    @Query("update ChatRoom cr set cr.pwRequired = false, cr.password = null where cr.roomId = :roomId")
+    void turnOffPwRequiredByRoomId(Long roomId);
+
+    @Query("select cr.nowParticipants from ChatRoom cr where cr.roomId = :roomId")
+    int getRoomLimitationByRoomId(Long roomId);
+
+    @Transactional
+    @Modifying
+    @Query("update ChatRoom cr set cr.limitation = :limitation where cr.roomId = :roomId")
+    void updateRoomLimitationByRoomId(int limitation, long roomId);
 }

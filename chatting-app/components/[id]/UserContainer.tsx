@@ -64,20 +64,22 @@ function UserContainer({
     }
     const fetchBannedUserList = async () => {
         isContainerClosed = false;
-        const { status, data: bannedUserList } =
-            await requestWithTokenAxios.get(`${process.env.NEXT_PUBLIC_API_URL}/room/banned_users/${roomId}`);
-        if (status === 401) handleTokenException();
-        setIsBannedUserShown(true);
-        setBannedUserList(bannedUserList);
+        try {
+            const { status, data: bannedUserList } =
+                await requestWithTokenAxios.get(`${process.env.NEXT_PUBLIC_API_URL}/room/banned_users/${roomId}`);
+            setIsBannedUserShown(true);
+            setBannedUserList(bannedUserList);
+        } catch (e) { handleTokenException(); };
     }
     const unlockThisUser = async (bannedIpNo: number) => {
         isContainerClosed = false;
-        const { status } =
-            await requestWithTokenAxios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/unlock_ban`, { bannedIpNo, roomId })
-        if (status === 200) setBannedUserList(bannedUserList => {
-            return [...bannedUserList.filter(bannedUser => bannedUser.bannedIpNo !== bannedIpNo)];
-        }) 
-        else if (status === 401) handleTokenException();
+        try {
+            const { status } = 
+                await requestWithTokenAxios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/unlock_ban`, { bannedIpNo, roomId });
+            if (status === 200) setBannedUserList(bannedUserList => {
+                return [...bannedUserList.filter(bannedUser => bannedUser.bannedIpNo !== bannedIpNo)];
+            }) 
+        } catch (e) { handleTokenException(); };
     }
     const handleTokenException = () => {
         removeCookie(CHATO_TOKEN, { path: '/' });

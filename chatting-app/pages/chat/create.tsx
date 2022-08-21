@@ -84,6 +84,8 @@ function CreateChat() {
                             className="input-box"
                             placeholder="name of chat room."
                             style={{ width: '100%' }}
+                            min={1}
+                            max={25}
                             {...register('roomName', {
                                 required: 'We need your new chat room name.',
                                 min: {
@@ -141,8 +143,14 @@ function CreateChat() {
                             min={2}
                             max={30}
                             {...register('limitation', {
-                                min: 2,
-                                max: 30,
+                                min: {
+                                    value: 2,
+                                    message: 'The room capacity is 2 at least.'
+                                },
+                                max: {
+                                    value: 30,
+                                    message: 'The room capacity cannot exceeds 30.'
+                                },
                                 onChange: showNowLimitValue,
                             })}
                         />
@@ -159,9 +167,14 @@ function CreateChat() {
                             placeholder="password"
                             className="input-box"
                             style={{ width: '220px' }}
+                            maxLength={15}
                             type="password"
                             {...register('password', {
                                 disabled: !usePassword,
+                                maxLength: {
+                                    value: 15,
+                                    message: 'Password length cannot exceeds 15.'
+                                }
                             })}
                         />
                     </label>
@@ -173,31 +186,6 @@ function CreateChat() {
                 >submit</button>
             </form>
             <style jsx>{`
-                input[type=range]{
-                    -webkit-appearance: none;
-                }
-                input[type=range]::-webkit-slider-runnable-track {
-                    width: 300px;
-                    height: 5px;
-                    background: #ddd;
-                    border: none;
-                    border-radius: 3px;
-                }
-                input[type=range]::-webkit-slider-thumb {
-                    -webkit-appearance: none;
-                    border: none;
-                    height: 16px;
-                    width: 16px;
-                    border-radius: 50%;
-                    background: goldenrod;
-                    margin-top: -5px;
-                }
-                input[type=range]:focus {
-                    outline: none;
-                }
-                input[type=range]:focus::-webkit-slider-runnable-track {
-                    background: #ccc;
-                }
                 .all {
                     transition: all 1s;
                     opacity: ${ isRendered ? '1' : '0' };

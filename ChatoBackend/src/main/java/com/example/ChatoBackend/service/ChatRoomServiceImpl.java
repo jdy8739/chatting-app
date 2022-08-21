@@ -179,4 +179,17 @@ public class ChatRoomServiceImpl implements ChatRoomService {
             }
         }
     }
+
+    @Override
+    public void updateRoomRoomPassword(boolean pwRequired, String password, long roomId) {
+        if (pwRequired) chatRoomRepository.turnOnPwRequiredByRoomId(password, roomId);
+        else chatRoomRepository.turnOffPwRequiredByRoomId(roomId);
+    }
+
+    @Override
+    public void updateRoomCapacity(int capacity, long roomId) {
+        int nowParticipantsNumber = chatRoomRepository.getRoomLimitationByRoomId(roomId);
+        if (capacity < nowParticipantsNumber) throw new RuntimeException();
+        else chatRoomRepository.updateRoomLimitationByRoomId(capacity, roomId);
+    }
 }

@@ -201,4 +201,25 @@ public class RoomController {
     public ResponseEntity<List<ChatRoom>> searchChatRooms(@RequestParam String keyword) {
         return new ResponseEntity<>(chatRoomService.searchChatRooms(keyword), HttpStatus.OK);
     }
+
+    @PutMapping("/settings")
+    public ResponseEntity<Void> settings(
+            @RequestBody Map<String, String> map,
+            HttpServletRequest req) {
+        log.info(map.toString());
+        String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
+        long roomId = Long.parseLong(map.get("roomId"));
+        long userNo = userService.findUserNoByUserId(jwtUtils.getUserId(token));
+        if (!chatRoomService.checkIfIsRoomOwner(roomId, userNo))
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        if (Boolean.parseBoolean(map.get("settingOption"))) {
+            chatRoomService.updateRoomRoomPassword(Boolean.parseBoolean(map.get("pwRequired")), map.get("value"), roomId);
+            map.remove("value");
+        } else try {
+            chatRoomService.updateRoomCapacity(Integer.parseInt(map.get("value")), roomId);
+        } catch (RuntimeException e) { return new ResponseEntity<>(HttpStatus.CONFLICT); }
+        map.put("isChanged", "true");
+        messagingTemplate.convertAndSend("/sub/chat/room/list", map);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 }

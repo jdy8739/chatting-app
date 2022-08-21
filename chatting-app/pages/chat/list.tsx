@@ -82,7 +82,8 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                 isPinned: false,
             };
         else roomList[subject]['list'].push(room);
-        if (room.owner === userNo) room.isMyRoom = true;
+        if (userNo === -1) room.isMyRoom = false;
+        else if (room.owner === userNo) room.isMyRoom = true;
     }
     const checkIfSubjectPinned = (targetSubject: string, roomList: ITable, pinnedSubjects: string[]) => {
         if (pinnedSubjects.some(subject => (subject === targetSubject))) {
@@ -183,17 +184,16 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                     writer: MASTER_PROTOCOL.MASTER,
                     writerNo: null,
                 })
-            } else if (status === 401) handleTokenException();
+            }
         })
+        .catch(() => handleTokenException());
     }
     const sendRoomDeleteMessage = (message: IMessageBody) => {
         if (socket && stomp) stomp.send(`/pub/chat/${SEND_PROTOCOL.DELETE}`, JSON.stringify(message));
     }
     const changeToNewSubject = (roomMovedInfo: IRoomMoved) => {
         requestWithTokenAxios.put(`${process.env.NEXT_PUBLIC_API_URL}/room/change_subject`, roomMovedInfo)
-        .then(({ status }) => {
-            if (status === 401) handleTokenException();
-        })
+        .catch(() => handleTokenException());
     }
     const subscribeRoomParticipants = () => {
         stomp.subscribe('/sub/chat/room/list', ({ body }: { body: string }) => {
@@ -258,40 +258,34 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
             };
         })
     }
-    const updateRoomInfoChange = (info: { roomId: number, target: string | number }) => {
-        // 타겟 룸
-        // 비번 변경인지 또는 인원 변경인지
-        // 목표 비번 또는 인원
-        // message가 숫자면 인원 변경, 문자면 비번설정으로 수정.
+    const updateRoomInfoChange = ({ settingOption, pwRequired, roomId, value }: {[key: string]: string}) => {
         setRoomList(roomList => {
-            let target: IRoom | undefined;
+            let targetSubject = undefined;
             let targetIndex = 0;
             Object.keys(roomList).some(subject => {
                 const targetRoom = roomList[subject].list.find((room, index) => {
-                    if ((room.roomId === info.roomId)) {
+                    if (room.roomId === +roomId) {
                         targetIndex = index;
                         return true;
                     }
                 });
                 if (targetRoom) {
-                    if (typeof info.target === 'string') {
-                        targetRoom.pwRequired = true;
-                    } else if (typeof info.target === 'number') {
-                        targetRoom.limitation = info.target;
-                    }
-                    target = {...targetRoom};
-                    roomList[subject].list[targetIndex] = target;
+                    targetSubject = subject;
+                    const option: boolean = JSON.parse(settingOption);
+                    if (option) targetRoom.pwRequired = JSON.parse(pwRequired);
+                    else targetRoom.limitation = +value;
+                    roomList[targetSubject].list[targetIndex] = {...targetRoom};
                     return true;
                 }
             })
-            if (!target) return roomList;
+            if (!targetSubject || !targetIndex) return roomList;
             else return {
                 ...roomList,
-                [target.subject]: {
+                [targetSubject]: {
                     list: [
-                        ...roomList[target.subject].list,
+                        ...roomList[targetSubject].list,
                     ],
-                    isPinned: roomList[target.subject].isPinned,
+                    isPinned: roomList[targetSubject].isPinned,
                 }
             }
         })
@@ -317,12 +311,14 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     const toggleSubjectToServer = async (subject: string, subjectList: string[]) => {
         const checkIfExists = (subjectElem: string) => (subjectElem === subject);
         const isAddLike = subjectList.some(checkIfExists);
-        const { status } = await requestWithTokenAxios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/manage_subject_like`, 
-        { subject, isAddLike });
-        if (status === 200) {
-            if (isAddLike) dispatch(removeInList(subject));
-            else dispatch(addInList(subject));
-        } else if (status === 401) handleTokenException();
+        try {
+            const { status } = await requestWithTokenAxios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/manage_subject_like`, 
+            { subject, isAddLike });
+            if (status === 200) {
+                if (isAddLike) dispatch(removeInList(subject));
+                else dispatch(addInList(subject));
+            }
+        } catch (e) { handleTokenException(); };
     }
     const handleTokenException = () => {
         removeCookie(CHATO_TOKEN, { path: '/' });
@@ -345,7 +341,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         }
     }, []);
     useEffect(() => {
-        if (userId && ((renderingCount++ === 0) || (subjectList.length === 8)))
+        if (userId && ((renderingCount++ === 0) || (subjectList.length <= 8)))
             arrangeRoomList(subjectList);
     }, [subjectList]);
     useEffect(() => {

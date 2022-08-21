@@ -42,4 +42,8 @@ public interface ChatRoomService {
     public void unlockBannedUser(long bannedIpNo);
 
     public List<ChatRoom> searchChatRooms(String keyword);
+
+    public void updateRoomRoomPassword(boolean pwRequired, String password, long roomId);
+
+    public void updateRoomCapacity(int capacity, long roomId);
 }

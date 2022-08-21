@@ -43,9 +43,9 @@ function NavBar() {
                         delete data.likedSubjects;
                         handleSignIn(data);
                     }
-                } else if (status === 401) handleTokenException();
+                }
             })
-            /* .catch(() => removeCookie(CHATO_TOKEN, {path: '/'})); */
+            .catch(() => handleTokenException());
         }
     }
     const doCommonTasks = () => {
@@ -62,7 +62,7 @@ function NavBar() {
         if (status === 200) {
             doCommonTasks();
             router.push('/chat/list');
-        } else if (status === 401) handleTokenException();
+        }
     }
     const hideSearchModal = () => setIsSearhModalShown(false);
     useEffect(() => {

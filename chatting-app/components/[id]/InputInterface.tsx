@@ -1,10 +1,18 @@
+import axios from "axios";
+import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
-import { useRef } from "react";
+import { useRouter } from "next/router";
+import React, { useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import { Client } from "webstomp-client";
-import { LIMIT, SEND_PROTOCOL } from "../../pages/chat/[id]";
+import { truncateList } from "../../lib/store/modules/likedSubjectReducer";
+import { signOut } from "../../lib/store/modules/signInReducer";
+import { LIMIT, MASTER_PROTOCOL, SEND_PROTOCOL } from "../../pages/chat/[id]";
 import { IMessageBody } from "../../types/types";
-import { getNowTime, toastConfig } from "../../utils/utils";
+import { CHATO_TOKEN, getNowTime, modalBgVariant, removeCookie, requestWithTokenAxios, toastConfig } from "../../utils/utils";
+import Room from "../list/Room";
 
 let imageFile: ArrayBuffer;
 
@@ -20,6 +28,9 @@ interface IInputInterface {
 
 function InputInterface({ socket, stomp, roomId, isMyRoom, userNo, currentUserName, shootChatMessage }: IInputInterface) {
     let newMessage: string;
+    const router = useRouter();
+    const dispatch = useDispatch();
+    const [isModalShown, setIsModalShown] = useState(false);
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
     const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.currentTarget.files) {
@@ -81,6 +92,28 @@ function InputInterface({ socket, stomp, roomId, isMyRoom, userNo, currentUserNa
             textAreaRef.current?.setSelectionRange(0, 0);
         }
     }
+    const handleRoomSettings = () => setIsModalShown(true);
+    const terminateChatRoom = () => {
+        requestWithTokenAxios.delete(`${process.env.NEXT_PUBLIC_API_URL}/room/delete/${roomId}`)
+        .then(() => {
+            if (socket && stomp)
+                stomp.send(`/pub/chat/${SEND_PROTOCOL.DELETE}`,
+                JSON.stringify({
+                    msgNo: 0,
+                    roomId: String(roomId),
+                    message: MASTER_PROTOCOL.DISBANDED,
+                    writer: MASTER_PROTOCOL.MASTER,
+                    writerNo: null,
+                }));
+        })
+    }
+    const handleTokenException = () => {
+        removeCookie(CHATO_TOKEN, { path: '/' });
+        dispatch(signOut());
+        dispatch(truncateList());
+        router.push('/user/signin');
+    }
+    const stopProppagation = (e: React.MouseEvent<HTMLDivElement>) => e.stopPropagation();
     return (
         <>
             <input
@@ -94,8 +127,8 @@ function InputInterface({ socket, stomp, roomId, isMyRoom, userNo, currentUserNa
             <span className="buttons">
                 {isMyRoom &&
                 <>
-                    <button>settings</button>
-                    <button>terminate</button>
+                    <button onClick={handleRoomSettings}>settings</button>
+                    <button onClick={terminateChatRoom}>terminate</button>
                 </>}
                 <Link href="/chat/list"><button>exit</button></Link>
             </span>
@@ -109,6 +142,27 @@ function InputInterface({ socket, stomp, roomId, isMyRoom, userNo, currentUserNa
                 />
                 <button className="submit-button">submit</button>
             </form>
+            <AnimatePresence>
+                {isModalShown &&
+                <motion.div
+                    className="modal-bg"
+                    variants={modalBgVariant}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    onClick={() => setIsModalShown(false)}
+                >
+                    <div
+                        className="modal settings"
+                        onClick={stopProppagation}
+                    >
+                        <SettingsContent
+                            roomId={roomId}
+                            setIsModalShown={setIsModalShown}
+                        />
+                    </div>
+                </motion.div>}
+            </AnimatePresence>
             <style jsx>{`
                     .chat-form { 
                         width: 100%;
@@ -136,9 +190,122 @@ function InputInterface({ socket, stomp, roomId, isMyRoom, userNo, currentUserNa
                         float: right;
                         color: orange;
                     }
+                    .settings {
+                        height: 265px;
+                    }
                 `}</style>
         </>
     )
 }
 
 export default InputInterface;
+
+interface IRoomSettings { 
+    password: string, 
+    pwRequired: boolean, 
+    limitation: number
+};
+
+function SettingsContent({
+    roomId,
+    setIsModalShown }: { 
+        roomId: number,
+        setIsModalShown: React.Dispatch<React.SetStateAction<boolean>> }) {
+    const [settingOption, setSettingOption] = useState(true);
+    const [usePassword, setUsePassword] = useState(false);
+    const { 
+        getValues, 
+        setValue,
+        register,
+        formState: { errors },
+        handleSubmit } = useForm<IRoomSettings>({
+        defaultValues: { password: '', pwRequired: false, limitation: 15 }
+    });
+    const [isRendered, setIsReRendered] = useState(false);
+    const showNowLimitValue = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setValue('limitation', +e.currentTarget.value);
+        setIsReRendered(!isRendered);
+    }
+    const submitSettingsChange = async ({ password, pwRequired, limitation }: IRoomSettings) => {
+        const { status } = await requestWithTokenAxios.put(`${process.env.NEXT_PUBLIC_API_URL}/room/settings`, {
+            settingOption, 
+            pwRequired, 
+            value: settingOption ? password : limitation,
+            roomId,
+        })
+        if (status === 200) setIsModalShown(false);
+    }
+    return (
+        <>
+            <br></br>
+            <div>
+                <button
+                    onClick={() => setSettingOption(true)}
+                    style={{ color: settingOption ? 'orange' : 'rgb(0, 219, 146)' }}
+                >password</button>
+                &emsp;
+                <button
+                    onClick={() => setSettingOption(false)}
+                    style={{ color: !settingOption ? 'orange' : 'rgb(0, 219, 146)' }}
+                >capacity</button>
+            </div>
+            <form onSubmit={handleSubmit(submitSettingsChange)}>
+                {settingOption ?
+                <div>
+                    <p>Set the room password.</p>
+                    <span className="small">use password</span>
+                    <input
+                        type="checkbox"
+                        {...register('pwRequired', {
+                            onChange: () => setUsePassword(!usePassword),
+                        })}
+                    />
+                    <input
+                        className="input-box"
+                        type="password"
+                        maxLength={15}
+                        {...register('password', {
+                            maxLength: {
+                                value: 15,
+                                message: 'Password length cannot exceeds 15.',
+                            }
+                        })}
+                        placeholder="Input new password."
+                        disabled={!usePassword}
+                    />
+                    <div className="error-message">{errors.password?.message}</div>
+                </div> :
+                <div>
+                    <p>Rearrange the room capacity.</p>
+                    <input
+                        className="input-box"
+                        type="range"
+                        min={2}
+                        max={30}
+                        {...register('limitation', {
+                            min: {
+                                value: 2,
+                                message: 'The room capacity is 2 at least.'
+                            },
+                            max: {
+                                value: 30,
+                                message: 'The room capacity cannot exceeds 30.'
+                            },
+                            onChange: showNowLimitValue,
+                        })}
+                    />
+                    &emsp;
+                    <div className="error-message">{errors.limitation?.message}</div>
+                    <span className="small">capacity {getValues('limitation')}</span>
+                </div>}
+                <button type="submit">apply</button>
+            </form>
+            <style jsx>{`
+                .small {
+                    font-size: 12px;
+                }
+            `}</style>
+        </>
+    )
+}
+
