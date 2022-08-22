@@ -43,8 +43,6 @@ public class UserServiceImpl implements UserService {
     @Autowired
     BannedIpRepository bannedIpRepository;
 
-    private final String BASE_URL = "./src/main/java/com/example/ChatoBackend";
-
     @Override
     public void saveUser(User user) {
         String encodedPassword = passwordEncoder.encode(user.getPassword());
@@ -59,7 +57,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public String saveProfilePic(String id, MultipartFile profilePicBinary) throws IOException {
         if (profilePicBinary != null) {
-            String path = BASE_URL + "/images/users/" + id;
+            String path = "./images/users/" + id;
             String picUrlPath = path + "/" + id + ".jpg";
             File newUserFolder = new File(path);
             if (!newUserFolder.exists()) newUserFolder.mkdir();
@@ -102,7 +100,7 @@ public class UserServiceImpl implements UserService {
         boolean isPrevFileSaved = (userRepository.findById(prevId).get().getProfilePicUrl() != null);
         if (!isPrevFileSaved) return;
         else {
-            String path = BASE_URL + "/images/users/" + prevId;
+            String path = "./images/users/" + prevId;
             File newUserFolder = new File(path);
             if (newUserFolder.exists()) {
                 String picUrl = path + "/" + prevId + ".jpg";
@@ -117,13 +115,13 @@ public class UserServiceImpl implements UserService {
         boolean isPrevFileSaved = (userRepository.findById(prevId).get().getProfilePicUrl() != null);
         if (!isPrevFileSaved) return;
         else {
-            String path = BASE_URL + "/images/users/" + prevId;
+            String path = "./images/users/" + prevId;
             File newUserFolder = new File(path);
             if (newUserFolder.exists()) {
                 String picUrl = path + "/" + prevId + ".jpg";
                 File picFile = new File(picUrl);
-                if (picFile.exists()) picFile.renameTo(new File(BASE_URL + "/images/users/" + prevId + "/" + id + ".jpg"));
-                newUserFolder.renameTo(new File(BASE_URL + "/images/users/" + id));
+                if (picFile.exists()) picFile.renameTo(new File("./images/users/" + prevId + "/" + id + ".jpg"));
+                newUserFolder.renameTo(new File("./images/users/" + id));
             }
         }
     }
@@ -246,11 +244,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public byte[] getUserPic(String id) throws IOException {
         byte[] imageByteArray = null;
-        String path = BASE_URL + "/images/users/" + id;
+        String path = "./images/users/" + id;
         File file = new File(path + "/" + id + ".jpg");
         if (file.exists()) imageByteArray = Files.readAllBytes(file.toPath());
         else {
-            file = new File(BASE_URL + "/images/users/default-avatar.jpg");
+            file = new File("./images/users/default-avatar.jpg");
             imageByteArray = Files.readAllBytes(file.toPath());
         }
         return imageByteArray;

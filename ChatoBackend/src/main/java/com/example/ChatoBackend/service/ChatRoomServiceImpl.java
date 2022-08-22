@@ -39,8 +39,6 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     @Autowired
     BannedIpRepository bannedIpRepository;
 
-    private final String BASE_URL = "./src/main/java/com/example/ChatoBackend";
-
     @Override
     public void saveChatRoom(ChatRoom chatRoom) throws SQLException {
         try {
@@ -175,7 +173,7 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     }
 
     private void deleteRoomPicture(long roomId) {
-        String path = BASE_URL + "/images/rooms/" + roomId;
+        String path = "./images/rooms/" + roomId;
         File roomDir = new File(path);
         if (roomDir.exists()) {
             try {
@@ -206,7 +204,7 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     public byte[] getChatPicture(long roomId, long msgNo) throws IOException {
         byte[] imageByteArray = null;
         try {
-            String path = BASE_URL + "/images/rooms/" + roomId;
+            String path = "./images/rooms/" + roomId;
             File file = new File(path + "/" + msgNo + ".jpg");
             imageByteArray = Files.readAllBytes(file.toPath());
         } catch (NoSuchFileException e) {

@@ -26,8 +26,6 @@ public class MessageServiceImpl implements MessageService {
     @Autowired
     MessageRepository messageRepository;
 
-    private final String BASE_URL = "./src/main/java/com/example/ChatoBackend";
-
     @Override
     public long saveMessage(MessageDTO messageDTO) {
         long newId = -1;
@@ -68,7 +66,7 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     public void savePicture(byte[] imageBytes, Long roomId, Long msgNo) throws IOException {
-        String path = BASE_URL + "/images/rooms/" + roomId;
+        String path = "./images/rooms/" + roomId;
         String picUrlPath = path + "/" + msgNo + ".jpg";
         File roomDir = new File(path);
         if (!roomDir.exists()) roomDir.mkdir();
