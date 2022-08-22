@@ -39,4 +39,6 @@ public interface UserService {
     public boolean checkIfIsValidRefreshToken(String refreshToken, String id);
 
     public void signout(String id);
+
+    public byte[] getUserPic(String id) throws IOException;
 }

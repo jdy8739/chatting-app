@@ -58,15 +58,7 @@ public class UserController {
     @GetMapping("/profile-pic/{id}")
     public ResponseEntity<byte[]> getProfileImage(
             @PathVariable("id") String id) throws IOException {
-        byte[] imageByteArray = null;
-        String path = "./images/users/" + id;
-        File file = new File(path + "/" + id + ".jpg");
-        if (file.exists()) imageByteArray = Files.readAllBytes(file.toPath());
-        else {
-            file = new File("./images/users/default-avatar.jpg");
-            imageByteArray = Files.readAllBytes(file.toPath());
-        }
-        return new ResponseEntity<>(imageByteArray, HttpStatus.OK);
+        return new ResponseEntity<>(userService.getUserPic(id), HttpStatus.OK);
     }
 
     @PostMapping("/signin")

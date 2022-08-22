@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOError;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -238,5 +239,18 @@ public class UserServiceImpl implements UserService {
     public void signout(String id) {
         Long userNo = userRepository.findUserNoByUserId(id);
         userRepository.setRefreshTokenByUserNo(null, userNo);
+    }
+
+    @Override
+    public byte[] getUserPic(String id) throws IOException {
+        byte[] imageByteArray = null;
+        String path = "./images/users/" + id;
+        File file = new File(path + "/" + id + ".jpg");
+        if (file.exists()) imageByteArray = Files.readAllBytes(file.toPath());
+        else {
+            file = new File("./images/users/default-avatar.jpg");
+            imageByteArray = Files.readAllBytes(file.toPath());
+        }
+        return imageByteArray;
     }
 }
