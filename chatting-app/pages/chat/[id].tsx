@@ -41,12 +41,14 @@ interface IChatRoomProps {
     password?: string,
     roomOwner: number | null,
     roomOwnerId: string,
+    numberOfParticipants: number,
 }
 
 interface IChatRoomInfo {
     owner: number | null, 
     ownerId: string,
     messageList?: IMessageBody[] | undefined,
+    numberOfParticipants: number,
 }
 
 interface IFetchMessagesProps {
@@ -63,16 +65,29 @@ let currentUserName: string = '';
 let previousShowCnt = 0;
 let timeOut: NodeJS.Timeout;
 
-const fetchRoomOwnerAndPreviousChat = async ({id, userNo, count, password, ipAddress}: IFetchMessagesProps) :Promise<IChatRoomInfo> => {
+const fetchRoomOwnerAndPreviousChat = async ({
+    id, 
+    userNo, 
+    count, 
+    password, 
+    ipAddress}: IFetchMessagesProps) :Promise<IChatRoomInfo> => {
     return await (await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/message/${id}?offset=${count}`, { password, ipAddress, userNo })).data;
 }
 
-function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwnerId }: IChatRoomProps) {
+function ChattingRoom({ 
+    id,
+    roomName,
+    password,
+    previousChat,
+    roomOwner,
+    numberOfParticipants,
+    roomOwnerId }: IChatRoomProps) {
     const router = useRouter();
     const [messages, setMessages] = useState<IMessageBody[]>(previousChat);
     const [isAllChatShown, setIsAllChatShown] = useState(previousChat.length < LIMIT.CHAT_REMAIN_NUMBER);
     const [targetChatNumber, setTargetChatNumber] = useState(-1);
     const [participants, setParticipants] = useState<IParticipants[]>([]);
+    const [numberOfPcps, setNumberOfPcps] = useState(numberOfParticipants);
     const { userNo, userId, userNickName } = useSelector(({ signInReducer: {userInfo} }: IUserInfoSelector) => userInfo);
     const subscribeNewMessage = () => {
         stomp.subscribe(`/sub/chat/room/${id}`, ({ body }: { body: string }) => {
@@ -123,6 +138,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
         if (scrollDown) window.scrollTo(0, document.body.scrollHeight);
     }
     const updateParticipantsList = (targetUser: IParticipants, isUserOut: boolean) => {
+        setNumberOfPcps(numberOfPcps => (isUserOut) ? (numberOfPcps - 1) : (numberOfPcps + 1));
         setParticipants(participants => {
             if (isUserOut) {
                 const targetIndex = participants.findIndex(participant => participant.id === targetUser.id);
@@ -235,6 +251,7 @@ function ChattingRoom({ id, roomName, password, previousChat, roomOwner, roomOwn
                 roomOwnerId={roomOwnerId}
                 setParticipants={setParticipants}
                 shootChatMessage={shootChatMessage}
+                numberOfPcps={numberOfPcps}
             />
             {/* 재랜더링 시 불필요한 연산을 방지하 위해, 컴포넌트로 넣는 작업이 필요해 보임. (해결) */}
             <div className="container">
@@ -317,12 +334,14 @@ export async function getServerSideProps({ params: { id }, query: { roomName, pa
     let owner: (number | null);
     let ownerId: string;
     let previousChat: (IMessageBody[] | undefined);
+    let numberOfParticipants;
     try {
         if (!userNo) userNo = null;
         const {data: { ip }}: { data: Iipdata } = await axios.get(`https://api.ipdata.co?api-key=${process.env.NEXT_PUBLIC_IPDATA_API_KEY}`);
         const results = await fetchRoomOwnerAndPreviousChat({id, userNo, count: previousShowCnt, password, ipAddress: ip});
         owner = results.owner;
         ownerId = results.ownerId;
+        numberOfParticipants = results.numberOfParticipants;
         previousChat = results.messageList?.reverse();
         previousChat?.forEach(chat => {if (chat.isDeleted) chat.message = ''});
     } catch (e) {
@@ -343,6 +362,7 @@ export async function getServerSideProps({ params: { id }, query: { roomName, pa
             password: (password || null),
             roomOwner: owner,
             roomOwnerId: ownerId,
+            numberOfParticipants,
         }
     };
 }

@@ -99,7 +99,8 @@ public class RoomController {
             @PathVariable("id") Long roomId,
             @RequestParam(value = "offset") String offset,
             @RequestBody Map<String, String> map) {
-        long roomOwner = 0;
+        Long roomOwner = null;
+        Integer  numberOfParticipants = null;
         String tmpUserNo = map.get("userNo");
         Long userNo = (tmpUserNo == null) ? null : Long.parseLong(tmpUserNo);
         String roomOwnerId = null;
@@ -112,7 +113,9 @@ public class RoomController {
             } else if (!chatRoomService.checkRoomStatusOK(roomId)) {
                 return new ResponseEntity<>(HttpStatus.PRECONDITION_FAILED);
             } else try {
-                roomOwner = chatRoomService.findRoomOwnerByRoomId(roomId);
+                ChatRoom chatRoom = chatRoomService.findChatRoomByRoomId(roomId);
+                roomOwner = chatRoom.getOwner();
+                numberOfParticipants = chatRoom.getNowParticipants();
                 roomOwnerId = userService.findUserIdByUserNo(roomOwner);
             } catch (NullPointerException ignored) {};
         }
@@ -121,6 +124,7 @@ public class RoomController {
         responseMap.put("owner", roomOwner);
         responseMap.put("ownerId", roomOwnerId);
         responseMap.put("messageList", messageDTOList);
+        responseMap.put("numberOfParticipants", numberOfParticipants);
         return new ResponseEntity<>(responseMap, HttpStatus.OK);
     }
 

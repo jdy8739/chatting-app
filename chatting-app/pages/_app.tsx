@@ -136,15 +136,20 @@ function MyApp({ Component, pageProps }: AppProps) {
           color: white;
           cursor: pointer;
         }
-        
+
+        .user-container > .number-of-users {
+          right: 18px;
+          top: 65px;
+        }
+
         .user-container > .user {
           right: 10px;
-          top: 65px;
+          top: 135px;
         }
         
         .user-container > .banned {
           right: 18px;
-          top: 135px;
+          top: 205px;
         }
         
         .user-container:hover {

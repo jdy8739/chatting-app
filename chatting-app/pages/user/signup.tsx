@@ -15,6 +15,14 @@ interface ISignUpForm {
 
 let userProfilePic: (File | undefined);
 
+const STYLE = {
+    FORM: { 
+        height: '652px',
+        marginBottom: '150px'
+    },
+    ERROR: { marginTop: '22px' },
+}
+
 function SingUp() {
     const router = useRouter();
     const [isRendered, setIsRendered] = useState(false);
@@ -81,10 +89,7 @@ function SingUp() {
             <Seo title="Chato SignUp"></Seo>
             <form
                 className="submit-form"
-                style={{ 
-                    height: '652px',
-                    marginBottom: '150px'
-                }}
+                style={STYLE.FORM}
                 onSubmit={handleSubmit(handleSignUpFormSubmit)}
             >
                 <h4 className="title">Welcome to Chato :)</h4>
@@ -179,7 +184,7 @@ function SingUp() {
                         />
                     </label>
                     <div className="error-message">{errors.passwordCheck?.message}</div>
-                    <label style={{ marginTop: '22px' }}>
+                    <label style={STYLE.ERROR}>
                         <span className="item">profile pic</span>
                         <input
                             type="file"

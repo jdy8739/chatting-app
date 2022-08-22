@@ -8,6 +8,12 @@ import { replaceList } from "../../lib/store/modules/likedSubjectReducer";
 import { IUserSignedInInfo, signIn } from "../../lib/store/modules/signInReducer";
 import { CHATO_TOKEN, clearPreviousRoomId, getAccessToken, signinAxios, toastConfig } from "../../utils/utils";
 
+const STYLE = {
+    FORM: { width: '400px', height: '250px' },
+    TITLE: { width: '80%', margin: 'auto' },
+    SUBMIT: { width: '100%', marginTop: '45px' },
+}
+
 function Signin() {
     const router = useRouter();
     const dispatch = useDispatch();
@@ -45,11 +51,11 @@ function Signin() {
             <form
                 onSubmit={handleSigninSubmit}
                 className="submit-form"
-                style={{ width: '400px', height: '250px' }}
+                style={STYLE.FORM}
             >
                 <h4 className="title">Nice to meet U Again! :)</h4>
                 <div
-                    style={{ width: '80%', margin: 'auto' }}
+                    style={STYLE.TITLE}
                 >
                     <label htmlFor="id">
                         <span className="item">ID</span>
@@ -76,7 +82,7 @@ function Signin() {
                 </Link>
                 <button 
                     className="submit-btn"
-                    style={{ width: '100%', marginTop: '45px' }}
+                    style={STYLE.SUBMIT}
                 >submit</button>
             </form>
             <style jsx>{`

@@ -17,6 +17,7 @@ interface IUserContainer {
     roomOwnerId: string,
     setParticipants:  React.Dispatch<React.SetStateAction<IParticipants[]>>,
     shootChatMessage: (target: SEND_PROTOCOL, message: IMessageBody) => void,
+    numberOfPcps: number,
 }
 
 interface IBannedUserList {
@@ -26,12 +27,12 @@ interface IBannedUserList {
     ipAddress: string,
 }
 
-let isContainerClosed = true;
-
 const STYLE = {
     MARK: {color: 'orange'},
     NONE: {}
-};
+}
+
+let fetchCount = 0;
 
 function UserContainer({ 
     roomId,
@@ -41,17 +42,19 @@ function UserContainer({
     roomOwner,
     roomOwnerId,
     setParticipants,
-    shootChatMessage }: IUserContainer) {
-        // console.log('user container updated.');
+    shootChatMessage,
+    numberOfPcps }: IUserContainer) {
+    console.log('user container updated.');
     const router = useRouter();
     const dispatch = useDispatch();
     const [isBannedUserShown, setIsBannedUserShown] = useState(false);
     const [bannedUserList, setBannedUserList] = useState<IBannedUserList[]>([]);
     const fetchNowParticipants = async () => {
-        const results: IParticipants[] = await (await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/room/participants/${roomId}`)).data;
-        // console.log(results);
-        isContainerClosed = false;
-        setParticipants(results);
+        if (fetchCount++ === 0) {
+            const results: IParticipants[] = await (await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/room/participants/${roomId}`)).data;
+            // console.log(results);
+            setParticipants(results);
+        }
     }
     const banThisParticipant = (participantId: string) => { 
         shootChatMessage(SEND_PROTOCOL.DELETE, {
@@ -63,18 +66,14 @@ function UserContainer({
         });
     }
     const fetchBannedUserList = async () => {
-        isContainerClosed = false;
-        try {
-            const { status, data: bannedUserList } =
+        try { const { data: bannedUserList } =
                 await requestWithTokenAxios.get(`${process.env.NEXT_PUBLIC_API_URL}/room/banned_users/${roomId}`);
             setIsBannedUserShown(true);
             setBannedUserList(bannedUserList);
         } catch (e) { handleTokenException(); };
     }
     const unlockThisUser = async (bannedIpNo: number) => {
-        isContainerClosed = false;
-        try {
-            const { status } = 
+        try { const { status } = 
                 await requestWithTokenAxios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/unlock_ban`, { bannedIpNo, roomId });
             if (status === 200) setBannedUserList(bannedUserList => {
                 return [...bannedUserList.filter(bannedUser => bannedUser.bannedIpNo !== bannedIpNo)];
@@ -88,15 +87,22 @@ function UserContainer({
         router.push('/user/signin');
     }
     useEffect(() => {
-        return () => { isContainerClosed = true; };
-    }, []);
+        return () => {
+            fetchCount = 0;
+        };
+    }, [])
     return (
         <>
             <div
                 className="user-container"
                 onMouseEnter={fetchNowParticipants}
-                onMouseLeave={() => isContainerClosed = true}
             >
+                <h4
+                    className="number-of-users"
+                    style={STYLE.NONE}
+                >
+                    n {(fetchCount === 0) ? numberOfPcps : participants.length}
+                </h4>
                 <h4 className="user"
                     style={!isBannedUserShown ? STYLE.MARK : STYLE.NONE}
                     onClick={() => setIsBannedUserShown(false)}
@@ -155,7 +161,6 @@ function UserContainer({
                                     src='/out.png'
                                     className="out-icon"
                                     onClick={() => unlockThisUser(bannedUser.bannedIpNo)}
-                                    alt="popai"
                                 />
                             </div>
                         )
@@ -166,6 +171,4 @@ function UserContainer({
     )
 }
 
-const judgeEqual = () => isContainerClosed;
-
-export default React.memo(UserContainer, judgeEqual);
+export default React.memo(UserContainer);

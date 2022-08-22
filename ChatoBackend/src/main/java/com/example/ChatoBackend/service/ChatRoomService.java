@@ -13,6 +13,8 @@ public interface ChatRoomService {
 
     public void saveChatRoom(ChatRoom chatRoom) throws SQLException;
 
+    public ChatRoom findChatRoomByRoomId(long roomId);
+
     public List<ChatRoom> findEveryChatRoom();
 
     public void changeSubject(Long roomId, String newSubject);

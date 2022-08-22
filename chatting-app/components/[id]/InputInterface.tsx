@@ -26,7 +26,14 @@ interface IInputInterface {
     shootChatMessage: (target: SEND_PROTOCOL, message: IMessageBody) => void
 }
 
-function InputInterface({ socket, stomp, roomId, isMyRoom, userNo, currentUserName, shootChatMessage }: IInputInterface) {
+function InputInterface({ 
+    socket,
+    stomp,
+    roomId,
+    isMyRoom,
+    userNo,
+    currentUserName,
+    shootChatMessage }: IInputInterface) {
     let newMessage: string;
     const router = useRouter();
     const dispatch = useDispatch();

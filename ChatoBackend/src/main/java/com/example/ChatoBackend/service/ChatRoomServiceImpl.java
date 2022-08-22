@@ -53,6 +53,11 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     }
 
     @Override
+    public ChatRoom findChatRoomByRoomId(long roomId) {
+        return chatRoomRepository.findByRoomId(roomId).get();
+    }
+
+    @Override
     public void changeSubject(Long roomId, String newSubject) {
         chatRoomRepository.changeSubject(roomId, newSubject);
     }
