@@ -113,11 +113,11 @@ function ChattingRoom({
             newMessage.message = `${targetId.slice(0, 9)} has been banned.`;
         } else if (msgNo !== null) {
             newMessage.message = `${targetId.slice(0, 9)} has just ${msgNo ? 'left' : 'joined'} the room.`;
+            updateParticipantsList({
+                id: targetId,
+                nickName: (targetNickName === 'null') ? null : targetNickName,
+            }, Boolean(msgNo));
         }
-        updateParticipantsList({
-            id: targetId,
-            nickName: targetNickName,
-        }, Boolean(msgNo));
         updateMessageList(newMessage);
     }
     const updateMessageList = (newMessageInfo: IMessageBody) => {

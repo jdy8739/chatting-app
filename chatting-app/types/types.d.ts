@@ -47,7 +47,7 @@ export interface IMessageBody {
 
 export interface IParticipants {
     id: string,
-    nickName: string,
+    nickName: string | null,
 }
 
 
