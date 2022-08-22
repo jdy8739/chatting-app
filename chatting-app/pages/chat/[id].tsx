@@ -111,7 +111,9 @@ function ChattingRoom({
             if (userId ? (targetId === userId) : (targetId === currentUserName))
                 expelUser('You are banned!');
             newMessage.message = `${targetId.slice(0, 9)} has been banned.`;
-        } else newMessage.message = `${targetId.slice(0, 9)} has just ${msgNo ? 'left' : 'joined'} the room.`;
+        } else if (msgNo !== null) {
+            newMessage.message = `${targetId.slice(0, 9)} has just ${msgNo ? 'left' : 'joined'} the room.`;
+        }
         updateParticipantsList({
             id: targetId,
             nickName: targetNickName,

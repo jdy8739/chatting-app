@@ -1,20 +1,16 @@
-import axios from "axios";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import { Client } from "webstomp-client";
-import { truncateList } from "../../lib/store/modules/likedSubjectReducer";
-import { signOut } from "../../lib/store/modules/signInReducer";
 import { LIMIT, MASTER_PROTOCOL, SEND_PROTOCOL } from "../../pages/chat/[id]";
 import { IMessageBody } from "../../types/types";
-import { CHATO_TOKEN, getNowTime, modalBgVariant, removeCookie, requestWithTokenAxios, toastConfig } from "../../utils/utils";
-import Room from "../list/Room";
+import { getNowTime, modalBgVariant, requestWithTokenAxios, toastConfig } from "../../utils/utils";
 
-let imageFile: ArrayBuffer;
+let imageFile: ArrayBuffer | null;
 
 interface IInputInterface {
     socket: WebSocket,
@@ -35,8 +31,6 @@ function InputInterface({
     currentUserName,
     shootChatMessage }: IInputInterface) {
     let newMessage: string;
-    const router = useRouter();
-    const dispatch = useDispatch();
     const [isModalShown, setIsModalShown] = useState(false);
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
     const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,6 +66,7 @@ function InputInterface({
                 imageFile,
                 headers)
             }
+            imageFile = null;
         }
     }
     const handleChatSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -114,13 +109,10 @@ function InputInterface({
                 }));
         })
     }
-    const handleTokenException = () => {
-        removeCookie(CHATO_TOKEN, { path: '/' });
-        dispatch(signOut());
-        dispatch(truncateList());
-        router.push('/user/signin');
-    }
     const stopProppagation = (e: React.MouseEvent<HTMLDivElement>) => e.stopPropagation();
+    useEffect(() => {
+        return () => { imageFile = null; };
+    }, [])
     return (
         <>
             <input

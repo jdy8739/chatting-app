@@ -5,6 +5,7 @@ import com.example.ChatoBackend.entity.BannedIp;
 import com.example.ChatoBackend.entity.ChatRoom;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.sql.ParameterMetaData;
 import java.sql.SQLException;
 import java.util.List;
@@ -48,4 +49,6 @@ public interface ChatRoomService {
     public void updateRoomRoomPassword(boolean pwRequired, String password, long roomId);
 
     public void updateRoomCapacity(int capacity, long roomId);
+
+    public byte[] getChatPicture(long roomId, long msgNo) throws IOException;
 }

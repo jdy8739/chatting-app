@@ -278,7 +278,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                     return true;
                 }
             })
-            if (!targetSubject || !targetIndex) return roomList;
+            if (!targetSubject || (targetIndex === -1)) return roomList;
             else return {
                 ...roomList,
                 [targetSubject]: {
@@ -303,9 +303,8 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         return [targetKey, targetIndex];
     }
     const toggleLikeList = useCallback((destination: SECTION, subject: string, subjectList: string[]) => {
-        if (!getAccessToken(CHATO_TOKEN)) {
-            setPinnedSubjectStorage(subject);
-        } else toggleSubjectToServer(subject, subjectList);
+        if (!getAccessToken(CHATO_TOKEN)) setPinnedSubjectStorage(subject); 
+        else toggleSubjectToServer(subject, subjectList);
         updateTableMoved(destination, subject);
     }, [])
     const toggleSubjectToServer = async (subject: string, subjectList: string[]) => {
@@ -341,7 +340,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         }
     }, []);
     useEffect(() => {
-        if (userId && ((renderingCount++ === 0) || (subjectList.length <= 8)))
+        if (userId && ((renderingCount++ === 0) || (subjectList.length === 8)))
             arrangeRoomList(subjectList);
     }, [subjectList]);
     useEffect(() => {

@@ -73,7 +73,7 @@ export const signupAxios = axios.create();
 signupAxios.interceptors.response.use(
     response => response,
     error => {
-		handleErrors(error.status);
+		handleErrors(error.response.status);
         return Promise.reject(error);
 })
 
@@ -107,11 +107,7 @@ signinAxios.interceptors.response.use(
 		return response;
 	},
     ({ response }: AxiosError) => {
-        const status = response?.status;
-        if (status === 404)
-            toast.error('No such Id in our record.', toastConfig);
-        else if (status === 400)
-            toast.error('Password does not matches!.', toastConfig);
+        handleTokenErrors(response?.status);
         return Promise.reject();
     }
 )
@@ -164,10 +160,18 @@ requestWithTokenAxios.interceptors.response.use(
 			} else if (accessTokenRequestStatus !== 200) {
 				return { status: 401 };
 			}
-		} else toast.error('It cannot be done!', toastConfig);
+		} else handleTokenErrors(response?.status);
 		return response;
 	}
 )
+
+const handleTokenErrors = (status: number | undefined) => {
+	if (!status) {}
+	else if (status === 403 || status === 400) toast.error('Password does not matches!.', toastConfig);
+	else if (status === 409) toast.error('Id is duplicate. Please try another id.', toastConfig);
+	else if (status === 404) toast.error('No such Id in our record.', toastConfig);
+	else toast.error('It cannot be done!', toastConfig);
+}
 
 type Tenv = (new (...args: any[]) => object) | undefined;
 

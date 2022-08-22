@@ -164,18 +164,8 @@ public class RoomController {
     @GetMapping("/content-pic/{roomId}/{msgNo}")
     public ResponseEntity<byte[]> getContentImage(
             @PathVariable("roomId") Long roomId,
-            @PathVariable("msgNo") Long msgNo) {
-        byte[] imageByteArray = null;
-        try {
-            String path = "./images/rooms/" + roomId;
-            File file = new File(path + "/" + msgNo + ".jpg");
-            imageByteArray = Files.readAllBytes(file.toPath());
-        } catch (NoSuchFileException e) {
-            return new ResponseEntity<>(null, HttpStatus.OK);
-        } catch (IOException e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        return new ResponseEntity<>(imageByteArray, HttpStatus.OK);
+            @PathVariable("msgNo") Long msgNo) throws IOException {
+        return new ResponseEntity<>(chatRoomService.getChatPicture(roomId, msgNo), HttpStatus.OK);
     }
 
     @GetMapping("/banned_users/{roomId}")

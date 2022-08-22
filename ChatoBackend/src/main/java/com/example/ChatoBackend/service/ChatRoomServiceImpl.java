@@ -9,12 +9,15 @@ import com.example.ChatoBackend.repository.MessageRepository;
 import com.example.ChatoBackend.store.ConnectedUserAndRoomInfoStore;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.sql.ParameterMetaData;
 import java.sql.SQLException;
@@ -36,12 +39,13 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     @Autowired
     BannedIpRepository bannedIpRepository;
 
+    private final String BASE_URL = "./src/main/java/com/example/ChatoBackend";
+
     @Override
     public void saveChatRoom(ChatRoom chatRoom) throws SQLException {
         try {
-            if (chatRoomRepository.save(chatRoom) != null) {
-                messageRepository.createDynamicTable(chatRoom.getRoomId());
-            }
+            chatRoomRepository.save(chatRoom);
+            messageRepository.createDynamicTable(chatRoom.getRoomId());
         } catch (SQLException sqlException) {
             sqlException.printStackTrace();
         }
@@ -171,7 +175,7 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     }
 
     private void deleteRoomPicture(long roomId) {
-        String path = "./images/rooms/" + roomId;
+        String path = BASE_URL + "/images/rooms/" + roomId;
         File roomDir = new File(path);
         if (roomDir.exists()) {
             try {
@@ -196,5 +200,20 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         int nowParticipantsNumber = chatRoomRepository.getRoomLimitationByRoomId(roomId);
         if (capacity < nowParticipantsNumber) throw new RuntimeException();
         else chatRoomRepository.updateRoomLimitationByRoomId(capacity, roomId);
+    }
+
+    @Override
+    public byte[] getChatPicture(long roomId, long msgNo) throws IOException {
+        byte[] imageByteArray = null;
+        try {
+            String path = BASE_URL + "/images/rooms/" + roomId;
+            File file = new File(path + "/" + msgNo + ".jpg");
+            imageByteArray = Files.readAllBytes(file.toPath());
+        } catch (NoSuchFileException e) {
+            throw new NoSuchElementException();
+        } catch (IOException e) {
+            throw new IOException();
+        }
+        return imageByteArray;
     }
 }

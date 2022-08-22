@@ -44,7 +44,7 @@ function UserContainer({
     setParticipants,
     shootChatMessage,
     numberOfPcps }: IUserContainer) {
-    console.log('user container updated.');
+    /* console.log('user container updated.'); */
     const router = useRouter();
     const dispatch = useDispatch();
     const [isBannedUserShown, setIsBannedUserShown] = useState(false);
