@@ -170,6 +170,7 @@ const handleTokenErrors = (status: number | undefined) => {
 	else if (status === 403 || status === 400) toast.error('Password does not matches!.', toastConfig);
 	else if (status === 409) toast.error('Id is duplicate. Please try another id.', toastConfig);
 	else if (status === 404) toast.error('No such Id in our record.', toastConfig);
+	else if (status === 304) toast.error('The number of participants exceeds limit.');
 	else toast.error('It cannot be done!', toastConfig);
 }
 

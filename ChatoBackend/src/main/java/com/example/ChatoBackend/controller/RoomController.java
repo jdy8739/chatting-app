@@ -200,7 +200,6 @@ public class RoomController {
     public ResponseEntity<Void> settings(
             @RequestBody Map<String, String> map,
             HttpServletRequest req) {
-        log.info(map.toString());
         String token = String.valueOf(req.getHeader(HttpHeaders.AUTHORIZATION));
         long roomId = Long.parseLong(map.get("roomId"));
         long userNo = userService.findUserNoByUserId(jwtUtils.getUserId(token));
@@ -211,7 +210,7 @@ public class RoomController {
             map.remove("value");
         } else try {
             chatRoomService.updateRoomCapacity(Integer.parseInt(map.get("value")), roomId);
-        } catch (RuntimeException e) { return new ResponseEntity<>(HttpStatus.CONFLICT); }
+        } catch (RuntimeException e) { return new ResponseEntity<>(HttpStatus.NOT_MODIFIED); }
         map.put("isChanged", "true");
         messagingTemplate.convertAndSend("/sub/chat/room/list", map);
         return new ResponseEntity<>(HttpStatus.OK);

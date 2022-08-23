@@ -196,8 +196,7 @@ function ChattingRoom({
         }
     }, [])
     const expelUser = async (sentence: string) => {
-        try {
-            if (!id) throw new Error();
+        try { if (!id) throw new Error();
             const {data: { ip }}: { data: Iipdata } = await axios.get(`https://api.ipdata.co?api-key=${process.env.NEXT_PUBLIC_IPDATA_API_KEY}`);
             axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/add_banned`, {
                 roomId: id,
