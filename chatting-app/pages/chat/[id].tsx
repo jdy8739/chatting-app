@@ -9,7 +9,7 @@ import InputInterface from "../../components/[id]/InputInterface";
 import MessageComponent from "../../components/[id]/MessageComponent";
 import UserContainer from "../../components/[id]/UserContainer";
 import { Iipdata, IMessageBody, IParticipants } from "../../types/types";
-import { CHATO_TOKEN, generateRandonUserId, getAccessToken, toastConfig } from "../../utils/utils";
+import { CHATO_TOKEN, generateRandonUserId, getAccessToken, SocketStomp, toastConfig } from "../../utils/utils";
 import { IUserInfoSelector } from "./list";
 
 export enum SEND_PROTOCOL {
@@ -58,9 +58,8 @@ interface IFetchMessagesProps {
     password?: string, 
     ipAddress?: string,
 }
-  
-let socket: WebSocket;
-let stomp: Client;
+
+let socketStomp: SocketStomp;
 let currentUserName: string = '';
 let previousShowCnt = 0;
 let timeOut: NodeJS.Timeout;
@@ -90,7 +89,7 @@ function ChattingRoom({
     const [numberOfPcps, setNumberOfPcps] = useState(numberOfParticipants);
     const { userNo, userId, userNickName } = useSelector(({ signInReducer: {userInfo} }: IUserInfoSelector) => userInfo);
     const subscribeNewMessage = () => {
-        stomp.subscribe(`/sub/chat/room/${id}`, ({ body }: { body: string }) => {
+        socketStomp.stomp.subscribe(`/sub/chat/room/${id}`, ({ body }: { body: string }) => {
             const newMessage: IMessageBody = JSON.parse(body);
             const isSentFromMaster = (newMessage.writer === MASTER_PROTOCOL.MASTER);
             if (isSentFromMaster && newMessage.message === MASTER_PROTOCOL.DISBANDED) {
@@ -151,15 +150,17 @@ function ChattingRoom({
         })
     }
     const showPreviousChat = async () => {
-        setTargetChatNumber(-1);
-        previousShowCnt += 1;
-        const { messageList: newMessages } = await fetchRoomOwnerAndPreviousChat({id, userNo, count: previousShowCnt, password});
-        if (newMessages) {
-            if (newMessages.length < LIMIT.CHAT_REMAIN_NUMBER) setIsAllChatShown(true);
-            setMessages(messages => {
-                const copied = [...newMessages.reverse(), ...messages];
-                return copied;
-            })
+        if (!isAllChatShown) {
+            const { messageList: newMessages } = await fetchRoomOwnerAndPreviousChat({id, userNo, count: previousShowCnt, password});
+            if (newMessages && newMessages.length > 0) {
+                previousShowCnt ++;
+                if (newMessages.length < LIMIT.CHAT_REMAIN_NUMBER) setIsAllChatShown(true);
+                setTargetChatNumber(-1);
+                setMessages(messages => {
+                    const copied = [...newMessages.reverse(), ...messages];
+                    return copied;
+                })
+            }
         }
     }
     const handleChatDblClick = useCallback((index: number, isNumberMatches: boolean) => {
@@ -189,8 +190,8 @@ function ChattingRoom({
         }
     }, [])
     const shootChatMessage = useCallback((target: SEND_PROTOCOL, message: IMessageBody) => {
-        if (socket && stomp) {
-            stomp.send(`/pub/chat/${target}`, 
+        if (socketStomp) {
+            socketStomp.stomp.send(`/pub/chat/${target}`, 
             JSON.stringify(message), 
             { sampleHeader: 'sampleHeader' });
         }
@@ -202,31 +203,26 @@ function ChattingRoom({
                 roomId: id,
                 ipAddress: ip,
                 userName: currentUserName,
+            }).then(() => {
+                toast.error(sentence, toastConfig);
+                router.push('/chat/list');
             })
-        } catch (e) {} finally {
-            toast.error(sentence, toastConfig);
-            router.push('/chat/list');
-        }
+        } catch (e) { toast.error('There are some erros. Please reconnect.', toastConfig) };
     }
-    const checkIfIsMyChat = useCallback(function <T>(arg: T) {
-        if (typeof arg === 'string')
-        return (arg === currentUserName);
-        else if (typeof arg === 'number') {
-            return (arg === userNo);
-        }
+    const checkIfIsMyChat = useCallback(<T extends Object>(arg: T) => {
+        if (typeof arg === 'string') return (arg === currentUserName);
+        else if (typeof arg === 'number') return (arg === userNo);
     }, [])
     const startAndSubscribeChatting = () => {
         currentUserName = userNickName ? userNickName : generateRandonUserId();
-        stomp.connect({}, () => { subscribeNewMessage(); });
+        socketStomp.stomp.connect({}, () => { subscribeNewMessage(); });
     }
     useEffect(() => {
-        socket = new WebSocket(`${process.env.NEXT_PUBLIC_SOCKET_URL}/stomp/chat`);
-        stomp = webstomp.over(socket);
-        stomp.debug = () => null;
+        socketStomp = new SocketStomp();
         if (!getAccessToken(CHATO_TOKEN))
             startAndSubscribeChatting();
         return () => {
-            stomp.disconnect(() => null, {});
+            socketStomp.stomp.disconnect(() => null, {});
             currentUserName = '';
             previousShowCnt = 0;
             clearTimeout(timeOut);
@@ -274,8 +270,7 @@ function ChattingRoom({
                     />)
                 )}
                 <InputInterface
-                    socket={socket}
-                    stomp={stomp}
+                    socketStomp={socketStomp}
                     roomId={id}
                     isMyRoom={(roomOwner === userNo)}
                     userNo={userNo}
@@ -319,6 +314,11 @@ function ChattingRoom({
                         justify-content: center;
                         color: #c0c0c0;
                         z-index: 10;
+                    }
+                    @media screen and (max-width: 768px) {
+                        .previous-chat-show {
+                            top: 130px;
+                        }
                     }
                 `}</style>
             </div>

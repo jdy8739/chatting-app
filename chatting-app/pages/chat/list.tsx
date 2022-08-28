@@ -4,7 +4,7 @@ import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import ClassifiedRooms from "../../components/list/Table";
 import { IMessageBody, IRoom } from "../../types/types";
 import webstomp, { Client } from "webstomp-client";
-import { CHATO_TOKEN, getAccessToken, getPinnedSubjectStorage, removeCookie, requestWithTokenAxios, setPinnedSubjectStorage } from "../../utils/utils";
+import { CHATO_TOKEN, getAccessToken, getPinnedSubjectStorage, removeCookie, requestWithTokenAxios, setPinnedSubjectStorage, SocketStomp } from "../../utils/utils";
 import { MASTER_PROTOCOL, SEND_PROTOCOL } from "./[id]";
 import BottomIcons from "../../components/list/BottomIcons";
 import { useSelector, useDispatch } from "react-redux";
@@ -49,9 +49,7 @@ const SHOW = {
     INVISIBLE: { display: 'none' },
 }
 
-let socket: WebSocket;
-let stomp: Client;
-
+let socketStomp: SocketStomp;
 let renderingCount = 0;
 
 function ChattingList({ rooms }: { rooms: IRoom[] }) {
@@ -189,14 +187,14 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         .catch(() => handleTokenException());
     }
     const sendRoomDeleteMessage = (message: IMessageBody) => {
-        if (socket && stomp) stomp.send(`/pub/chat/${SEND_PROTOCOL.DELETE}`, JSON.stringify(message));
+        if (socketStomp) socketStomp.stomp.send(`/pub/chat/${SEND_PROTOCOL.DELETE}`, JSON.stringify(message));
     }
     const changeToNewSubject = (roomMovedInfo: IRoomMoved) => {
         requestWithTokenAxios.put(`${process.env.NEXT_PUBLIC_API_URL}/room/change_subject`, roomMovedInfo)
         .catch(() => handleTokenException());
     }
     const subscribeRoomParticipants = () => {
-        stomp.subscribe('/sub/chat/room/list', ({ body }: { body: string }) => {
+        socketStomp.stomp.subscribe('/sub/chat/room/list', ({ body }: { body: string }) => {
             const messageObj = JSON.parse(body);
             if (Object.hasOwn(messageObj, 'isEnter'))
                 updateRoomParticipants(messageObj);
@@ -326,16 +324,14 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         router.push('/user/signin');
     }
     useEffect(() => {
-        socket = new WebSocket(`${process.env.NEXT_PUBLIC_SOCKET_URL}/stomp/chat`);
-        stomp = webstomp.over(socket);
-        stomp.connect({}, () => {
+        socketStomp = new SocketStomp();
+        socketStomp.stomp.connect({}, () => {
             subscribeRoomParticipants();
         });
-        stomp.debug = () => null;
         if (!getAccessToken(CHATO_TOKEN))
             arrangeRoomList(getPinnedSubjectStorage());        
         return () => {
-            stomp.disconnect(() => null, {});
+            socketStomp.stomp.disconnect(() => null, {});
             renderingCount = 0;
         }
     }, []);

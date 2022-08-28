@@ -1,20 +1,16 @@
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
-import { useRouter } from "next/router";
 import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
-import { Client } from "webstomp-client";
 import { LIMIT, MASTER_PROTOCOL, SEND_PROTOCOL } from "../../pages/chat/[id]";
 import { IMessageBody } from "../../types/types";
-import { getNowTime, modalBgVariant, requestWithTokenAxios, toastConfig } from "../../utils/utils";
+import { getNowTime, modalBgVariant, requestWithTokenAxios, SocketStomp, toastConfig } from "../../utils/utils";
 
 let imageFile: ArrayBuffer | null;
 
 interface IInputInterface {
-    socket: WebSocket,
-    stomp: Client,
+    socketStomp: SocketStomp,
     roomId: number,
     isMyRoom: boolean,
     userNo: number,
@@ -23,8 +19,7 @@ interface IInputInterface {
 }
 
 function InputInterface({ 
-    socket,
-    stomp,
+    socketStomp,
     roomId,
     isMyRoom,
     userNo,
@@ -61,8 +56,8 @@ function InputInterface({
                 'time': getNowTime(),
             }
             Object.freeze(headers);
-            if (socket && stomp) {
-                stomp.send(`/pub/chat/${SEND_PROTOCOL.BINARY}`,
+            if (socketStomp) {
+                socketStomp.stomp.send(`/pub/chat/${SEND_PROTOCOL.BINARY}`,
                 imageFile,
                 headers)
             }
@@ -82,7 +77,7 @@ function InputInterface({
             newMessage = textAreaRef.current.value;
             textAreaRef.current.value = '';
         }
-        if (socket && stomp) {
+        if (socketStomp) {
             shootChatMessage(SEND_PROTOCOL.MESSEGE, {
                 msgNo: 0,
                 roomId: String(roomId),
@@ -98,8 +93,8 @@ function InputInterface({
     const terminateChatRoom = () => {
         requestWithTokenAxios.delete(`${process.env.NEXT_PUBLIC_API_URL}/room/delete/${roomId}`)
         .then(() => {
-            if (socket && stomp)
-                stomp.send(`/pub/chat/${SEND_PROTOCOL.DELETE}`,
+            if (socketStomp)
+                socketStomp.stomp.send(`/pub/chat/${SEND_PROTOCOL.DELETE}`,
                 JSON.stringify({
                     msgNo: 0,
                     roomId: String(roomId),

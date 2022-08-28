@@ -2,6 +2,7 @@ import axios, { AxiosError, AxiosResponse } from "axios";
 import { toast } from "react-toastify";
 import { Cookies } from 'react-cookie';
 import { ISignedIn } from "../components/commons/NavBar";
+import webstomp, { Client } from "webstomp-client";
 
 const cookies = new Cookies();
 
@@ -11,6 +12,16 @@ interface ICookieOpt {
 	secure?: boolean;
 	httpOnly?: boolean;
 }
+
+export class SocketStomp {
+	socket: WebSocket;
+	stomp: Client;
+	constructor() {
+		this.socket = new WebSocket(`${process.env.NEXT_PUBLIC_SOCKET_URL}/stomp/chat`);
+		this.stomp = webstomp.over(this.socket);
+        this.stomp.debug = () => null;
+	}
+};
 
 export const setCookie = (name: string, value: string, options: ICookieOpt) => {
 	return cookies.set(name, value, options);
@@ -167,10 +178,10 @@ requestWithTokenAxios.interceptors.response.use(
 
 const handleTokenErrors = (status: number | undefined) => {
 	if (!status) {}
-	else if (status === 403 || status === 400) toast.error('Password does not matches!.', toastConfig);
+	else if (status === 403 || status === 400) toast.error('Unauthorized or, the password does not matches!.', toastConfig);
 	else if (status === 409) toast.error('Id is duplicate. Please try another id.', toastConfig);
-	else if (status === 404) toast.error('No such Id in our record.', toastConfig);
-	else if (status === 304) toast.error('The number of participants exceeds limit.');
+	else if (status === 404) toast.error('No such Id in our records.', toastConfig);
+	else if (status === 304) toast.error('The number of participants exceeds the limit.');
 	else toast.error('It cannot be done!', toastConfig);
 }
 

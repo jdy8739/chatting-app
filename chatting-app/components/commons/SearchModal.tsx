@@ -62,7 +62,7 @@ function SearchModal({ hideSearchModal }: { hideSearchModal: () => void }) {
                         <button>search</button>
                     </form>
                     <br></br>
-                    <DragDropContext onDragEnd={() => {}}>
+                    <DragDropContext>
                         <Droppable
                             droppableId="none"
                             key="none"
