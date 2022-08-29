@@ -52,7 +52,7 @@ function SingUp() {
             if (userProfilePic && getValues().userProfilePic) {
                 formData.append('userProfilePic', userProfilePic);
             }
-            await signupAxios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/signup`, formData, {
+            await signupAxios.post(`/user/signup`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             })
             toast.success('Welcome to Chato! :)', toastConfig);

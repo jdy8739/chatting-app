@@ -4,8 +4,8 @@ import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { truncateList } from "../../lib/store/modules/likedSubjectReducer";
 import { signOut } from "../../lib/store/modules/signInReducer";
-import { MASTER_PROTOCOL, RECEIVE_PROTOCOL, SEND_PROTOCOL } from "../../pages/chat/[id]";
 import { IMessageBody, IParticipants } from "../../types/types";
+import { MASTER_PROTOCOL, RECEIVE_PROTOCOL, SEND_PROTOCOL } from "../../utils/enums";
 import { CHATO_TOKEN, removeCookie, requestWithTokenAxios } from "../../utils/utils";
 
 interface IUserContainer { 
@@ -51,7 +51,7 @@ function UserContainer({
     const [bannedUserList, setBannedUserList] = useState<IBannedUserList[]>([]);
     const fetchNowParticipants = async () => {
         if (fetchCount++ === 0) {
-            const results: IParticipants[] = await (await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/room/participants/${roomId}`)).data;
+            const results: IParticipants[] = await (await axios.get(`/room/participants/${roomId}`)).data;
             // console.log(results);
             setParticipants(results);
         }
@@ -67,14 +67,14 @@ function UserContainer({
     }
     const fetchBannedUserList = async () => {
         try { const { data: bannedUserList } =
-                await requestWithTokenAxios.get(`${process.env.NEXT_PUBLIC_API_URL}/room/banned_users/${roomId}`);
+                await requestWithTokenAxios.get(`/room/banned_users/${roomId}`);
             setIsBannedUserShown(true);
             setBannedUserList(bannedUserList);
         } catch (e) { handleTokenException(); };
     }
     const unlockThisUser = async (bannedIpNo: number) => {
         try { const { status } = 
-                await requestWithTokenAxios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/unlock_ban`, { bannedIpNo, roomId });
+                await requestWithTokenAxios.post(`/room/unlock_ban`, { bannedIpNo, roomId });
             if (status === 200) setBannedUserList(bannedUserList => {
                 return [...bannedUserList.filter(bannedUser => bannedUser.bannedIpNo !== bannedIpNo)];
             }) 

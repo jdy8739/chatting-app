@@ -1,6 +1,6 @@
 import React from "react";
-import { MASTER_PROTOCOL } from "../../pages/chat/[id]";
 import { IMessageBody } from "../../types/types";
+import { MASTER_PROTOCOL } from "../../utils/enums";
 
 interface IMessageComponent {
     msg: IMessageBody,
@@ -37,7 +37,7 @@ function MessageComponent({
     roomOwner,
     roomId,
     isNumberMatches }: IMessageComponent) {
-    /* console.log('rendered. '); */
+    /* console.log('A message component rendered. '); */
     const isMyMessage = (msg.writerNo === userNo);
     const isSameTimeMessage = (prevTime !== msg.time);
     const checkIsEligibleToDelete = () => {
@@ -135,7 +135,7 @@ function ChatContent({ isDeleted, isPicture, content, roomId, msgNo }: IMessageC
         <>
             {(isPicture && !isDeleted) ? 
             <img
-                src={`${process.env.NEXT_PUBLIC_API_URL}/room/content-pic/${roomId}/${msgNo}`}
+                src={`/room/content-pic/${roomId}/${msgNo}`}
                 style={imageStyle}
             /> :
             <span>{isDeleted ? 'deleted message' : content}</span>}

@@ -3,38 +3,14 @@ import { useCallback, useEffect, useState } from "react";
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import ClassifiedRooms from "../../components/list/Table";
 import { IMessageBody, IRoom } from "../../types/types";
-import webstomp, { Client } from "webstomp-client";
 import { CHATO_TOKEN, getAccessToken, getPinnedSubjectStorage, removeCookie, requestWithTokenAxios, setPinnedSubjectStorage, SocketStomp } from "../../utils/utils";
-import { MASTER_PROTOCOL, SEND_PROTOCOL } from "./[id]";
 import BottomIcons from "../../components/list/BottomIcons";
 import { useSelector, useDispatch } from "react-redux";
 import { IUserSignedInInfo, signOut } from "../../lib/store/modules/signInReducer";
 import { addInList, removeInList, truncateList } from "../../lib/store/modules/likedSubjectReducer";
 import { useRouter } from "next/router";
-
-export enum SECTION {
-    PINNED = "pinned",
-    NOT_PINNED = "not_pinned",
-    TRASH_CAN = 'trash-can',
-}
-
-export interface ISubjectListSelector { 
-    likedSubjectReducer: { 
-        subjectList: string[],
-    } 
-};
-
-export interface IUserInfoSelector { 
-    signInReducer: { 
-        userInfo: IUserSignedInInfo,
-    } 
-}
-
-export interface ITable {
-    [key: string]: { 
-        list: IRoom[], isPinned: boolean,
-    }
-}
+import { MASTER_PROTOCOL, SECTION, SEND_PROTOCOL } from "../../utils/enums";
+import { ISubjectListSelector, ITable, IUserInfoSelector } from "../../utils/interfaces";
 
 interface IRoomMoved {
     sourceId: string,
@@ -58,12 +34,13 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     let isTableShown: boolean;
     const router = useRouter();
     const dispatch = useDispatch();
+    const [chatRooms, setChatRooms] = useState(rooms);
     const [roomList, setRoomList] = useState<ITable>({});
     const { userNo, userId } = useSelector(({ signInReducer: {userInfo} }: IUserInfoSelector) => userInfo);
     const subjectList = useSelector(({ likedSubjectReducer: { subjectList }}: ISubjectListSelector) => subjectList);
     const arrangeRoomList = (pinnedSubjects: (string[] | null)) => {
         const defaultRoomListObject: ITable = {};
-        rooms.forEach(room => arrangeEachRoom(room, defaultRoomListObject));
+        chatRooms.forEach(chatRoom => arrangeEachRoom(chatRoom, defaultRoomListObject));
         if (pinnedSubjects) {
             Object.keys(defaultRoomListObject).forEach(subject => {
                 checkIfSubjectPinned(subject, defaultRoomListObject, pinnedSubjects);
@@ -72,16 +49,16 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         }
         setRoomList({...defaultRoomListObject});
     }
-    const arrangeEachRoom = (room: IRoom, roomList: ITable) => {
-        const subject = room.subject;
+    const arrangeEachRoom = (chatRoom: IRoom, roomList: ITable) => {
+        const subject = chatRoom.subject;
         if (!Object.hasOwn(roomList, subject))
             roomList[subject] = { 
-                list: [room],
+                list: [chatRoom],
                 isPinned: false,
             };
-        else roomList[subject]['list'].push(room);
-        if (userNo === -1) room.isMyRoom = false;
-        else if (room.owner === userNo) room.isMyRoom = true;
+        else roomList[subject]['list'].push(chatRoom);
+        if (userNo === -1) chatRoom.isMyRoom = false;
+        else if (chatRoom.owner === userNo) chatRoom.isMyRoom = true;
     }
     const checkIfSubjectPinned = (targetSubject: string, roomList: ITable, pinnedSubjects: string[]) => {
         if (pinnedSubjects.some(subject => (subject === targetSubject))) {
@@ -172,7 +149,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     }
     const deleteRoom = (sourceId: string, index: number) => {
         const targetRoomId = roomList[sourceId].list[index].roomId;
-        requestWithTokenAxios.delete(`${process.env.NEXT_PUBLIC_API_URL}/room/delete/${targetRoomId}`)
+        requestWithTokenAxios.delete(`/room/delete/${targetRoomId}`)
         .then(({ status }) => {
             if (status === 200) {
                 sendRoomDeleteMessage({
@@ -190,7 +167,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         if (socketStomp) socketStomp.stomp.send(`/pub/chat/${SEND_PROTOCOL.DELETE}`, JSON.stringify(message));
     }
     const changeToNewSubject = (roomMovedInfo: IRoomMoved) => {
-        requestWithTokenAxios.put(`${process.env.NEXT_PUBLIC_API_URL}/room/change_subject`, roomMovedInfo)
+        requestWithTokenAxios.put(`/room/change_subject`, roomMovedInfo)
         .catch(() => handleTokenException());
     }
     const subscribeRoomParticipants = () => {
@@ -228,15 +205,15 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
             };
         })
     }
-    const updateRoomCreated = (room: IRoom) => {
+    const updateRoomCreated = (chatRoom: IRoom) => {
         setRoomList(roomList => {
-            arrangeEachRoom(room, roomList);
-            const targetRoomList = roomList[room.subject].list;
+            arrangeEachRoom(chatRoom, roomList);
+            const targetRoomList = roomList[chatRoom.subject].list;
             return { 
                 ...roomList,
-                [room.subject]: {
+                [chatRoom.subject]: {
                     list: [...targetRoomList],
-                    isPinned: Object.hasOwn(roomList, room.subject) ? roomList[room.subject].isPinned : false,
+                    isPinned: Object.hasOwn(roomList, chatRoom.subject) ? roomList[chatRoom.subject].isPinned : false,
                 }
             };
         })
@@ -247,6 +224,9 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
             if (targetIndex === -1) return roomList;
             const targetRoomList = roomList[targetKey].list;
             targetRoomList.splice(+targetIndex, 1);
+            setChatRooms(chatRooms => {
+                return chatRooms.filter(chatRoom => chatRoom.roomId !== info.roomId);
+            });
             return { 
                 ...roomList,
                 [targetKey]: {
@@ -309,8 +289,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         const checkIfExists = (subjectElem: string) => (subjectElem === subject);
         const isAddLike = subjectList.some(checkIfExists);
         try {
-            const { status } = await requestWithTokenAxios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/manage_subject_like`, 
-            { subject, isAddLike });
+            const { status } = await requestWithTokenAxios.post(`/user/manage_subject_like`, { subject, isAddLike });
             if (status === 200) {
                 if (isAddLike) dispatch(removeInList(subject));
                 else dispatch(addInList(subject));
@@ -356,7 +335,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                             {(provided, snapshot) => 
                             <div
                                 ref={provided.innerRef} 
-                                {...provided.droppableProps}
+                                {...provided.droppableProps} 
                                 className={`container grid-box ${value ? SECTION.PINNED : SECTION.NOT_PINNED}
                                 ${snapshot.draggingFromThisWith ? 'draggingFromThisWith-pin' : ''} 
                                 ${snapshot.draggingOverWith ? 'isDraggingOver-pin' : ''}
@@ -412,13 +391,18 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                     background-color: #ffd17c;
                     transition: all 1s;
                     position: relative;
+                    background-image: linear-gradient(to top, #dadada, transparent), url('/pin-board.png');
+                    background-size: cover;
+                    background-position: center center;
                 }
                 .not_pinned {
                     width: 100vw;
                     min-height: 400px;
                     margin-top: 0;
                     position: relative;
-                    margin-bottom: 100px;
+                    background-image: linear-gradient(to top, transparent, #dadada), url('/unpinned.png');
+                    background-size: cover;
+                    background-position: center center;
                 }
                 .draggingFromThisWith-pin {
                     background-color: violet;
@@ -444,7 +428,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
 };
 
 export async function getServerSideProps() {
-    const rooms: IRoom[] = (await axios.get<IRoom[]>(`${process.env.NEXT_PUBLIC_API_URL}/room/list`)).data;
+    const rooms: IRoom[] = (await axios.get<IRoom[]>(`/room/list`)).data;
     rooms.forEach(room => {if (room.password) delete room.password });
     return {
         props: { rooms }

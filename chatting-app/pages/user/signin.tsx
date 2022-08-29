@@ -3,9 +3,9 @@ import { useRouter } from "next/router";
 import React, { useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
-import { ISignedIn } from "../../components/commons/NavBar";
 import { replaceList } from "../../lib/store/modules/likedSubjectReducer";
 import { IUserSignedInInfo, signIn } from "../../lib/store/modules/signInReducer";
+import { ISignedIn } from "../../utils/interfaces";
 import { CHATO_TOKEN, clearPreviousRoomId, getAccessToken, signinAxios, toastConfig } from "../../utils/utils";
 
 const STYLE = {
@@ -26,7 +26,7 @@ function Signin() {
         const password = pwInputRef.current?.value;
         if (id && password) {
             try {
-                const { status, data: userData }: { status: number, data: ISignedIn } = await signinAxios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/signin`, {id, password});
+                const { status, data: userData }: { status: number, data: ISignedIn } = await signinAxios.post(`/user/signin`, {id, password});
                 if (status === 200) {
                     const likedList: Array<string> = [];
                     if (userData.likedSubjects)

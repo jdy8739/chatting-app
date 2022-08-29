@@ -3,8 +3,8 @@ import Link from "next/link";
 import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
-import { LIMIT, MASTER_PROTOCOL, SEND_PROTOCOL } from "../../pages/chat/[id]";
 import { IMessageBody } from "../../types/types";
+import { LIMIT, MASTER_PROTOCOL, SEND_PROTOCOL } from "../../utils/enums";
 import { getNowTime, modalBgVariant, requestWithTokenAxios, SocketStomp, toastConfig } from "../../utils/utils";
 
 let imageFile: ArrayBuffer | null;
@@ -91,7 +91,7 @@ function InputInterface({
     }
     const handleRoomSettings = () => setIsModalShown(true);
     const terminateChatRoom = () => {
-        requestWithTokenAxios.delete(`${process.env.NEXT_PUBLIC_API_URL}/room/delete/${roomId}`)
+        requestWithTokenAxios.delete(`/room/delete/${roomId}`)
         .then(() => {
             if (socketStomp)
                 socketStomp.stomp.send(`/pub/chat/${SEND_PROTOCOL.DELETE}`,
@@ -221,7 +221,7 @@ function SettingsContent({
         setIsReRendered(!isRendered);
     }
     const submitSettingsChange = async ({ password, pwRequired, limitation }: IRoomSettings) => {
-        const { status } = await requestWithTokenAxios.put(`${process.env.NEXT_PUBLIC_API_URL}/room/settings`, {
+        const { status } = await requestWithTokenAxios.put(`/room/settings`, {
             settingOption, 
             pwRequired, 
             value: settingOption ? password : limitation,

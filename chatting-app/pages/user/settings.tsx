@@ -8,8 +8,8 @@ import { toast } from "react-toastify";
 import Modal from "../../components/settings/Modal";
 import { truncateList } from "../../lib/store/modules/likedSubjectReducer";
 import { IUserSignedInInfo, signIn, signOut } from "../../lib/store/modules/signInReducer";
+import { IUserInfoSelector } from "../../utils/interfaces";
 import { CHATO_TOKEN, clearPreviousRoomId, getAccessToken, ID_REGEX, removeCookie, requestWithTokenAxios, toastConfig } from "../../utils/utils";
-import { IUserInfoSelector } from "../chat/list";
 
 export interface IUserInfo {
     id: string,
@@ -50,8 +50,7 @@ function Settings() {
         getValues,
         handleSubmit } = useForm<IUserInfo>();
     const fetchUserInfo = async () => {
-        const { status, data: userInfo }: { status: number, data: IUserInfo } =
-                await requestWithTokenAxios.get(`${process.env.NEXT_PUBLIC_API_URL}/user/info`);
+        const { status, data: userInfo }: { status: number, data: IUserInfo } = await requestWithTokenAxios.get(`/user/info`);
         if (status === 200) {
             setInputRefValue(userInfo);
             setUserInfo(userInfo);
@@ -103,7 +102,7 @@ function Settings() {
                 if (value !== null) formData.append(key, value);
             }
             try {
-                const { status } = await requestWithTokenAxios.put(`${process.env.NEXT_PUBLIC_API_URL}/user/alter`, formData);
+                const { status } = await requestWithTokenAxios.put(`/user/alter`, formData);
                 if (status === 200) {
                     toast.success('Your info has been altered successfully!', toastConfig);
                     if (userInfo?.id === data.id) handleSignOut();
@@ -130,8 +129,7 @@ function Settings() {
     const handleUserWithdraw = (inputPassword: string) :Promise<boolean> => {
         return new Promise(async (success, fail) => {
             try {
-                const { status } =
-                    await requestWithTokenAxios.put(`${process.env.NEXT_PUBLIC_API_URL}/user/withdraw`, { inputPassword });
+                const { status } = await requestWithTokenAxios.put(`/user/withdraw`, { inputPassword });
                 if (status === 200) {
                     toast.success('Your id has been removed.', toastConfig);
                     removeCookie(CHATO_TOKEN, {path: '/'});

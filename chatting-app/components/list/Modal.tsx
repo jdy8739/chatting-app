@@ -25,7 +25,7 @@ function Modal({ roomId, query, hideModal, pushToChatRoom, addSubjectTable }: IM
         }
     }
     const submitPassword = async () => {
-        const { data } = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/enter_password`, {
+        const { data } = await axios.post(`/room/enter_password`, {
             roomId: roomId,
             password: inputRef.current?.value,
         });

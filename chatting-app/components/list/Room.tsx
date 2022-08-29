@@ -4,8 +4,8 @@ import React, { useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import { IUserInfoSelector } from "../../pages/chat/list";
 import { IRoom } from "../../types/types";
+import { IUserInfoSelector } from "../../utils/interfaces";
 import { toastConfig } from "../../utils/utils";
 import Modal from "./Modal";
 

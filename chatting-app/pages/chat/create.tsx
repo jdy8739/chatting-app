@@ -48,7 +48,7 @@ function CreateChat() {
                 message: 'A Password is required. :('
             })
         } else if (Object.keys(errors).length === 0) {
-            const { status } = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/create`, {
+            const { status } = await axios.post(`/room/create`, {
                 roomName: roomName,
                 subject: useCustomSubject ? subject : subjectOption,
                 limitation: limitation,

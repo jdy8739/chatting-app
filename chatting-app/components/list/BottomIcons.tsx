@@ -1,7 +1,8 @@
 import { AnimatePresence } from "framer-motion";
 import React, { Dispatch, SetStateAction, useState } from "react";
 import { Droppable } from "react-beautiful-dnd";
-import { ITable, SECTION } from "../../pages/chat/list";
+import { SECTION } from "../../utils/enums";
+import { ITable } from "../../utils/interfaces";
 import Modal from "./Modal";
 
 function BottomIcons({ setRoomList }: { setRoomList: Dispatch<SetStateAction<ITable>> }) {

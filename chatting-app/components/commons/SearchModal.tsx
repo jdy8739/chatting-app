@@ -21,8 +21,7 @@ function SearchModal({ hideSearchModal }: { hideSearchModal: () => void }) {
         e.preventDefault();
         const value = inputRef.current?.value;
         if (value !== '') {
-            const { data: searchedRooms }: { data: IRoom[] } = 
-                await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/room/search?keyword=${value}`);
+            const { data: searchedRooms }: { data: IRoom[] } = await axios.get(`/room/search?keyword=${value}`);
             if (searchedRooms.length === 0) {
                 toast.error('No rooms have been found. :(', toastConfig);
                 setSearchedRooms([]);

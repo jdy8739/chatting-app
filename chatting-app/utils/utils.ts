@@ -4,7 +4,10 @@ import { Cookies } from 'react-cookie';
 import { ISignedIn } from "../components/commons/NavBar";
 import webstomp, { Client } from "webstomp-client";
 
+axios.defaults.baseURL = `${process.env.NEXT_PUBLIC_API_URL}`;
 const cookies = new Cookies();
+
+export const API_KEY_REQUEST_URL = 'https://api.ipdata.co?api-key=';
 
 interface ICookieOpt {
 	path: string;
@@ -124,6 +127,7 @@ signinAxios.interceptors.response.use(
 )
 
 export const requestWithTokenAxios = axios.create();
+// requestWithTokenAxios.defaults.headers.common['authorization'] = `Bearer ${getAccessToken(CHATO_TOKEN)}`;
 
 requestWithTokenAxios.interceptors.request.use(
 	request => {

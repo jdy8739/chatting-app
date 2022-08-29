@@ -1,38 +1,16 @@
 import axios from "axios";
 import { useRouter } from "next/router";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import webstomp, { Client } from "webstomp-client";
 import Seo from "../../components/commons/Seo";
 import InputInterface from "../../components/[id]/InputInterface";
 import MessageComponent from "../../components/[id]/MessageComponent";
 import UserContainer from "../../components/[id]/UserContainer";
 import { Iipdata, IMessageBody, IParticipants } from "../../types/types";
-import { CHATO_TOKEN, generateRandonUserId, getAccessToken, SocketStomp, toastConfig } from "../../utils/utils";
-import { IUserInfoSelector } from "./list";
-
-export enum SEND_PROTOCOL {
-    MESSEGE = 'message',
-    DELETE = 'delete',
-    BINARY = 'binary',
-}
-
-export enum RECEIVE_PROTOCOL {
-    SUBSCRIBE = 0,
-    BAN = 2,
-    CHANGE = 3,
-}
-
-export enum MASTER_PROTOCOL {
-    MASTER = "MASTER",
-    DISBANDED = "disbanded",
-}
-
-export enum LIMIT {
-    CHAT_REMAIN_NUMBER = 10,
-    STMOP_MESSAGE_SIZE = 500000,
-}
+import { LIMIT, MASTER_PROTOCOL, RECEIVE_PROTOCOL, SEND_PROTOCOL } from "../../utils/enums";
+import { IUserInfoSelector } from "../../utils/interfaces";
+import { API_KEY_REQUEST_URL, CHATO_TOKEN, generateRandonUserId, getAccessToken, SocketStomp, toastConfig } from "../../utils/utils";
 
 interface IChatRoomProps {
     id: number,
@@ -70,7 +48,7 @@ const fetchRoomOwnerAndPreviousChat = async ({
     count, 
     password, 
     ipAddress}: IFetchMessagesProps) :Promise<IChatRoomInfo> => {
-    return await (await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/room/message/${id}?offset=${count}`, { password, ipAddress, userNo })).data;
+    return await (await axios.post(`/room/message/${id}?offset=${count}`, { password, ipAddress, userNo })).data;
 }
 
 function ChattingRoom({ 
@@ -151,9 +129,10 @@ function ChattingRoom({
     }
     const showPreviousChat = async () => {
         if (!isAllChatShown) {
-            const { messageList: newMessages } = await fetchRoomOwnerAndPreviousChat({id, userNo, count: previousShowCnt, password});
+            const { messageList: newMessages } = await fetchRoomOwnerAndPreviousChat({
+                id, userNo, count: ++previousShowCnt, password
+            });
             if (newMessages && newMessages.length > 0) {
-                previousShowCnt ++;
                 if (newMessages.length < LIMIT.CHAT_REMAIN_NUMBER) setIsAllChatShown(true);
                 setTargetChatNumber(-1);
                 setMessages(messages => {
@@ -177,7 +156,7 @@ function ChattingRoom({
         }
     }, [])
     const deleteChat = useCallback(async (id: number, msgNo: number) => {
-        const { status } = await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/room/del_message/${id}?msg_no=${msgNo}`);
+        const { status } = await axios.delete(`/room/del_message/${id}?msg_no=${msgNo}`);
         if (status === 200) {
             shootChatMessage(SEND_PROTOCOL.DELETE, {
                 msgNo: 0,
@@ -198,8 +177,8 @@ function ChattingRoom({
     }, [])
     const expelUser = async (sentence: string) => {
         try { if (!id) throw new Error();
-            const {data: { ip }}: { data: Iipdata } = await axios.get(`https://api.ipdata.co?api-key=${process.env.NEXT_PUBLIC_IPDATA_API_KEY}`);
-            axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/add_banned`, {
+            const {data: { ip }}: { data: Iipdata } = await axios.get(`${API_KEY_REQUEST_URL}${process.env.NEXT_PUBLIC_IPDATA_API_KEY}`);
+            axios.post(`/user/add_banned`, {
                 roomId: id,
                 ipAddress: ip,
                 userName: currentUserName,
@@ -252,22 +231,26 @@ function ChattingRoom({
             />
             {/* 재랜더링 시 불필요한 연산을 방지하 위해, 컴포넌트로 넣는 작업이 필요해 보임. (해결) */}
             <div className="container">
-                {messages.map((msg, i) => 
-                    (<MessageComponent
+                {messages.map((msg, i) => {
+                    const prevWriter = messages[i - 1]?.writer;
+                    const prevTime = messages[i - 1]?.time;
+                    const isNumberMatches = (targetChatNumber === i);
+                    return (<MessageComponent
                         key={i}
                         index={i}
                         msg={msg}
                         isDeleted={msg.isDeleted}
-                        prevWriter={messages[i - 1]?.writer}
-                        prevTime={messages[i - 1]?.time}
+                        prevWriter={prevWriter}
+                        prevTime={prevTime}
                         checkIfIsMyChat={checkIfIsMyChat}
                         deleteChat={deleteChat}
                         handleChatDblClick={handleChatDblClick}
                         userNo={userNo}
                         roomOwner={roomOwner}
                         roomId={id}
-                        isNumberMatches={(targetChatNumber === i)}
+                        isNumberMatches={isNumberMatches}
                     />)
+                }
                 )}
                 <InputInterface
                     socketStomp={socketStomp}
@@ -338,7 +321,7 @@ export async function getServerSideProps({ params: { id }, query: { roomName, pa
     let numberOfParticipants;
     try {
         if (!userNo) userNo = null;
-        const {data: { ip }}: { data: Iipdata } = await axios.get(`https://api.ipdata.co?api-key=${process.env.NEXT_PUBLIC_IPDATA_API_KEY}`);
+        const {data: { ip }}: { data: Iipdata } = await axios.get(`${API_KEY_REQUEST_URL}${process.env.NEXT_PUBLIC_IPDATA_API_KEY}`);
         const results = await fetchRoomOwnerAndPreviousChat({id, userNo, count: previousShowCnt, password, ipAddress: ip});
         owner = results.owner;
         ownerId = results.ownerId;
