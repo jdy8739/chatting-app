@@ -14,6 +14,7 @@ interface IMessageComponent {
     roomOwner: (number | null),
     roomId: number,
     isNumberMatches: boolean,
+    isDeleted: boolean,
 }
 
 const imageStyle = {
@@ -35,8 +36,9 @@ function MessageComponent({
     userNo,
     roomOwner,
     roomId,
-    isNumberMatches }: IMessageComponent) {
-    /* console.log('A message component rendered. '); */
+    isNumberMatches,
+    isDeleted }: IMessageComponent) {
+    /* console.log('A message component rendered.'); */
     const isMyMessage = (msg.writerNo === userNo);
     const isSameTimeMessage = (prevTime !== msg.time);
     const checkIsEligibleToDelete = () => {
@@ -72,15 +74,14 @@ function MessageComponent({
                         ${msg.isDeleted ? 'deleted-chat' : ''}
                     `}
                 >
-                    {!msg.isDeleted &&
-                    isNumberMatches &&
+                    {!msg.isDeleted && isNumberMatches &&
                     <span
                         onClick={() => deleteChat(roomId, msg.msgNo)}
                         className="delete-btn"
                     >
-                        x
+                        <span>x</span>
                     </span>}
-                    <ChatContent 
+                    <ChatContent
                         isDeleted={msg.isDeleted}
                         isPicture={msg.isPicture}
                         content={msg.message}

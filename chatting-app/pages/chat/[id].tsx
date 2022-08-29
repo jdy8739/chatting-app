@@ -214,7 +214,8 @@ function ChattingRoom({
         prevWriter: string,
         prevTime?: string,
         isNumberMatches: boolean,
-        index: number
+        index: number,
+        isDeleted: boolean
     }
     const array: IMessageProps[] = [];
     let count = 0;
@@ -222,8 +223,13 @@ function ChattingRoom({
         const prevWriter = messages[count - 1]?.writer;
         const prevTime = messages[count - 1]?.time;
         const isNumberMatches = (targetChatNumber === count);
-        array.push({ prevWriter, prevTime, isNumberMatches, index: count });
-        count ++;
+        array.push({ 
+            prevWriter, 
+            prevTime, 
+            isNumberMatches, 
+            index: count++, 
+            isDeleted: message.isDeleted || false 
+        });
     }
     const profileAndRoomInfo = { userNo, roomOwner, roomId: id };
     const comparisonLogicFunctions = { checkIfIsMyChat, deleteChat, handleChatDblClick };
