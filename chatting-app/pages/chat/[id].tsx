@@ -208,6 +208,26 @@ function ChattingRoom({
         }
     }, []);
     useEffect(() => {if (userNo !== -1) startAndSubscribeChatting()}, [userNo]);
+
+    /* start making props for message-components. */
+    interface IMessageProps {
+        prevWriter: string,
+        prevTime?: string,
+        isNumberMatches: boolean,
+        index: number
+    }
+    const array: IMessageProps[] = [];
+    let count = 0;
+    for (const message of messages) {
+        const prevWriter = messages[count - 1]?.writer;
+        const prevTime = messages[count - 1]?.time;
+        const isNumberMatches = (targetChatNumber === count);
+        array.push({ prevWriter, prevTime, isNumberMatches, index: count });
+        count ++;
+    }
+    const profileAndRoomInfo = { userNo, roomOwner, roomId: id };
+    const comparisonLogicFunctions = { checkIfIsMyChat, deleteChat, handleChatDblClick };
+    /* props making end. */
     return (
         <>
             <Seo title={`Chato room ${roomName}`} />
@@ -232,23 +252,12 @@ function ChattingRoom({
             {/* 재랜더링 시 불필요한 연산을 방지하 위해, 컴포넌트로 넣는 작업이 필요해 보임. (해결) */}
             <div className="container">
                 {messages.map((msg, i) => {
-                    const prevWriter = messages[i - 1]?.writer;
-                    const prevTime = messages[i - 1]?.time;
-                    const isNumberMatches = (targetChatNumber === i);
                     return (<MessageComponent
                         key={i}
-                        index={i}
                         msg={msg}
-                        isDeleted={msg.isDeleted}
-                        prevWriter={prevWriter}
-                        prevTime={prevTime}
-                        checkIfIsMyChat={checkIfIsMyChat}
-                        deleteChat={deleteChat}
-                        handleChatDblClick={handleChatDblClick}
-                        userNo={userNo}
-                        roomOwner={roomOwner}
-                        roomId={id}
-                        isNumberMatches={isNumberMatches}
+                        {...array[i]}
+                        {...profileAndRoomInfo}
+                        {...comparisonLogicFunctions}
                     />)
                 }
                 )}

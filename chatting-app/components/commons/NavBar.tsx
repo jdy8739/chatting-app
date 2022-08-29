@@ -138,7 +138,9 @@ function NavBar() {
                 }
                 .bar-right {
                     width: 50%;
-                    text-align: right;
+                    display: flex;
+                    justify-content: right;
+                    align-items: center;
                 }
                 .clicked {
                     color: orange;

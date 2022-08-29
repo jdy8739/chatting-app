@@ -14,7 +14,6 @@ interface IMessageComponent {
     roomOwner: (number | null),
     roomId: number,
     isNumberMatches: boolean,
-    isDeleted?: boolean,
 }
 
 const imageStyle = {
@@ -135,7 +134,7 @@ function ChatContent({ isDeleted, isPicture, content, roomId, msgNo }: IMessageC
         <>
             {(isPicture && !isDeleted) ? 
             <img
-                src={`/room/content-pic/${roomId}/${msgNo}`}
+                src={`${process.env.NEXT_PUBLIC_API_URL}/room/content-pic/${roomId}/${msgNo}`}
                 style={imageStyle}
             /> :
             <span>{isDeleted ? 'deleted message' : content}</span>}
