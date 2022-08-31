@@ -3,6 +3,7 @@ package com.example.ChatoBackend.repository;
 import com.example.ChatoBackend.DTO.MessageDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 
@@ -21,11 +22,15 @@ public class MessageRepository {
 
     @Autowired
     private DataSource dataSource;
+
     SimpleJdbcInsert simpleJdbcInsert;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     public void createDynamicTable(Long roomId) throws SQLException {
-        Connection con = dataSource.getConnection();
-        Statement sm = con.createStatement();
+        /* Connection con = dataSource.getConnection();
+        Statement sm = con.createStatement(); */
         String tableName = "room_" + roomId.toString();
         String query = "CREATE TABLE " + tableName +
                 " (" +
@@ -38,8 +43,9 @@ public class MessageRepository {
                 "is_picture TINYINT(1) NOT NULL DEFAULT 0, " +
                 "PRIMARY KEY (msg_id) " +
                 ");";
-        sm.executeUpdate(query);
-        con.close();
+        /* sm.executeUpdate(query);
+        con.close(); */
+        this.jdbcTemplate.execute(query);
     }
 
     public long saveMessage(MessageDTO messageDTO) throws SQLException {
@@ -89,21 +95,23 @@ public class MessageRepository {
     }
 
     public void deleteMessage(Long roomId, Long msgNo) throws SQLException {
-        Connection con = dataSource.getConnection();
-        Statement sm = con.createStatement();
+        /* Connection con = dataSource.getConnection();
+        Statement sm = con.createStatement(); */
         String tableName = "room_" + roomId;
         String query = "update " + tableName + " set is_deleted = true where msg_id = " + msgNo + ";";
-        if (sm.executeUpdate(query) != 1) throw new SQLException();
-        con.close();
+        jdbcTemplate.execute(query);
+        /* if (sm.executeUpdate(query) != 1) throw new SQLException();
+        con.close(); */
     }
 
     public void deleteRoom(Long roomId) throws SQLException {
-        Connection con = dataSource.getConnection();
-        Statement sm = con.createStatement();
+        /* Connection con = dataSource.getConnection();
+        Statement sm = con.createStatement(); */
         String tableName = "room_" + roomId;
         String query = "drop table " + tableName + ";";
-        sm.executeUpdate(query);
-        con.close();
+        jdbcTemplate.execute(query);
+        /* sm.executeUpdate(query);
+        con.close(); */
     }
 }
 
