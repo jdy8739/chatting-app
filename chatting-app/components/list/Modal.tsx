@@ -68,6 +68,7 @@ function Modal({ roomId, query, hideModal, pushToChatRoom, addSubjectTable }: IM
                 <input
                     className="modal-input"
                     placeholder={(roomId) ? "Input room password." : "Input new subject name."}
+                    type={(roomId) ? 'password' : 'text'}
                     onKeyUp={handlePressEnter}
                     ref={inputRef}
                 />

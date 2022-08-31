@@ -27,6 +27,7 @@ function InputInterface({
     shootChatMessage }: IInputInterface) {
     let newMessage: string;
     const [isModalShown, setIsModalShown] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
     const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.currentTarget.files) {
@@ -38,7 +39,8 @@ function InputInterface({
                     imageFile = new Uint8Array(result);
                 }
             }
-            fileReader.readAsArrayBuffer(targetFile);
+            if (fileReader && targetFile)
+                fileReader.readAsArrayBuffer(targetFile);
         }
     }
     const shootBinaryImageMessage = () => {
@@ -62,6 +64,7 @@ function InputInterface({
                 headers)
             }
             imageFile = null;
+            if (fileInputRef.current) fileInputRef.current.value = '';
         }
     }
     const handleChatSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -112,6 +115,7 @@ function InputInterface({
         <>
             <input
                 type="file"
+                ref={fileInputRef}
                 onChange={handleOnChange}
             />
             <button
