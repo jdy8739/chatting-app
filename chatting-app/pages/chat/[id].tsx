@@ -143,7 +143,6 @@ function ChattingRoom({
         }
     }
     const handleChatDblClick = useCallback((index: number, isNumberMatches: boolean) => {
-        /* targetChatNumber이 변경되지않음. (해결)*/
         if (isNumberMatches) {
             clearTimeout(timeOut);
             setTargetChatNumber(-1);
@@ -255,7 +254,6 @@ function ChattingRoom({
                 shootChatMessage={shootChatMessage}
                 numberOfPcps={numberOfPcps}
             />
-            {/* 재랜더링 시 불필요한 연산을 방지하 위해, 컴포넌트로 넣는 작업이 필요해 보임. (해결) */}
             <div className="container">
                 {messages.map((msg, i) => {
                     return (<MessageComponent

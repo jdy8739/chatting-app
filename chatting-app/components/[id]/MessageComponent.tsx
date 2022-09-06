@@ -7,7 +7,7 @@ interface IMessageComponent {
     index: number,
     prevWriter: string,
     prevTime?: string,
-    checkIfIsMyChat: <T>(arg: T) => (boolean | undefined),
+    checkIfIsMyChat: <T extends Object>(arg: T) => boolean | undefined,
     deleteChat: (id: number, msgNo: number) => Promise<void>,
     handleChatDblClick: (index: number, isNumberMatches: boolean) => void,
     userNo: number,
