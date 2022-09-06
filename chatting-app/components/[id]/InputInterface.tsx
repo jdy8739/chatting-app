@@ -18,6 +18,13 @@ interface IInputInterface {
     shootChatMessage: (target: SEND_PROTOCOL, message: IMessageBody) => void
 }
 
+const handleReaderOnLoad = (readerEvent: ProgressEvent<FileReader>) => {
+    const result = readerEvent.target?.result;
+    if (result && typeof result !== 'string') {
+        imageFile = new Uint8Array(result);
+    }
+}
+
 function InputInterface({ 
     socketStomp,
     roomId,
@@ -33,14 +40,8 @@ function InputInterface({
         if (e.currentTarget.files) {
             const targetFile = e.currentTarget.files[0];
             const fileReader = new FileReader();
-            fileReader.onload = (readerEvent) => {
-                const result = readerEvent.target?.result;
-                if (result && typeof result !== 'string') {
-                    imageFile = new Uint8Array(result);
-                }
-            }
-            if (fileReader && targetFile)
-                fileReader.readAsArrayBuffer(targetFile);
+            fileReader.onload = handleReaderOnLoad;
+            if (fileReader && targetFile) fileReader.readAsArrayBuffer(targetFile);
         }
     }
     const shootBinaryImageMessage = () => {
