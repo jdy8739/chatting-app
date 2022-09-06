@@ -95,9 +95,9 @@ function NavBar() {
                                 <button className={router.pathname === '/user/signin' ? 'clicked' : ''}>sign in</button>
                             </Link>
                         </>}
-                        <Link href="#">
+                        <a href="https://jdy8739.github.io/profile/" target="_blank">
                             <button>portfolio</button>
-                        </Link>
+                        </a>
                     </div>
                 </div>
             </div>
