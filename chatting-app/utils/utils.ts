@@ -1,8 +1,8 @@
 import axios, { AxiosError, AxiosResponse } from "axios";
 import { toast } from "react-toastify";
 import { Cookies } from 'react-cookie';
-import { ISignedIn } from "../components/commons/NavBar";
 import webstomp, { Client } from "webstomp-client";
+import { ISignedIn } from "./interfaces";
 
 axios.defaults.baseURL = `${process.env.NEXT_PUBLIC_API_URL}`;
 const cookies = new Cookies();
