@@ -40,7 +40,7 @@ import java.util.*;
 @Controller
 @RequestMapping("/room")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*") // http://54.180.107.192
+@CrossOrigin(origins = "http://13.209.250.95", allowedHeaders = "*")
 public class RoomController {
 
     private final String ROOM_ID = "roomId";

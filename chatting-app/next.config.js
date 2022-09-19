@@ -2,6 +2,7 @@
 const nextConfig = {
     reactStrictMode: false,
     productionBrowserSourceMaps: false,
+    distDir: 'build',
 }
 
 module.exports = nextConfig

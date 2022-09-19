@@ -27,7 +27,7 @@ import java.util.NoSuchElementException;
 @Slf4j
 @Controller
 @RequestMapping("/user")
-@CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*")
+@CrossOrigin(origins = "http://13.209.250.95", allowedHeaders = "*")
 public class UserController {
 
     @Autowired

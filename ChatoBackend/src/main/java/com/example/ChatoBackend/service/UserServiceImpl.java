@@ -69,7 +69,7 @@ public class UserServiceImpl implements UserService {
             writer.write(profilePicBinary.getBytes());
             writer.close();
         }
-        return "http://localhost:5000/user/profile-pic/" + id;
+        return "http://13.124.162.22/user/profile-pic/" + id;
     }
 
     @Override
