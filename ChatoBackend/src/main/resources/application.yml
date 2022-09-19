@@ -3,9 +3,9 @@ server:
 
 spring:
   datasource:
-    url:
-    username: 
-    password:
+    url: jdbc:mysql://chatodatabase.csvoscejacsn.ap-northeast-2.rds.amazonaws.com/chato_database
+    username: jdy8739
+    password: wjdehdud0886!
     driver-class-name: com.mysql.cj.jdbc.Driver
     dialect: org.hibernate.dialect.MySQL8Dialect
     hikari:
