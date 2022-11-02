@@ -257,7 +257,7 @@ function ChattingRoom({
             <div className="container">
                 {messages.map((msg, i) => {
                     return (<MessageComponent
-                        key={i}
+                        key={msg.id}
                         msg={msg}
                         {...array[i]}
                         {...profileAndRoomInfo}
