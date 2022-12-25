@@ -1,8 +1,7 @@
-import type { AppProps } from 'next/app'
-import Layout from '../components/Layout';
+import type { AppProps } from "next/app";
+import Layout from "../components/Layout";
 import PropTypes from "prop-types";
 import wrapper from "../lib/store/configureStore";
-
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
@@ -15,8 +14,9 @@ function MyApp({ Component, pageProps }: AppProps) {
         body {
           padding: 0;
           margin: 0;
-          font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
-            Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+          font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
+            Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue,
+            sans-serif;
           background-color: #ebfbf4;
         }
 
@@ -24,7 +24,7 @@ function MyApp({ Component, pageProps }: AppProps) {
           color: inherit;
           text-decoration: none;
         }
-        
+
         button {
           border: none;
           padding: 8px;
@@ -35,66 +35,66 @@ function MyApp({ Component, pageProps }: AppProps) {
           background-color: transparent;
           transition: all 1s;
         }
-        
+
         button:hover {
           background-color: rgb(0, 219, 146);
           color: white;
         }
-        
+
         * {
           box-sizing: border-box;
         }
-        
+
         h5 {
           margin-top: 0;
           color: gray;
         }
-        
+
         .chat {
           color: white;
           padding: 8px;
           border-radius: 8px;
           position: relative;
         }
-        
+
         .my-chat {
           background-color: orange;
           transition: all 0.3s;
         }
-        
+
         .my-chat:hover {
           background-color: rgb(255, 103, 129);
         }
-        
+
         .others-chat {
           background-color: rgb(0, 219, 146);
         }
-        
+
         .master-chat {
           text-align: center;
           color: rgb(179, 179, 179);
           font-size: 12px;
           display: block;
         }
-        
+
         .chat-box {
           padding: 20px 0px;
           word-wrap: break-word;
           position: relative;
         }
-        
+
         .my-chat-box {
           text-align: right;
         }
-        
+
         .others-chat-box {
           text-align: left;
         }
-        
+
         .deleted-chat {
           background-color: gray;
         }
-        
+
         .container {
           width: 70%;
           max-width: 2250px;
@@ -103,7 +103,7 @@ function MyApp({ Component, pageProps }: AppProps) {
           position: relative;
           margin: 60px auto 0 auto;
         }
-        
+
         .delete-btn {
           background-color: red;
           width: 25px;
@@ -118,7 +118,7 @@ function MyApp({ Component, pageProps }: AppProps) {
           font-weight: 900;
           cursor: pointer;
         }
-        
+
         .user-container {
           width: 350px;
           height: 100vh;
@@ -130,7 +130,7 @@ function MyApp({ Component, pageProps }: AppProps) {
           opacity: 0.9;
           z-index: 10;
         }
-        
+
         .user-container > h4 {
           position: absolute;
           color: white;
@@ -146,23 +146,23 @@ function MyApp({ Component, pageProps }: AppProps) {
           right: 10px;
           top: 135px;
         }
-        
+
         .user-container > .banned {
           right: 18px;
           top: 205px;
         }
-        
+
         .user-container:hover {
           transform: translateX(285px);
           opacity: 1;
         }
-        
+
         .name-box {
           width: 285px;
           height: 100vh;
           padding-top: 65px;
         }
-        
+
         .profile {
           background-color: rgb(255, 255, 250, 0.3);
           width: 100%;
@@ -173,18 +173,18 @@ function MyApp({ Component, pageProps }: AppProps) {
           cursor: pointer;
           position: relative;
         }
-        
+
         .profile-img {
           background-size: cover;
           background-position: center center;
           border-radius: 50%;
           border: 1px solid orange;
         }
-        
+
         .profile:hover {
           background-color: orange;
         }
-        
+
         .profile-img {
           width: 30px;
           height: 30px;
@@ -194,13 +194,13 @@ function MyApp({ Component, pageProps }: AppProps) {
           overflow: hidden;
           border: 2px solid orange;
         }
-        
+
         .out-icon {
           position: absolute;
           right: 20px;
           top: 35%;
         }
-        
+
         .submit-form {
           width: 500px;
           height: 390px;
@@ -211,48 +211,48 @@ function MyApp({ Component, pageProps }: AppProps) {
           box-shadow: 0px 5px 30px rgba(0, 0, 0, 0.05);
           padding: 2px;
         }
-        
+
         .input-box {
           padding: 12px;
           border: 1px solid orange;
           border-radius: 20px;
           margin: 12px 0;
         }
-        
-        input[type=checkbox] {
+
+        input[type="checkbox"] {
           width: 20px;
           height: 20px;
           margin: 15px;
           padding-top: 15px;
           accent-color: orange;
         }
-        
-        input[type=file] {
+
+        input[type="file"] {
           font-size: 10px;
           text-align: right;
         }
-        
+
         .item {
           color: gray;
           font-size: 13px;
         }
-        
+
         .title {
           color: orange;
         }
-        
+
         label {
           display: flex;
           justify-content: space-between;
           align-items: center;
         }
-        
+
         .form-body {
           width: 80%;
           margin: auto;
           margin-top: 20px;
         }
-        
+
         .submit-btn {
           width: 500px;
           height: 60px;
@@ -261,13 +261,13 @@ function MyApp({ Component, pageProps }: AppProps) {
           margin: auto;
           border: 1px solid rgb(0, 219, 146);
         }
-        
+
         .error-message {
           height: 18px;
           color: orange;
           font-size: 13px;
         }
-        
+
         .modal-bg {
           width: 100vw;
           height: 100vh;
@@ -280,7 +280,7 @@ function MyApp({ Component, pageProps }: AppProps) {
           justify-content: center;
           z-index: 99;
         }
-        
+
         .modal {
           width: 400px;
           height: 90px;
@@ -289,65 +289,65 @@ function MyApp({ Component, pageProps }: AppProps) {
           text-align: center;
           box-shadow: 2px 2px 2px gray;
         }
-        
+
         .modal-input {
           width: 200px;
         }
-        
+
         .wrong-pw {
           animation-name: shake;
           animation-duration: 0.3s;
         }
-        
+
         @keyframes shake {
           0% {
-              transform: translateX(0px)
+            transform: translateX(0px);
           }
           20% {
-              transform: translateX(30px)
+            transform: translateX(30px);
           }
           40% {
-              transform: translateX(-30px)
+            transform: translateX(-30px);
           }
           60% {
-              transform: translateX(30px)
+            transform: translateX(30px);
           }
           80% {
-              transform: translateX(-30px)
+            transform: translateX(-30px);
           }
           100% {
-              transform: translateX(0px)
+            transform: translateX(0px);
           }
         }
 
-        input[type=range]{
-            -webkit-appearance: none;
+        input[type="range"] {
+          -webkit-appearance: none;
         }
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 300px;
-            height: 5px;
-            background: #ddd;
-            border: none;
-            border-radius: 3px;
+        input[type="range"]::-webkit-slider-runnable-track {
+          width: 300px;
+          height: 5px;
+          background: #ddd;
+          border: none;
+          border-radius: 3px;
         }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            border: none;
-            height: 16px;
-            width: 16px;
-            border-radius: 50%;
-            background: goldenrod;
-            margin-top: -5px;
+        input[type="range"]::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          border: none;
+          height: 16px;
+          width: 16px;
+          border-radius: 50%;
+          background: goldenrod;
+          margin-top: -5px;
         }
-        input[type=range]:focus {
-            outline: none;
+        input[type="range"]:focus {
+          outline: none;
         }
-        input[type=range]:focus::-webkit-slider-runnable-track {
-            background: #ccc;
+        input[type="range"]:focus::-webkit-slider-runnable-track {
+          background: #ccc;
         }
       `}</style>
     </>
-  )
+  );
 }
 
 MyApp.prototype = {

@@ -1,21 +1,21 @@
-import type { NextPage } from 'next'
-import Link from 'next/link';
-import Seo from '../components/commons/Seo'
+import type { NextPage } from "next";
+import Link from "next/link";
+import Seo from "../components/commons/Seo";
 
 const Home: NextPage = () => {
   return (
-    <div className='relative'>
-      <Seo title={'Hello Chato ;)'}></Seo>
-      <div className='greetings'>
-        <h1 className='hello'>Hello Chato ;)</h1>
+    <div className="relative">
+      <Seo title={"Hello Chato ;)"}></Seo>
+      <div className="greetings">
+        <h1 className="hello">Hello Chato ;)</h1>
         <Link href="/chat/list">
-          <button className='start'>start chatting &rarr;</button>
+          <button className="start">start chatting &rarr;</button>
         </Link>
-        <p className='made-by'>made by Do Young Chung</p>
+        <p className="made-by">made by Do Young Chung</p>
       </div>
-      <div className='screen'>
-        <div className='background'></div>
-        <div className='background'></div>
+      <div className="screen">
+        <div className="background"></div>
+        <div className="background"></div>
       </div>
       <style jsx>{`
         .hello {
@@ -59,7 +59,7 @@ const Home: NextPage = () => {
         .background {
           width: 100vw;
           height: 100%;
-          background-image: url('/unpinned.png');
+          background-image: url("/unpinned.png");
           animation-duration: 8s;
           animation-name: goup;
           animation-iteration-count: infinite;
@@ -75,7 +75,7 @@ const Home: NextPage = () => {
         }
       `}</style>
     </div>
-  )
-}
+  );
+};
 
 export default Home;
