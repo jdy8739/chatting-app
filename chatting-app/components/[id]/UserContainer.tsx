@@ -4,20 +4,21 @@ import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { truncateList } from "../../lib/store/modules/likedSubjectReducer";
 import { signOut } from "../../lib/store/modules/signInReducer";
-import { IMessageBody, IParticipants } from "../../types/types";
+import { IParticipants } from "../../types/types";
 import Image from "next/image";
 import {
   MASTER_PROTOCOL,
   RECEIVE_PROTOCOL,
   SEND_PROTOCOL,
-} from "../../utils/enums";
+  SERVER_STATUS,
+} from "../../constants/enums";
 import {
   CHATO_TOKEN,
   removeCookie,
   requestWithTokenAxios,
 } from "../../utils/utils";
 import { IBannedUserList, IUserContainer } from "../../utils/interfaces";
-import { USER_STYLE } from "../../constatns/styles";
+import { USER_STYLE } from "../../constants/styles";
 
 let fetchCount = 0;
 
@@ -72,7 +73,7 @@ function UserContainer({
         bannedIpNo,
         roomId,
       });
-      if (status === 200)
+      if (status === SERVER_STATUS.OK)
         setBannedUserList((bannedUserList) => {
           return [
             ...bannedUserList.filter(
@@ -148,7 +149,12 @@ function UserContainer({
                     )}
                     &emsp; &emsp;
                     {participant.id === roomOwnerId && (
-                      <Image src="/crown.png" width="30px" height="25px" alt="crown-icon"/>
+                      <Image
+                        src="/crown.png"
+                        width="30px"
+                        height="25px"
+                        alt="crown-icon"
+                      />
                     )}
                   </div>
                 );
