@@ -1,6 +1,6 @@
 import React from "react";
 import { IMessageBody } from "../../types/types";
-import { MASTER_PROTOCOL } from "../../utils/enums";
+import { MASTER_PROTOCOL } from "../../constants/enums";
 
 interface IMessageComponent {
     msg: IMessageBody,

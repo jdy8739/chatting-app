@@ -1,7 +1,7 @@
 import { AnimatePresence } from "framer-motion";
 import React, { Dispatch, SetStateAction, useState } from "react";
 import { Droppable } from "react-beautiful-dnd";
-import { SECTION } from "../../utils/enums";
+import { SECTION } from "../../constants/enums";
 import { ITable } from "../../utils/interfaces";
 import Modal from "./Modal";
 

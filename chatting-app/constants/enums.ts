@@ -25,3 +25,7 @@ export enum SECTION {
     NOT_PINNED = "not_pinned",
     TRASH_CAN = 'trash-can',
 }
+
+export enum SERVER_STATUS {
+    OK = 200,
+}

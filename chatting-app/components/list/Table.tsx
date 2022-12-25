@@ -1,7 +1,7 @@
 import React from "react";
 import { Draggable, Droppable } from "react-beautiful-dnd";
 import { IRoom } from "../../types/types";
-import { SECTION } from "../../utils/enums";
+import { SECTION } from "../../constants/enums";
 import Room from "./Room";
 
 interface ITable {
