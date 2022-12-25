@@ -6,24 +6,12 @@ import { IMessageBody, IRoom } from "../../types/types";
 import { CHATO_TOKEN, getAccessToken, getPinnedSubjectStorage, removeCookie, requestWithTokenAxios, setPinnedSubjectStorage, SocketStomp } from "../../utils/utils";
 import BottomIcons from "../../components/list/BottomIcons";
 import { useSelector, useDispatch } from "react-redux";
-import { IUserSignedInInfo, signOut } from "../../lib/store/modules/signInReducer";
+import { signOut } from "../../lib/store/modules/signInReducer";
 import { addInList, removeInList, truncateList } from "../../lib/store/modules/likedSubjectReducer";
 import { useRouter } from "next/router";
-import { MASTER_PROTOCOL, SECTION, SEND_PROTOCOL } from "../../utils/enums";
-import { ISubjectListSelector, ITable, IUserInfoSelector } from "../../utils/interfaces";
-
-interface IRoomMoved {
-    sourceId: string,
-    destinationId: string, 
-    sourceIndex: number, 
-    destinationIndex: number,
-    targetRoomId?: number,
-}
-
-const SHOW = {
-    VISIBLE: {},
-    INVISIBLE: { display: 'none' },
-}
+import { MASTER_PROTOCOL, SECTION, SEND_PROTOCOL } from "../../constants/enums";
+import { IRoomMoved, ISubjectListSelector, ITable, IUserInfoSelector } from "../../utils/interfaces";
+import { TABLE_SHOW } from "../../constants/styles";
 
 let socketStomp: SocketStomp;
 let renderingCount = 0;
@@ -348,7 +336,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
                                     return (
                                         <div
                                             key={subject}
-                                            style={isTableShown ? SHOW.VISIBLE : SHOW.INVISIBLE}
+                                            style={isTableShown ? TABLE_SHOW.VISIBLE : TABLE_SHOW.INVISIBLE}
                                         >
                                             {isTableShown && 
                                             <ClassifiedRooms

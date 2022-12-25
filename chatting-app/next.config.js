@@ -3,6 +3,9 @@ const nextConfig = {
     reactStrictMode: false,
     productionBrowserSourceMaps: false,
     distDir: 'build',
+    images: {
+        domains: ['localhost']
+    },
 }
 
-module.exports = nextConfig
+module.exports = nextConfig;

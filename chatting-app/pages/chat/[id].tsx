@@ -8,34 +8,9 @@ import InputInterface from "../../components/[id]/InputInterface";
 import MessageComponent from "../../components/[id]/MessageComponent";
 import UserContainer from "../../components/[id]/UserContainer";
 import { Iipdata, IMessageBody, IParticipants } from "../../types/types";
-import { LIMIT, MASTER_PROTOCOL, RECEIVE_PROTOCOL, SEND_PROTOCOL } from "../../utils/enums";
-import { IUserInfoSelector } from "../../utils/interfaces";
+import { LIMIT, MASTER_PROTOCOL, RECEIVE_PROTOCOL, SEND_PROTOCOL } from "../../constants/enums";
+import { IChatRoomInfo, IChatRoomProps, IFetchMessagesProps, IUserInfoSelector } from "../../utils/interfaces";
 import { API_KEY_REQUEST_URL, CHATO_TOKEN, generateRandonUserId, getAccessToken, SocketStomp, toastConfig } from "../../utils/utils";
-
-interface IChatRoomProps {
-    id: number,
-    roomName: string,
-    previousChat: IMessageBody[],
-    password?: string,
-    roomOwner: number | null,
-    roomOwnerId: string,
-    numberOfParticipants: number,
-}
-
-interface IChatRoomInfo {
-    owner: number | null, 
-    ownerId: string,
-    messageList?: IMessageBody[] | undefined,
-    numberOfParticipants: number,
-}
-
-interface IFetchMessagesProps {
-    id: number, 
-    userNo: number | null, 
-    count: number, 
-    password?: string, 
-    ipAddress?: string,
-}
 
 let socketStomp: SocketStomp;
 let currentUserName: string = '';

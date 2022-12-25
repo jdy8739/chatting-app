@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { IMessageBody } from "../../types/types";
-import { LIMIT, MASTER_PROTOCOL, SEND_PROTOCOL } from "../../utils/enums";
+import { LIMIT, MASTER_PROTOCOL, SEND_PROTOCOL } from "../../constants/enums";
 import { getNowTime, modalBgVariant, requestWithTokenAxios, SocketStomp, toastConfig } from "../../utils/utils";
 
 let imageFile: ArrayBuffer | null;
