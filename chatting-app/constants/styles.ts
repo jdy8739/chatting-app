@@ -31,3 +31,9 @@ export const FORM_STYLE = {
   },
   ERROR: { marginTop: "22px" },
 };
+
+export const SIGN_IN_FORM_STYLE = {
+  FORM: { width: "400px", height: "250px" },
+  TITLE: { width: "80%", margin: "auto" },
+  SUBMIT: { width: "100%", marginTop: "45px" },
+};

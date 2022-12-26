@@ -6,6 +6,7 @@ import {
   API_KEY_REQUEST_URL,
   requestWithTokenAxios,
   signinAxios,
+  signupAxios,
 } from "../utils/utils";
 
 export const fetchUserInfo = async () => {
@@ -50,7 +51,7 @@ export const fetchUserPrivateIpAddress = async () => {
 export const fetchRoomParticipants = async (roomId: number) => {
   let participants = null;
   try {
-    const { data } = await await axios.get<Array<IParticipants>>(
+    const { data } = await axios.get<Array<IParticipants>>(
       `/room/participants/${roomId}`
     );
     participants = data;
@@ -159,4 +160,17 @@ export const requestSignIn = async (id: string, password: string) => {
     // show toast;
   }
   return userInfo;
+};
+
+export const requestSignUp = async (formData: FormData) => {
+  let isSignUpSuccessful = false;
+  try {
+    const { status } = await signupAxios.post(`/user/signup`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    if (status === SERVER_STATUS.OK) isSignUpSuccessful = true;
+  } catch (e) {
+    // show toast;
+  }
+  return isSignUpSuccessful;
 };

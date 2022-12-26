@@ -10,10 +10,10 @@ import {
   getAccessToken,
   ID_REGEX,
   PW_REGEX,
-  signupAxios,
   toastConfig,
 } from "../../utils/utils";
 import Image from "next/image";
+import { requestSignUp } from "../../apis/userApis";
 
 let userProfilePic: File | undefined;
 
@@ -46,11 +46,11 @@ function SingUp() {
       if (userProfilePic && getValues().userProfilePic) {
         formData.append("userProfilePic", userProfilePic);
       }
-      await signupAxios.post(`/user/signup`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      toast.success("Welcome to Chato! :)", toastConfig);
-      router.push("/chat/list");
+      const isSignUpSuccessful = await requestSignUp(formData);
+      if (isSignUpSuccessful) {
+        toast.success("Welcome to Chato! :)", toastConfig);
+        router.push("/chat/list");
+      }
     }
   };
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

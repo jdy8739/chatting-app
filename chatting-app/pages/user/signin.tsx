@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import { requestSignIn } from "../../apis/userApis";
+import { SIGN_IN_FORM_STYLE } from "../../constants/styles";
 import { replaceList } from "../../lib/store/modules/likedSubjectReducer";
 import {
   IUserSignedInInfo,
@@ -15,12 +16,6 @@ import {
   getAccessToken,
   toastConfig,
 } from "../../utils/utils";
-
-const STYLE = {
-  FORM: { width: "400px", height: "250px" },
-  TITLE: { width: "80%", margin: "auto" },
-  SUBMIT: { width: "100%", marginTop: "45px" },
-};
 
 function Signin() {
   const router = useRouter();
@@ -60,10 +55,10 @@ function Signin() {
       <form
         onSubmit={handleSigninSubmit}
         className="submit-form"
-        style={STYLE.FORM}
+        style={SIGN_IN_FORM_STYLE.FORM}
       >
         <h4 className="title">Nice to meet U Again! :)</h4>
-        <div style={STYLE.TITLE}>
+        <div style={SIGN_IN_FORM_STYLE.TITLE}>
           <label htmlFor="id">
             <span className="item">ID</span>
             <input id="id" className="input-box" ref={idInputRef} required />
@@ -82,7 +77,7 @@ function Signin() {
         <Link href="/chat/list">
           <div className="item">chat without signin?</div>
         </Link>
-        <button className="submit-btn" style={STYLE.SUBMIT}>
+        <button className="submit-btn" style={SIGN_IN_FORM_STYLE.SUBMIT}>
           submit
         </button>
       </form>
