@@ -20,7 +20,12 @@ import {
   truncateList,
 } from "../../lib/store/modules/likedSubjectReducer";
 import { useRouter } from "next/router";
-import { MASTER_PROTOCOL, SECTION, SEND_PROTOCOL } from "../../constants/enums";
+import {
+  MASTER_PROTOCOL,
+  MSG_TYPE,
+  SECTION,
+  SEND_PROTOCOL,
+} from "../../constants/enums";
 import {
   IRoomMoved,
   ISubjectListSelector,
@@ -29,6 +34,7 @@ import {
 } from "../../utils/interfaces";
 import { TABLE_SHOW } from "../../constants/styles";
 import {
+  fetchAllRoomsList,
   requestChangeToNewSubject,
   requestRoomDelete,
   requestToggleSubjectLike,
@@ -212,13 +218,13 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
       "/sub/chat/room/list",
       ({ body }: { body: string }) => {
         const messageObj = JSON.parse(body);
-        if (Object.hasOwn(messageObj, "isEnter"))
+        if (Object.hasOwn(messageObj, MSG_TYPE.ENTER))
           updateRoomParticipants(messageObj);
-        else if (Object.hasOwn(messageObj, "isDeleted"))
+        else if (Object.hasOwn(messageObj, MSG_TYPE.DELETE))
           updateRoomDeleted(messageObj);
-        else if (Object.hasOwn(messageObj, "destinationId"))
+        else if (Object.hasOwn(messageObj, MSG_TYPE.MOVE))
           updateRoomMoved(messageObj);
-        else if (Object.hasOwn(messageObj, "isChanged"))
+        else if (Object.hasOwn(messageObj, MSG_TYPE.CHANGE))
           updateRoomInfoChange(messageObj);
         else updateRoomCreated(messageObj);
       }
@@ -516,13 +522,23 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
 }
 
 export async function getServerSideProps() {
-  const rooms: IRoom[] = (await axios.get<IRoom[]>(`/room/list`)).data;
-  rooms.forEach((room) => {
-    if (room.password) delete room.password;
-  });
-  return {
-    props: { rooms },
-  };
+  const rooms = await fetchAllRoomsList();
+  if (rooms) {
+    rooms.forEach((room) => {
+      if (room.password) delete room.password;
+    });
+    return {
+      props: { rooms },
+    };
+  } else {
+    return {
+      redirect: {
+        permanent: false,
+        destination: "/",
+      },
+      props: {},
+    };
+  }
 }
 
 export default ChattingList;

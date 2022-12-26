@@ -22,6 +22,14 @@ export interface ITable {
   };
 }
 
+export interface IModal {
+  roomId?: number;
+  query: string;
+  hideModal: () => void;
+  pushToChatRoom?: (password?: string) => void;
+  addSubjectTable?: (newTableName: string) => void;
+}
+
 export interface ILikedSubject {
   likedSubjectNo: number;
   subject: string;
@@ -32,6 +40,14 @@ export interface ISignedIn extends IUserSignedInInfo {
   likedSubjects?: ILikedSubject[];
   accessToken: string;
   refreshToken: string;
+}
+
+export interface ISignUpForm {
+  id: string;
+  nickName: string;
+  password: string;
+  passwordCheck: string;
+  userProfilePic?: File | null;
 }
 
 export interface IRoomMoved {

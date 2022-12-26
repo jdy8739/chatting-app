@@ -29,3 +29,22 @@ export enum SECTION {
 export enum SERVER_STATUS {
   OK = 200,
 }
+
+export enum MSG_TYPE {
+  ENTER = "isEnter",
+  DELETE = "isDeleted",
+  MOVE = "destinationId",
+  CHANGE = "isChanged",
+}
+
+export interface IUserInfo {
+  id: string;
+  nickName: string;
+  profilePicUrl?: string;
+}
+
+export enum EXECUTE {
+  DEFAULT = 0,
+  ALTER_USER_INFO = 1,
+  WITHDRAW = 2,
+}

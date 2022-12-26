@@ -19,3 +19,15 @@ export const IMAGE_STYLE = {
 export const FlexGrow = {
   flexGrow: "1",
 };
+
+export const zIndex100 = {
+  zIndex: 100,
+};
+
+export const FORM_STYLE = {
+  FORM: {
+    height: "652px",
+    marginBottom: "150px",
+  },
+  ERROR: { marginTop: "22px" },
+};

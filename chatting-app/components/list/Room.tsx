@@ -9,8 +9,8 @@ import { IUserInfoSelector } from "../../utils/interfaces";
 import { toastConfig } from "../../utils/utils";
 import Modal from "./Modal";
 import Image from "next/image";
-
-const FlexGrow = { flexGrow: "1" };
+import { FlexGrow } from "../../constants/styles";
+import { PUBLIC_ICONS_PATH } from "../../constants/icons";
 
 function Room({ room, index }: { room: IRoom; index: number }) {
   const router = useRouter();
@@ -72,7 +72,7 @@ function Room({ room, index }: { room: IRoom; index: number }) {
               <Image
                 width="50px"
                 height="25px"
-                src="/people_icon.png"
+                src={`${PUBLIC_ICONS_PATH.PEOPLE}`}
                 alt="people"
               />
               <p>{`${room.nowParticipants}/${room.limitation}`}</p>
@@ -81,8 +81,8 @@ function Room({ room, index }: { room: IRoom; index: number }) {
                 <Image
                   width="25px"
                   height="25px"
-                  src="/lock_icon.png"
-                  alt="lick-icon"
+                  src={`${PUBLIC_ICONS_PATH.LOCK}`}
+                  alt="lock-icon"
                 />
               )}
             </div>

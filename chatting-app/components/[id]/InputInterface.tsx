@@ -3,14 +3,10 @@ import Link from "next/link";
 import React, { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { LIMIT, MASTER_PROTOCOL, SEND_PROTOCOL } from "../../constants/enums";
-import {
-  getNowTime,
-  modalBgVariant,
-  requestWithTokenAxios,
-  toastConfig,
-} from "../../utils/utils";
+import { getNowTime, modalBgVariant, toastConfig } from "../../utils/utils";
 import { IInputInterface } from "../../utils/interfaces";
 import SettingsContent from "./SettingsContent";
+import { requestRoomDelete } from "../../apis/roomApis";
 
 let imageFile: ArrayBuffer | null;
 
@@ -95,8 +91,9 @@ function InputInterface({
     }
   };
   const handleRoomSettings = () => setIsModalShown(true);
-  const terminateChatRoom = () => {
-    requestWithTokenAxios.delete(`/room/delete/${roomId}`).then(() => {
+  const terminateChatRoom = async () => {
+    const isRoomDeleteSuccessful = await requestRoomDelete(roomId);
+    if (isRoomDeleteSuccessful) {
       if (socketStomp)
         socketStomp.stomp.send(
           `/pub/chat/${SEND_PROTOCOL.DELETE}`,
@@ -108,7 +105,7 @@ function InputInterface({
             writerNo: null,
           })
         );
-    });
+    }
   };
   const stopProppagation = (e: React.MouseEvent<HTMLDivElement>) =>
     e.stopPropagation();

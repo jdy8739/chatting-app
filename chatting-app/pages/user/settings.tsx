@@ -6,6 +6,7 @@ import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import Modal from "../../components/settings/Modal";
+import { EXECUTE, IUserInfo } from "../../constants/enums";
 import { truncateList } from "../../lib/store/modules/likedSubjectReducer";
 import {
   IUserSignedInInfo,
@@ -19,24 +20,16 @@ import {
   getAccessToken,
   ID_REGEX,
   removeCookie,
-  requestWithTokenAxios,
   toastConfig,
 } from "../../utils/utils";
-
-export interface IUserInfo {
-  id: string;
-  nickName: string;
-  profilePicUrl?: string;
-}
-
-export enum EXECUTE {
-  DEFAULT = 0,
-  ALTER_USER_INFO = 1,
-  WITHDRAW = 2,
-}
+import Image from "next/image";
+import {
+  fetchUserSettingsInfo,
+  requestAlterUserSettingsInfo,
+  requestWithdrawal,
+} from "../../apis/userApis";
 
 let userProfilePic: File | undefined;
-
 let tmpPicUrl = "";
 
 const STYLE = {
@@ -66,13 +59,12 @@ function Settings() {
     handleSubmit,
   } = useForm<IUserInfo>();
   const fetchUserInfo = async () => {
-    const { status, data: userInfo }: { status: number; data: IUserInfo } =
-      await requestWithTokenAxios.get(`/user/info`);
-    if (status === 200) {
-      setInputRefValue(userInfo);
-      setUserInfo(userInfo);
-      tmpPicUrl = userInfo.profilePicUrl || "";
-    } else if (status === 401) {
+    const userSettingsInfo = await fetchUserSettingsInfo();
+    if (userSettingsInfo) {
+      setInputRefValue(userSettingsInfo);
+      setUserInfo(userSettingsInfo);
+      tmpPicUrl = userSettingsInfo.profilePicUrl || "";
+    } else {
       toast.error("This is not an available user info.", toastConfig);
       handleTokenException();
     }
@@ -116,42 +108,33 @@ function Settings() {
     inputPassword: string
   ): Promise<boolean> => {
     return new Promise(async (success, fail) => {
-      const updatedUserIndo: { [key: string]: string | Blob | null } = {
+      const updatedUserInfo: { [key: string]: string | Blob | null } = {
         ...data,
         userProfilePic: data.profilePicUrl ? data.profilePicUrl[0] : null,
       };
-      delete updatedUserIndo.profilePicUrl;
+      delete updatedUserInfo.profilePicUrl;
       const formData = new FormData();
       formData.append("isUseProfilePic", checkIsPicChosen());
       formData.append("inputPassword", inputPassword);
-      for (let key in updatedUserIndo) {
-        const value = updatedUserIndo[key];
+      for (const key in updatedUserInfo) {
+        const value = updatedUserInfo[key];
         if (value !== null) formData.append(key, value);
       }
-      try {
-        const { status } = await requestWithTokenAxios.put(
-          `/user/alter`,
-          formData
-        );
-        if (status === 200) {
-          toast.success(
-            "Your info has been altered successfully!",
-            toastConfig
-          );
-          if (userInfo?.id === data.id) handleSignOut();
-          setTimeout(() => {
-            handleSignIn({
-              userNo: userNo,
-              userId: data.id,
-              userNickName: data.nickName,
-            });
-          }, 500);
-          success(true);
-        } else if (status === 401) {
-          handleTokenException();
-        } else if (status === 403) throw new Error();
-      } catch (e) {
+      const isAlterSuccessful = await requestAlterUserSettingsInfo(formData);
+      if (isAlterSuccessful) {
+        toast.success("Your info has been altered successfully!", toastConfig);
+        if (userInfo?.id === data.id) handleSignOut();
+        setTimeout(() => {
+          handleSignIn({
+            userNo: userNo,
+            userId: data.id,
+            userNickName: data.nickName,
+          });
+        }, 500);
+        success(true);
+      } else {
         fail(false);
+        handleTokenException();
       }
     });
   };
@@ -163,20 +146,15 @@ function Settings() {
   };
   const handleUserWithdraw = (inputPassword: string): Promise<boolean> => {
     return new Promise(async (success, fail) => {
-      try {
-        const { status } = await requestWithTokenAxios.put(`/user/withdraw`, {
-          inputPassword,
-        });
-        if (status === 200) {
-          toast.success("Your id has been removed.", toastConfig);
-          removeCookie(CHATO_TOKEN, { path: "/" });
-          handleSignIn({ userNo: -1, userId: "", userNickName: "" });
-          success(true);
-        } else if (status === 401) {
-          handleTokenException();
-        } else if (status === 403) throw new Error();
-      } catch (e) {
+      const isWithdrawalSuccessful = await requestWithdrawal(inputPassword);
+      if (isWithdrawalSuccessful) {
+        toast.success("Your id has been removed.", toastConfig);
+        removeCookie(CHATO_TOKEN, { path: "/" });
+        handleSignIn({ userNo: -1, userId: "", userNickName: "" });
+        success(true);
+      } else {
         fail(false);
+        handleTokenException();
       }
     });
   };
@@ -207,13 +185,17 @@ function Settings() {
         <div className="profile-image-box">
           <label htmlFor="pic" style={STYLE.JUSTIFY_CENTER}>
             {picBlobString || userInfo?.profilePicUrl ? (
-              <img
-                className="profile-img big-img"
+              <Image
+                // className="profile-img big-img"
+                src={""}
                 style={{
                   backgroundImage: `url(${
                     picBlobString ? picBlobString : userInfo?.profilePicUrl
                   })`,
                 }}
+                width="100px"
+                height="100px"
+                alt="profile-image"
               />
             ) : (
               <div className="profile-img big-img"></div>

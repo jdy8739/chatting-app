@@ -3,17 +3,16 @@ import { useRouter } from "next/router";
 import React, { useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
+import { requestSignIn } from "../../apis/userApis";
 import { replaceList } from "../../lib/store/modules/likedSubjectReducer";
 import {
   IUserSignedInInfo,
   signIn,
 } from "../../lib/store/modules/signInReducer";
-import { ISignedIn } from "../../utils/interfaces";
 import {
   CHATO_TOKEN,
   clearPreviousRoomId,
   getAccessToken,
-  signinAxios,
   toastConfig,
 } from "../../utils/utils";
 
@@ -35,21 +34,18 @@ function Signin() {
     const id = idInputRef.current?.value;
     const password = pwInputRef.current?.value;
     if (id && password) {
-      try {
-        const { status, data: userData }: { status: number; data: ISignedIn } =
-          await signinAxios.post(`/user/signin`, { id, password });
-        if (status === 200) {
-          const likedList: Array<string> = [];
-          if (userData.likedSubjects)
-            userData.likedSubjects.forEach((subject) =>
-              likedList.push(subject.subject)
-            );
-          dispatch(replaceList(likedList));
-          delete userData.likedSubjects;
-          handleSignIn(userData);
-          router.push("/chat/list");
-        }
-      } catch (e) {}
+      const userInfo = await requestSignIn(id, password);
+      if (userInfo) {
+        const likedList: Array<string> = [];
+        if (userInfo.likedSubjects)
+          userInfo.likedSubjects.forEach((subject) =>
+            likedList.push(subject.subject)
+          );
+        dispatch(replaceList(likedList));
+        delete userInfo.likedSubjects;
+        handleSignIn(userInfo);
+        router.push("/chat/list");
+      }
     }
   };
   useEffect(() => {
@@ -91,15 +87,15 @@ function Signin() {
         </button>
       </form>
       <style jsx>{`
-                input {
-                    width: 230px;
-                }
-                .item:nth-child(3) {
-                    text-align: right;
-                    margin: 15px 30px 0 0;
-                    cursor: pointer;
-                
-            `}</style>
+        input {
+          width: 230px;
+        }
+        .item:nth-child(3) {
+          text-align: right;
+          margin: 15px 30px 0 0;
+          cursor: pointer;
+        }
+      `}</style>
     </>
   );
 }
