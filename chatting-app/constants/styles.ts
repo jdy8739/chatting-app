@@ -37,3 +37,10 @@ export const SIGN_IN_FORM_STYLE = {
   TITLE: { width: "80%", margin: "auto" },
   SUBMIT: { width: "100%", marginTop: "45px" },
 };
+
+export const SETTINGS_FORM_STYLE = {
+  HEIGHT: { height: "480px" },
+  JUSTIFY_CENTER: { justifyContent: "center" },
+  PAD_LEFT: { paddingLeft: "60px" },
+  MARGIN: { margin: "40px 0" },
+};
