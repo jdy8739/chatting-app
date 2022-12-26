@@ -4,6 +4,7 @@ import { SECTION } from "../../constants/enums";
 import Room from "./Room";
 import Image from "next/image";
 import { ITableComponent, ITable } from "../../utils/interfaces";
+import { PUBLIC_ICONS_PATH } from "../../constants/icons";
 
 function Table({
   rooms,
@@ -38,7 +39,7 @@ function Table({
                   <Image
                     width="32px"
                     height="32px"
-                    src="/pinned.png"
+                    src={`${PUBLIC_ICONS_PATH.PIN}`}
                     alt="pinned-icon"
                   />
                 )}

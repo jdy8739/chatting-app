@@ -8,7 +8,6 @@ import {
   getAccessToken,
   getPinnedSubjectStorage,
   removeCookie,
-  requestWithTokenAxios,
   setPinnedSubjectStorage,
   SocketStomp,
 } from "../../utils/utils";
@@ -29,13 +28,18 @@ import {
   IUserInfoSelector,
 } from "../../utils/interfaces";
 import { TABLE_SHOW } from "../../constants/styles";
+import {
+  requestChangeToNewSubject,
+  requestRoomDelete,
+  requestToggleSubjectLike,
+} from "../../apis/roomApis";
 
 let socketStomp: SocketStomp;
 let renderingCount = 0;
 
 function ChattingList({ rooms }: { rooms: IRoom[] }) {
-  let pinnedTableLength: number = 0;
-  let notPinnedTableLength: number = 0;
+  let pinnedTableLength = 0;
+  let notPinnedTableLength = 0;
   let isTableShown: boolean;
   const router = useRouter();
   const dispatch = useDispatch();
@@ -179,22 +183,18 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
       }
     });
   };
-  const deleteRoom = (sourceId: string, index: number) => {
+  const deleteRoom = async (sourceId: string, index: number) => {
     const targetRoomId = roomList[sourceId].list[index].roomId;
-    requestWithTokenAxios
-      .delete(`/room/delete/${targetRoomId}`)
-      .then(({ status }) => {
-        if (status === 200) {
-          sendRoomDeleteMessage({
-            msgNo: 0,
-            roomId: String(targetRoomId),
-            message: MASTER_PROTOCOL.DISBANDED,
-            writer: MASTER_PROTOCOL.MASTER,
-            writerNo: null,
-          });
-        }
-      })
-      .catch(() => handleTokenException());
+    const isRoomDeleteSuccessful = await requestRoomDelete(targetRoomId);
+    if (isRoomDeleteSuccessful) {
+      sendRoomDeleteMessage({
+        msgNo: 0,
+        roomId: String(targetRoomId),
+        message: MASTER_PROTOCOL.DISBANDED,
+        writer: MASTER_PROTOCOL.MASTER,
+        writerNo: null,
+      });
+    } else handleTokenException();
   };
   const sendRoomDeleteMessage = (message: IMessageBody) => {
     if (socketStomp)
@@ -203,10 +203,9 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         JSON.stringify(message)
       );
   };
-  const changeToNewSubject = (roomMovedInfo: IRoomMoved) => {
-    requestWithTokenAxios
-      .put(`/room/change_subject`, roomMovedInfo)
-      .catch(() => handleTokenException());
+  const changeToNewSubject = async (roomMovedInfo: IRoomMoved) => {
+    const isChangeSuccessful = await requestChangeToNewSubject(roomMovedInfo);
+    if (!isChangeSuccessful) handleTokenException();
   };
   const subscribeRoomParticipants = () => {
     socketStomp.stomp.subscribe(
@@ -359,18 +358,14 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
   ) => {
     const checkIfExists = (subjectElem: string) => subjectElem === subject;
     const isAddLike = subjectList.some(checkIfExists);
-    try {
-      const { status } = await requestWithTokenAxios.post(
-        `/user/manage_subject_like`,
-        { subject, isAddLike }
-      );
-      if (status === 200) {
-        if (isAddLike) dispatch(removeInList(subject));
-        else dispatch(addInList(subject));
-      }
-    } catch (e) {
-      handleTokenException();
-    }
+    const isToggleSubjectLikeSuccessful = await requestToggleSubjectLike(
+      subject,
+      isAddLike
+    );
+    if (isToggleSubjectLikeSuccessful) {
+      if (isAddLike) dispatch(removeInList(subject));
+      else dispatch(addInList(subject));
+    } else handleTokenException();
   };
   const handleTokenException = () => {
     removeCookie(CHATO_TOKEN, { path: "/" });
