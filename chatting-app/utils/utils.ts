@@ -55,7 +55,7 @@ export const ID_REGEX = /^(?!.*[!#$%&’'*+/=?^_`])[a-zA-Z0-9]+$/;
 export const PW_REGEX = /^(?=.*[~`!@#$%^&*()--+={}\[\]|\\:;"'<>,.?/_₹])/;
 
 export const generateRandonUserId = () => {
-  let bytes = new Uint32Array(3);
+  const bytes = new Uint32Array(3);
   window.crypto.getRandomValues(bytes);
   return (
     performance.now().toString(36) +
@@ -138,7 +138,6 @@ signinAxios.interceptors.response.use(
 );
 
 export const requestWithTokenAxios = axios.create();
-// requestWithTokenAxios.defaults.headers.common['authorization'] = `Bearer ${getAccessToken(CHATO_TOKEN)}`;
 
 requestWithTokenAxios.interceptors.request.use(
   (request) => {
@@ -198,8 +197,7 @@ requestWithTokenAxios.interceptors.response.use(
 );
 
 const handleTokenErrors = (status: number | undefined) => {
-  if (!status) {
-  } else if (status === 403 || status === 400)
+  if (status === 403 || status === 400)
     toast.error(
       "Unauthorized or, the password does not matches!.",
       toastConfig
@@ -308,4 +306,10 @@ export const setPinnedSubjectStorage = (subject: string) => {
     subjectArray = filtered;
   } else subjectArray = [subject];
   globalThis.localStorage.setItem("pinned", JSON.stringify(subjectArray));
+};
+
+export const scrollViewDown = () => {
+  const scrollDown =
+    document.body.scrollHeight - document.documentElement.scrollTop < 1000;
+  if (scrollDown) window.scrollTo(0, document.body.scrollHeight);
 };

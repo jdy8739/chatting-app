@@ -1,13 +1,11 @@
-import axios from "axios";
 import { useRouter } from "next/router";
 import React, { useCallback, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { toast } from "react-toastify";
 import Seo from "../../components/commons/Seo";
 import InputInterface from "../../components/[id]/InputInterface";
 import MessageComponent from "../../components/[id]/MessageComponent";
 import UserContainer from "../../components/[id]/UserContainer";
-import { Iipdata, IMessageBody, IParticipants } from "../../types/types";
+import { IMessageBody, IParticipants } from "../../types/types";
 import {
   LIMIT,
   MASTER_PROTOCOL,
@@ -15,42 +13,31 @@ import {
   SEND_PROTOCOL,
 } from "../../constants/enums";
 import {
-  IChatRoomInfo,
   IChatRoomProps,
-  IFetchMessagesProps,
   IMessageProps,
   IServerProps,
   IUserInfoSelector,
 } from "../../utils/interfaces";
 import {
-  API_KEY_REQUEST_URL,
   CHATO_TOKEN,
   generateRandonUserId,
   getAccessToken,
+  scrollViewDown,
   SocketStomp,
-  toastConfig,
 } from "../../utils/utils";
+import {
+  fetchRoomOwnerAndPreviousChat,
+  requestMessageDelete,
+} from "../../apis/chatApis";
+import {
+  fetchUserPrivateIpAddress,
+  requestUserExpel,
+} from "../../apis/userApis";
 
 let socketStomp: SocketStomp;
 let currentUserName = "";
 let previousShowCnt = 0;
 let timeOut: NodeJS.Timeout;
-
-const fetchRoomOwnerAndPreviousChat = async ({
-  id,
-  userNo,
-  count,
-  password,
-  ipAddress,
-}: IFetchMessagesProps): Promise<IChatRoomInfo> => {
-  return await (
-    await axios.post(`/room/message/${id}?offset=${count}`, {
-      password,
-      ipAddress,
-      userNo,
-    })
-  ).data;
-};
 
 function ChattingRoom({
   id,
@@ -82,7 +69,7 @@ function ChattingRoom({
           isSentFromMaster &&
           newMessage.message === MASTER_PROTOCOL.DISBANDED
         ) {
-          expelUser("This room is disbanded.");
+          expelUser();
         } else {
           const msgNo = newMessage.msgNo;
           const isParticipantsListChanged =
@@ -101,7 +88,7 @@ function ChattingRoom({
     const [targetId, targetNickName] = newMessage.message.split("/");
     if (msgNo === RECEIVE_PROTOCOL.BAN) {
       if (userId ? targetId === userId : targetId === currentUserName)
-        expelUser("You are banned!");
+        expelUser();
       newMessage.message = `${targetId.slice(0, 9)} has been banned.`;
     } else if (msgNo !== null) {
       newMessage.message = `${targetId.slice(0, 9)} has just ${
@@ -131,11 +118,6 @@ function ChattingRoom({
       return;
     } else setMessages((messages) => [...messages, newMessageInfo]);
     if (!isSentFromMaster) scrollViewDown();
-  };
-  const scrollViewDown = () => {
-    const scrollDown =
-      document.body.scrollHeight - document.documentElement.scrollTop < 1000;
-    if (scrollDown) window.scrollTo(0, document.body.scrollHeight);
   };
   const updateParticipantsList = (
     targetUser: IParticipants,
@@ -190,10 +172,8 @@ function ChattingRoom({
     []
   );
   const deleteChat = useCallback(async (id: number, msgNo: number) => {
-    const { status } = await axios.delete(
-      `/room/del_message/${id}?msg_no=${msgNo}`
-    );
-    if (status === 200) {
+    const isDeleteSuccessful = await requestMessageDelete(id, msgNo);
+    if (isDeleteSuccessful) {
       shootChatMessage(SEND_PROTOCOL.DELETE, {
         msgNo: 0,
         roomId: String(id),
@@ -214,26 +194,15 @@ function ChattingRoom({
     },
     []
   );
-  const expelUser = async (sentence: string) => {
-    try {
-      if (!id) throw new Error();
-      const {
-        data: { ip },
-      }: { data: Iipdata } = await axios.get(
-        `${API_KEY_REQUEST_URL}${process.env.NEXT_PUBLIC_IPDATA_API_KEY}`
+  const expelUser = async () => {
+    const userPrivateIpAddress = await fetchUserPrivateIpAddress();
+    if (userPrivateIpAddress) {
+      const isUserBanSuccessful = await requestUserExpel(
+        id,
+        userPrivateIpAddress,
+        currentUserName
       );
-      axios
-        .post(`/user/add_banned`, {
-          roomId: id,
-          ipAddress: ip,
-          userName: currentUserName,
-        })
-        .then(() => {
-          toast.error(sentence, toastConfig);
-          router.push("/chat/list");
-        });
-    } catch (e) {
-      toast.error("There are some erros. Please reconnect.", toastConfig);
+      if (isUserBanSuccessful) router.push("/chat/list");
     }
   };
   const checkIfIsMyChat = useCallback(<T extends number | string>(arg: T) => {
@@ -343,26 +312,24 @@ function ChattingRoom({
             padding: 10px;
             background-color: transparent;
           }
-        `}</style>
-        <style>{`
           .previous-chat-show {
-              width: 100vw;
-              height: 100px;
-              background-color: gray;
-              position: absolute;
-              top: 65px;
-              opacity: 0.4;
-              cursor: pointer;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              color: #c0c0c0;
-              z-index: 10;
+            width: 100vw;
+            height: 100px;
+            background-color: gray;
+            position: absolute;
+            top: 65px;
+            opacity: 0.4;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #c0c0c0;
+            z-index: 10;
           }
           @media screen and (max-width: 768px) {
-              .previous-chat-show {
-                  top: 130px;
-              }
+            .previous-chat-show {
+              top: 130px;
+            }
           }
         `}</style>
       </div>
@@ -374,31 +341,29 @@ export async function getServerSideProps({
   params: { id },
   query: { roomName, password, userNo },
 }: IServerProps) {
-  let owner: number | null;
-  let ownerId: string;
+  let owner: number | null = null;
+  let ownerId = "";
   let previousChat: IMessageBody[] | undefined;
   let numberOfParticipants;
   try {
     if (!userNo) userNo = null;
-    const {
-      data: { ip },
-    }: { data: Iipdata } = await axios.get(
-      `${API_KEY_REQUEST_URL}${process.env.NEXT_PUBLIC_IPDATA_API_KEY}`
-    );
-    const results = await fetchRoomOwnerAndPreviousChat({
-      id,
-      userNo,
-      count: previousShowCnt,
-      password,
-      ipAddress: ip,
-    });
-    owner = results.owner;
-    ownerId = results.ownerId;
-    numberOfParticipants = results.numberOfParticipants;
-    previousChat = results.messageList?.reverse();
-    previousChat?.forEach((chat) => {
-      if (chat.isDeleted) chat.message = "";
-    });
+    const userPrivateIpAddress = await fetchUserPrivateIpAddress();
+    if (userPrivateIpAddress) {
+      const chatRoomInfo = await fetchRoomOwnerAndPreviousChat({
+        id,
+        userNo,
+        count: previousShowCnt,
+        password,
+        ipAddress: userPrivateIpAddress,
+      });
+      owner = chatRoomInfo.owner;
+      ownerId = chatRoomInfo.ownerId;
+      numberOfParticipants = chatRoomInfo.numberOfParticipants;
+      previousChat = chatRoomInfo.messageList?.reverse();
+      previousChat?.forEach((chat) => {
+        if (chat.isDeleted) chat.message = "";
+      });
+    }
   } catch (e) {
     console.log(`Failed to enter the chat room id ${id}.`);
     return {
@@ -415,7 +380,7 @@ export async function getServerSideProps({
       roomName: roomName || "",
       previousChat: previousChat ? previousChat : [],
       password: password || null,
-      roomOwner: owner,
+      roomOwner: owner || "",
       roomOwnerId: ownerId,
       numberOfParticipants,
     },
