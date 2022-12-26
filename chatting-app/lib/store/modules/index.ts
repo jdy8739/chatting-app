@@ -8,7 +8,10 @@ const rootReducer = (state: any, action: any) => {
     case HYDRATE:
       return action.payload;
     default:
-      return combineReducers({ signInReducer, likedSubjectReducer })(state, action);
+      return combineReducers({ signInReducer, likedSubjectReducer })(
+        state,
+        action
+      );
   }
 };
 

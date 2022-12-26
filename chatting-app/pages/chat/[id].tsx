@@ -235,7 +235,7 @@ function ChattingRoom({
       toast.error("There are some erros. Please reconnect.", toastConfig);
     }
   };
-  const checkIfIsMyChat = useCallback(<T extends Object>(arg: T) => {
+  const checkIfIsMyChat = useCallback(<T extends number | string>(arg: T) => {
     if (typeof arg === "string") return arg === currentUserName;
     else if (typeof arg === "number") return arg === userNo;
   }, []);
@@ -344,26 +344,26 @@ function ChattingRoom({
           }
         `}</style>
         <style>{`
-                    .previous-chat-show {
-                        width: 100vw;
-                        height: 100px;
-                        background-color: gray;
-                        position: absolute;
-                        top: 65px;
-                        opacity: 0.4;
-                        cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        color: #c0c0c0;
-                        z-index: 10;
-                    }
-                    @media screen and (max-width: 768px) {
-                        .previous-chat-show {
-                            top: 130px;
-                        }
-                    }
-                `}</style>
+          .previous-chat-show {
+              width: 100vw;
+              height: 100px;
+              background-color: gray;
+              position: absolute;
+              top: 65px;
+              opacity: 0.4;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: #c0c0c0;
+              z-index: 10;
+          }
+          @media screen and (max-width: 768px) {
+              .previous-chat-show {
+                  top: 130px;
+              }
+          }
+        `}</style>
       </div>
     </>
   );

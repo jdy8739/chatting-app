@@ -50,6 +50,11 @@ export interface IMessageProps {
   isDeleted: boolean;
 }
 
+export interface IServerProps {
+  params: { id: number };
+  query: { roomName?: string; password?: string; userNo: number | null };
+}
+
 /*** These are for User page [id] ***/
 
 export interface IChatRoomProps {
@@ -120,7 +125,7 @@ export interface IMessageComponent {
   index: number;
   prevWriter: string;
   prevTime?: string;
-  checkIfIsMyChat: <T>(arg: T) => boolean | undefined;
+  checkIfIsMyChat: <T extends number | string>(arg: T) => boolean | undefined;
   deleteChat: (id: number, msgNo: number) => Promise<void>;
   handleChatDblClick: (index: number, isNumberMatches: boolean) => void;
   userNo: number;

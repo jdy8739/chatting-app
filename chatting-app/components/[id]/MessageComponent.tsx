@@ -2,14 +2,7 @@ import React from "react";
 import { MASTER_PROTOCOL } from "../../constants/enums";
 import Image from "next/image";
 import { IMessageComponent, IMessageContent } from "../../utils/interfaces";
-
-const imageStyle = {
-  maxWidth: "300px",
-  height: "auto",
-  padding: "14px",
-  borderRadius: "inherit",
-  backgroundColor: "inherit",
-};
+import { IMAGE_STYLE } from "../../constants/styles";
 
 function MessageComponent({
   msg,
@@ -144,7 +137,7 @@ function ChatContent({
       {isPicture && !isDeleted ? (
         <Image
           src={`${process.env.NEXT_PUBLIC_API_URL}/room/content-pic/${roomId}/${msgNo}`}
-          style={imageStyle}
+          style={IMAGE_STYLE}
           alt="content"
         />
       ) : (

@@ -31,13 +31,18 @@ function Modal({
     e.stopPropagation();
   const handleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     try {
+      let isRequestSuccessful = false;
       if (e.keyCode === 13) {
         const inputPassword = e.currentTarget.value;
         if (protocol === EXECUTE.ALTER_USER_INFO)
-          await handleUserSettingsSubmit(alteredUserInfo, inputPassword);
+          isRequestSuccessful = await handleUserSettingsSubmit(
+            alteredUserInfo,
+            inputPassword
+          );
         else if (protocol === EXECUTE.WITHDRAW)
-          await handleUserWithdraw(inputPassword);
-        router.push("/chat/list");
+          isRequestSuccessful = await handleUserWithdraw(inputPassword);
+        if (isRequestSuccessful) router.push("/chat/list");
+        else throw new Error();
       }
     } catch (e) {
       const targetRef = modalRef.current;
