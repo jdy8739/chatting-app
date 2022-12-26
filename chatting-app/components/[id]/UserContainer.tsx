@@ -1,24 +1,22 @@
-import axios from "axios";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { truncateList } from "../../lib/store/modules/likedSubjectReducer";
 import { signOut } from "../../lib/store/modules/signInReducer";
-import { IParticipants } from "../../types/types";
 import Image from "next/image";
 import {
   MASTER_PROTOCOL,
   RECEIVE_PROTOCOL,
   SEND_PROTOCOL,
-  SERVER_STATUS,
 } from "../../constants/enums";
-import {
-  CHATO_TOKEN,
-  removeCookie,
-  requestWithTokenAxios,
-} from "../../utils/utils";
+import { CHATO_TOKEN, removeCookie } from "../../utils/utils";
 import { IBannedUserList, IUserContainer } from "../../utils/interfaces";
 import { USER_STYLE } from "../../constants/styles";
+import {
+  fetchBannedUserList,
+  fetchRoomParticipants,
+  unlockBannedIpAddress,
+} from "../../apis/userApis";
 
 let fetchCount = 0;
 
@@ -40,11 +38,8 @@ function UserContainer({
   const [bannedUserList, setBannedUserList] = useState<IBannedUserList[]>([]);
   const fetchNowParticipants = async () => {
     if (fetchCount++ === 0) {
-      const results: IParticipants[] = await (
-        await axios.get(`/room/participants/${roomId}`)
-      ).data;
-      // console.log(results);
-      setParticipants(results);
+      const participants = await fetchRoomParticipants(roomId);
+      if (participants) setParticipants(participants);
     }
   };
   const banThisParticipant = (participantId: string) => {
@@ -56,34 +51,24 @@ function UserContainer({
       message: participantId,
     });
   };
-  const fetchBannedUserList = async () => {
-    try {
-      const { data: bannedUserList } = await requestWithTokenAxios.get(
-        `/room/banned_users/${roomId}`
-      );
+  const getBannedUserList = async () => {
+    const bannedUserList = await fetchBannedUserList(roomId);
+    if (bannedUserList) {
       setIsBannedUserShown(true);
       setBannedUserList(bannedUserList);
-    } catch (e) {
-      handleTokenException();
-    }
+    } else handleTokenException();
   };
   const unlockThisUser = async (bannedIpNo: number) => {
-    try {
-      const { status } = await requestWithTokenAxios.post(`/room/unlock_ban`, {
-        bannedIpNo,
-        roomId,
+    const isUnlockSuccessful = await unlockBannedIpAddress(bannedIpNo, roomId);
+    if (isUnlockSuccessful) {
+      setBannedUserList((bannedUserList) => {
+        return [
+          ...bannedUserList.filter(
+            (bannedUser) => bannedUser.bannedIpNo !== bannedIpNo
+          ),
+        ];
       });
-      if (status === SERVER_STATUS.OK)
-        setBannedUserList((bannedUserList) => {
-          return [
-            ...bannedUserList.filter(
-              (bannedUser) => bannedUser.bannedIpNo !== bannedIpNo
-            ),
-          ];
-        });
-    } catch (e) {
-      handleTokenException();
-    }
+    } else handleTokenException();
   };
   const handleTokenException = () => {
     removeCookie(CHATO_TOKEN, { path: "/" });
@@ -113,7 +98,7 @@ function UserContainer({
           <h4
             className="banned"
             style={isBannedUserShown ? USER_STYLE.MARK : USER_STYLE.NONE}
-            onClick={fetchBannedUserList}
+            onClick={getBannedUserList}
           >
             ban
           </h4>

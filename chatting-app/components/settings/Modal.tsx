@@ -3,6 +3,7 @@ import { EXECUTE, IUserInfo } from "../../pages/user/settings";
 import { motion } from "framer-motion";
 import { modalBgVariant } from "../../utils/utils";
 import { useRouter } from "next/router";
+import { classNames } from "../../constants/className";
 
 interface IModal {
   alteredUserInfo: IUserInfo;
@@ -47,8 +48,11 @@ function Modal({
     } catch (e) {
       const targetRef = modalRef.current;
       if (targetRef) {
-        targetRef.classList.add("wrong-pw");
-        timeOut = setTimeout(() => targetRef.classList.remove("wrong-pw"), 300);
+        targetRef.classList.add(classNames.wrong_pw);
+        timeOut = setTimeout(
+          () => targetRef.classList.remove(classNames.wrong_pw),
+          300
+        );
       }
     }
   };

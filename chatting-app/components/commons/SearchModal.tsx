@@ -1,14 +1,13 @@
-import axios from "axios";
 import { motion } from "framer-motion";
 import { useRouter } from "next/router";
 import React, { useEffect, useRef, useState } from "react";
 import { DragDropContext, Droppable } from "react-beautiful-dnd";
 import { toast } from "react-toastify";
+import { fetchRoomsByKeyword } from "../../apis/roomApis";
+import { zIndex100 } from "../../constants/styles";
 import { IRoom } from "../../types/types";
 import { modalBgVariant, toastConfig } from "../../utils/utils";
 import Room from "../list/Room";
-
-const zIndex = { zIndex: 100 };
 
 let prevPathName = "";
 
@@ -20,12 +19,10 @@ function SearchModal({ hideSearchModal }: { hideSearchModal: () => void }) {
     e.stopPropagation();
   const startSearch = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const value = inputRef.current?.value;
-    if (value !== "") {
-      const { data: searchedRooms }: { data: IRoom[] } = await axios.get(
-        `/room/search?keyword=${value}`
-      );
-      if (searchedRooms.length === 0) {
+    const keyword = inputRef.current?.value;
+    if (keyword) {
+      const searchedRooms = await fetchRoomsByKeyword(keyword);
+      if (!searchedRooms || searchedRooms.length === 0) {
         toast.error("No rooms have been found. :(", toastConfig);
         setSearchedRooms([]);
       } else setSearchedRooms(searchedRooms);
@@ -50,7 +47,7 @@ function SearchModal({ hideSearchModal }: { hideSearchModal: () => void }) {
         initial="initial"
         animate="animate"
         exit="exit"
-        style={zIndex}
+        style={zIndex100}
         onClick={hideSearchModal}
       >
         <div className="modal big-modal" onClick={stopProppagation}>

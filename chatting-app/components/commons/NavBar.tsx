@@ -12,15 +12,11 @@ import {
   signIn,
   signOut,
 } from "../../lib/store/modules/signInReducer";
-import { ISignedIn, IUserInfoSelector } from "../../utils/interfaces";
-import {
-  CHATO_TOKEN,
-  getAccessToken,
-  removeCookie,
-  requestWithTokenAxios,
-} from "../../utils/utils";
+import { IUserInfoSelector } from "../../utils/interfaces";
+import { CHATO_TOKEN, removeCookie } from "../../utils/utils";
 import SearchModal from "./SearchModal";
 import Image from "next/image";
+import { fetchUserInfo, requestSignOut } from "../../apis/userApis";
 
 function NavBar() {
   const router = useRouter();
@@ -32,47 +28,38 @@ function NavBar() {
   const handleSignIn = (userInfo: IUserSignedInInfo) =>
     dispatch(signIn(userInfo));
   const handleSignOut = () => dispatch(signOut());
-  const fetchUserInfo = async () => {
-    const token: string | null = getAccessToken(CHATO_TOKEN);
-    if (token) {
-      requestWithTokenAxios
-        .get(`/user/get-userInfo`)
-        .then(({ status, data }: { status: number; data: ISignedIn }) => {
-          if (status === 200) {
-            if (data) {
-              const likedList: Array<string> = [];
-              if (data.likedSubjects)
-                data.likedSubjects.forEach((subject) =>
-                  likedList.push(subject.subject)
-                );
-              dispatch(replaceList(likedList));
-              delete data.likedSubjects;
-              handleSignIn(data);
-            }
-          }
-        })
-        .catch(() => handleTokenException());
-    }
+  const getUserInfo = async () => {
+    const userInfo = await fetchUserInfo();
+    if (userInfo) {
+      const likedList: Array<string> = [];
+      if (userInfo.likedSubjects)
+        userInfo.likedSubjects.forEach((subject) =>
+          likedList.push(subject.subject)
+        );
+      dispatch(replaceList(likedList));
+      delete userInfo.likedSubjects;
+      handleSignIn(userInfo);
+    } else handleTokenException();
   };
-  const doCommonTasks = () => {
+  const initializeUserInfo = () => {
     removeCookie(CHATO_TOKEN, { path: "/" });
     handleSignOut();
     dispatch(truncateList());
   };
   const handleTokenException = () => {
-    doCommonTasks();
+    initializeUserInfo();
     router.push("/chat/signin");
   };
   const signOutAndClearUserInfo = async () => {
-    const { status } = await requestWithTokenAxios.get(`/user/signout`);
-    if (status === 200) {
-      doCommonTasks();
+    const isSignOutSuccessful = await requestSignOut();
+    if (isSignOutSuccessful) {
+      initializeUserInfo();
       router.push("/chat/list");
     }
   };
   const hideSearchModal = () => setIsSearhModalShown(false);
   useEffect(() => {
-    fetchUserInfo();
+    getUserInfo();
   }, []);
   return (
     <>

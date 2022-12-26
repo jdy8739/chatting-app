@@ -1,16 +1,10 @@
-import axios from "axios";
 import { motion } from "framer-motion";
 import React, { useEffect, useRef } from "react";
 import { toast } from "react-toastify";
+import { checkIfIsPasswordCorrect } from "../../apis/roomApis";
+import { classNames } from "../../constants/className";
+import { IModal } from "../../utils/interfaces";
 import { modalBgVariant, toastConfig } from "../../utils/utils";
-
-interface IModal {
-  roomId?: number;
-  query: string;
-  hideModal: () => void;
-  pushToChatRoom?: (password?: string) => void;
-  addSubjectTable?: (newTableName: string) => void;
-}
 
 let timeOut: NodeJS.Timeout;
 
@@ -32,19 +26,25 @@ function Modal({
     }
   };
   const submitPassword = async () => {
-    const { data } = await axios.post(`/room/enter_password`, {
-      roomId: roomId,
-      password: inputRef.current?.value,
-    });
-    if (data && pushToChatRoom) {
-      pushToChatRoom(inputRef.current?.value);
-      hideModal();
-    } else {
-      const targetRef = modalRef.current;
-      if (targetRef) {
-        targetRef.classList.add("wrong-pw");
-        timeOut = setTimeout(() => targetRef.classList.remove("wrong-pw"), 300);
-        toast.error("Password is not correct.", toastConfig);
+    const inputPassword = inputRef.current?.value;
+    if (roomId && inputPassword) {
+      const isPasswordCorrect = await checkIfIsPasswordCorrect(
+        roomId,
+        inputPassword
+      );
+      if (isPasswordCorrect && pushToChatRoom) {
+        pushToChatRoom(inputRef.current?.value);
+        hideModal();
+      } else {
+        const targetRef = modalRef.current;
+        if (targetRef) {
+          targetRef.classList.add(classNames.wrong_pw);
+          timeOut = setTimeout(
+            () => targetRef.classList.remove(classNames.wrong_pw),
+            300
+          );
+          toast.error("Password is not correct.", toastConfig);
+        }
       }
     }
   };

@@ -3,6 +3,8 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import Seo from "../../components/commons/Seo";
+import { FORM_STYLE } from "../../constants/styles";
+import { ISignUpForm } from "../../utils/interfaces";
 import {
   CHATO_TOKEN,
   getAccessToken,
@@ -11,24 +13,9 @@ import {
   signupAxios,
   toastConfig,
 } from "../../utils/utils";
-
-interface ISignUpForm {
-  id: string;
-  nickName: string;
-  password: string;
-  passwordCheck: string;
-  userProfilePic?: File | null;
-}
+import Image from "next/image";
 
 let userProfilePic: File | undefined;
-
-const STYLE = {
-  FORM: {
-    height: "652px",
-    marginBottom: "150px",
-  },
-  ERROR: { marginTop: "22px" },
-};
 
 function SingUp() {
   const router = useRouter();
@@ -52,7 +39,7 @@ function SingUp() {
     } else {
       const formData = new FormData();
       const values: { [key: string]: string | Blob | null } = { ...data };
-      for (let key in values) {
+      for (const key in values) {
         const value = values[key];
         if (value !== null) formData.append(key, value);
       }
@@ -96,7 +83,7 @@ function SingUp() {
       <Seo title="Chato SignUp"></Seo>
       <form
         className="submit-form"
-        style={STYLE.FORM}
+        style={FORM_STYLE.FORM}
         onSubmit={handleSubmit(handleSignUpFormSubmit)}
       >
         <h4 className="title">Welcome to Chato :)</h4>
@@ -195,7 +182,7 @@ function SingUp() {
             />
           </label>
           <div className="error-message">{errors.passwordCheck?.message}</div>
-          <label style={STYLE.ERROR}>
+          <label style={FORM_STYLE.ERROR}>
             <span className="item">profile pic</span>
             <input
               type="file"
@@ -208,13 +195,12 @@ function SingUp() {
         </div>
         {picBlobString && (
           <div className="profile-image-box">
-            <img
+            <Image
               className="profile-img"
-              style={{
-                backgroundImage: `url(${picBlobString})`,
-                width: "150px",
-                height: "150px",
-              }}
+              width="150px"
+              height="150px"
+              src={picBlobString}
+              alt="profile-image"
             />
             <span className="del-btn" onClick={removeProfilePic}>
               delete
