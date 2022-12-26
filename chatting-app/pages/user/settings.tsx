@@ -28,16 +28,10 @@ import {
   requestAlterUserSettingsInfo,
   requestWithdrawal,
 } from "../../apis/userApis";
+import { SETTINGS_FORM_STYLE } from "../../constants/styles";
 
 let userProfilePic: File | undefined;
 let tmpPicUrl = "";
-
-const STYLE = {
-  HEIGHT: { height: "480px" },
-  JUSTIFY_CENTER: { justifyContent: "center" },
-  PAD_LEFT: { paddingLeft: "60px" },
-  MARGIN: { margin: "40px 0" },
-};
 
 function Settings() {
   const router = useRouter();
@@ -179,11 +173,11 @@ function Settings() {
       <form
         onSubmit={handleSubmit(() => setProtocol(EXECUTE.ALTER_USER_INFO))}
         className="submit-form"
-        style={STYLE.HEIGHT}
+        style={SETTINGS_FORM_STYLE.HEIGHT}
       >
         <h4 className="title">User Information Settings</h4>
         <div className="profile-image-box">
-          <label htmlFor="pic" style={STYLE.JUSTIFY_CENTER}>
+          <label htmlFor="pic" style={SETTINGS_FORM_STYLE.JUSTIFY_CENTER}>
             {picBlobString || userInfo?.profilePicUrl ? (
               <Image
                 // className="profile-img big-img"
@@ -214,7 +208,7 @@ function Settings() {
           <input
             id="pic"
             type="file"
-            style={STYLE.PAD_LEFT}
+            style={SETTINGS_FORM_STYLE.PAD_LEFT}
             {...register("profilePicUrl", {
               onChange: handleFileChange,
             })}
@@ -262,7 +256,7 @@ function Settings() {
             withdrawal
           </span>
         </label>
-        <button className="submit-btn" style={STYLE.MARGIN}>
+        <button className="submit-btn" style={SETTINGS_FORM_STYLE.MARGIN}>
           submit
         </button>
       </form>
