@@ -19,6 +19,7 @@ import {
   IChatRoomProps,
   IFetchMessagesProps,
   IMessageProps,
+  IServerProps,
   IUserInfoSelector,
 } from "../../utils/interfaces";
 import {
@@ -367,11 +368,6 @@ function ChattingRoom({
       </div>
     </>
   );
-}
-
-interface IServerProps {
-  params: { id: number };
-  query: { roomName?: string; password?: string; userNo: number | null };
 }
 
 export async function getServerSideProps({
