@@ -11,19 +11,18 @@ import {
   MASTER_PROTOCOL,
   RECEIVE_PROTOCOL,
   SEND_PROTOCOL,
-} from "../../constants/enums";
+} from "../../utils/enums";
 import {
   IChatRoomProps,
   IMessageProps,
   IServerProps,
   IUserInfoSelector,
+  SocketStomp,
 } from "../../utils/interfaces";
 import {
-  CHATO_TOKEN,
   generateRandonUserId,
-  getAccessToken,
+  getAccessTokenInCookies,
   scrollViewDown,
-  SocketStomp,
 } from "../../utils/utils";
 import {
   fetchRoomOwnerAndPreviousChat,
@@ -33,6 +32,7 @@ import {
   fetchUserPrivateIpAddress,
   requestUserExpel,
 } from "../../apis/userApis";
+import { CHATO_TOKEN } from "../../constants/etc";
 
 let socketStomp: SocketStomp;
 let currentUserName = "";
@@ -217,7 +217,7 @@ function ChattingRoom({
   };
   useEffect(() => {
     socketStomp = new SocketStomp();
-    if (!getAccessToken(CHATO_TOKEN)) startAndSubscribeChatting();
+    if (!getAccessTokenInCookies(CHATO_TOKEN)) startAndSubscribeChatting();
     return () => {
       socketStomp.stomp.disconnect(() => null, {});
       currentUserName = "";

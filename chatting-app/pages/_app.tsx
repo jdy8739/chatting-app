@@ -2,8 +2,10 @@ import type { AppProps } from "next/app";
 import Layout from "../components/Layout";
 import PropTypes from "prop-types";
 import wrapper from "../lib/store/configureStore";
+import { useRouter } from "next/router";
 
 function MyApp({ Component, pageProps }: AppProps) {
+  const router = useRouter();
   return (
     <>
       <Layout>
@@ -17,7 +19,13 @@ function MyApp({ Component, pageProps }: AppProps) {
           font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
             Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue,
             sans-serif;
+          width: 100vw;
+          height: 100vh;
           background-color: #ebfbf4;
+          background-image: ${router.pathname === "/chat/list"
+            ? "none"
+            : `linear-gradient(to top, transparent, #dadada),
+            url("/unpinned.png")`};
         }
 
         a {

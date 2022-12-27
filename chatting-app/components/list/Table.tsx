@@ -1,6 +1,6 @@
 import React from "react";
 import { Draggable, Droppable } from "react-beautiful-dnd";
-import { SECTION } from "../../constants/enums";
+import { SECTION } from "../../utils/enums";
 import Room from "./Room";
 import Image from "next/image";
 import { ITableComponent, ITable } from "../../utils/interfaces";

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { SERVER_STATUS } from "../constants/enums";
+import { SERVER_STATUS } from "../utils/enums";
 import { IChatRoomInfo, IFetchMessagesProps } from "../utils/interfaces";
 
 export const fetchRoomOwnerAndPreviousChat = async ({

@@ -8,8 +8,7 @@ import {
   MASTER_PROTOCOL,
   RECEIVE_PROTOCOL,
   SEND_PROTOCOL,
-} from "../../constants/enums";
-import { CHATO_TOKEN, removeCookie } from "../../utils/utils";
+} from "../../utils/enums";
 import { IBannedUserList, IUserContainer } from "../../utils/interfaces";
 import { USER_STYLE } from "../../constants/styles";
 import {
@@ -17,6 +16,8 @@ import {
   fetchRoomParticipants,
   unlockBannedIpAddress,
 } from "../../apis/userApis";
+import { removeAccessTokenInCookies } from "../../utils/utils";
+import { CHATO_TOKEN } from "../../constants/etc";
 
 let fetchCount = 0;
 
@@ -71,7 +72,7 @@ function UserContainer({
     } else handleTokenException();
   };
   const handleTokenException = () => {
-    removeCookie(CHATO_TOKEN, { path: "/" });
+    removeAccessTokenInCookies(CHATO_TOKEN, { path: "/" });
     dispatch(signOut());
     dispatch(truncateList());
     router.push("/user/signin");

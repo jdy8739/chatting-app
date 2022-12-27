@@ -4,9 +4,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { DragDropContext, Droppable } from "react-beautiful-dnd";
 import { toast } from "react-toastify";
 import { fetchRoomsByKeyword } from "../../apis/roomApis";
-import { zIndex100 } from "../../constants/styles";
+import { modalBgVariant, zIndex100 } from "../../constants/styles";
 import { IRoom } from "../../types/types";
-import { modalBgVariant, toastConfig } from "../../utils/utils";
+import { toastConfig } from "../../utils/utils";
 import Room from "../list/Room";
 
 let prevPathName = "";
@@ -85,6 +85,7 @@ function SearchModal({ hideSearchModal }: { hideSearchModal: () => void }) {
           border: 1px solid green;
           border-radius: 4px;
           padding: 6px;
+          outline: none;
         }
         h3 {
           color: orange;

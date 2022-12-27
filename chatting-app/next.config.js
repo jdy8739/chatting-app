@@ -4,7 +4,7 @@ const nextConfig = {
   productionBrowserSourceMaps: false,
   distDir: "build",
   images: {
-    domains: ["localhost"],
+    domains: ["localhost", "13.124.162.22"], // <-- ec2 java server ip
   },
 };
 

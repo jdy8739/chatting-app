@@ -6,7 +6,7 @@ import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import Modal from "../../components/settings/Modal";
-import { EXECUTE, IUserInfo } from "../../constants/enums";
+import { EXECUTE, IUserInfo } from "../../utils/enums";
 import { truncateList } from "../../lib/store/modules/likedSubjectReducer";
 import {
   IUserSignedInInfo,
@@ -15,11 +15,9 @@ import {
 } from "../../lib/store/modules/signInReducer";
 import { IUserInfoSelector } from "../../utils/interfaces";
 import {
-  CHATO_TOKEN,
   clearPreviousRoomId,
-  getAccessToken,
-  ID_REGEX,
-  removeCookie,
+  getAccessTokenInCookies,
+  removeAccessTokenInCookies,
   toastConfig,
 } from "../../utils/utils";
 import Image from "next/image";
@@ -29,6 +27,7 @@ import {
   requestWithdrawal,
 } from "../../apis/userApis";
 import { SETTINGS_FORM_STYLE } from "../../constants/styles";
+import { CHATO_TOKEN, ID_REGEX } from "../../constants/etc";
 
 let userProfilePic: File | undefined;
 let tmpPicUrl = "";
@@ -114,7 +113,8 @@ function Settings() {
         const value = updatedUserInfo[key];
         if (value !== null) formData.append(key, value);
       }
-      const isAlterSuccessful = await requestAlterUserSettingsInfo(formData);
+      const [isAlterSuccessful, isInvalidToken] =
+        await requestAlterUserSettingsInfo(formData);
       if (isAlterSuccessful) {
         toast.success("Your info has been altered successfully!", toastConfig);
         if (userInfo?.id === data.id) handleSignOut();
@@ -127,8 +127,8 @@ function Settings() {
         }, 500);
         success(true);
       } else {
-        fail(false);
-        handleTokenException();
+        if (isInvalidToken) handleTokenException();
+        else fail(false);
       }
     });
   };
@@ -140,27 +140,29 @@ function Settings() {
   };
   const handleUserWithdraw = (inputPassword: string): Promise<boolean> => {
     return new Promise(async (success, fail) => {
-      const isWithdrawalSuccessful = await requestWithdrawal(inputPassword);
+      const [isWithdrawalSuccessful, isInvalidToken] = await requestWithdrawal(
+        inputPassword
+      );
       if (isWithdrawalSuccessful) {
         toast.success("Your id has been removed.", toastConfig);
-        removeCookie(CHATO_TOKEN, { path: "/" });
+        removeAccessTokenInCookies(CHATO_TOKEN, { path: "/" });
         handleSignIn({ userNo: -1, userId: "", userNickName: "" });
         success(true);
       } else {
-        fail(false);
-        handleTokenException();
+        if (isInvalidToken) handleTokenException();
+        else fail(false);
       }
     });
   };
   const handleTokenException = () => {
-    removeCookie(CHATO_TOKEN, { path: "/" });
+    removeAccessTokenInCookies(CHATO_TOKEN, { path: "/" });
     dispatch(signOut());
     dispatch(truncateList());
     router.push("/chat/list");
   };
   useEffect(() => {
     clearPreviousRoomId();
-    const token = getAccessToken(CHATO_TOKEN);
+    const token = getAccessTokenInCookies(CHATO_TOKEN);
     if (!token) router.push("/chat/list");
     else fetchUserInfo();
     return () => {
@@ -180,15 +182,11 @@ function Settings() {
           <label htmlFor="pic" style={SETTINGS_FORM_STYLE.JUSTIFY_CENTER}>
             {picBlobString || userInfo?.profilePicUrl ? (
               <Image
-                // className="profile-img big-img"
-                src={""}
-                style={{
-                  backgroundImage: `url(${
-                    picBlobString ? picBlobString : userInfo?.profilePicUrl
-                  })`,
-                }}
-                width="100px"
-                height="100px"
+                src={`${
+                  picBlobString ? picBlobString : userInfo?.profilePicUrl
+                }`}
+                width="150px"
+                height="150px"
                 alt="profile-image"
               />
             ) : (

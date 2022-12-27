@@ -33,7 +33,7 @@ export const FORM_STYLE = {
 };
 
 export const SIGN_IN_FORM_STYLE = {
-  FORM: { width: "400px", height: "250px" },
+  FORM: { width: "400px", height: "250px", marginBottom: "100px" },
   TITLE: { width: "80%", margin: "auto" },
   SUBMIT: { width: "100%", marginTop: "45px" },
 };
@@ -43,4 +43,16 @@ export const SETTINGS_FORM_STYLE = {
   JUSTIFY_CENTER: { justifyContent: "center" },
   PAD_LEFT: { paddingLeft: "60px" },
   MARGIN: { margin: "40px 0" },
+};
+
+export const modalBgVariant = {
+  initial: {
+    opacity: 0,
+  },
+  animate: {
+    opacity: 1,
+  },
+  exit: {
+    opacity: 0,
+  },
 };

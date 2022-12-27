@@ -1,7 +1,7 @@
+import webstomp, { Client } from "webstomp-client";
 import { IUserSignedInInfo } from "../lib/store/modules/signInReducer";
 import { IMessageBody, IParticipants, IRoom } from "../types/types";
-import { SECTION, SEND_PROTOCOL } from "../constants/enums";
-import { SocketStomp } from "./utils";
+import { SECTION, SEND_PROTOCOL } from "./enums";
 
 export interface ISubjectListSelector {
   likedSubjectReducer: {
@@ -96,6 +96,25 @@ export interface IFetchMessagesProps {
   count: number;
   password?: string;
   ipAddress?: string;
+}
+
+export interface ICookieOpt {
+  path: string;
+  expires?: Date;
+  secure?: boolean;
+  httpOnly?: boolean;
+}
+
+export class SocketStomp {
+  socket: WebSocket;
+  stomp: Client;
+  constructor() {
+    this.socket = new WebSocket(
+      `${process.env.NEXT_PUBLIC_SOCKET_URL}/stomp/chat`
+    );
+    this.stomp = webstomp.over(this.socket);
+    this.stomp.debug = () => null;
+  }
 }
 
 /*** These are for User Container Component ***/

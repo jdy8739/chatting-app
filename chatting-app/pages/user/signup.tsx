@@ -5,15 +5,10 @@ import { toast } from "react-toastify";
 import Seo from "../../components/commons/Seo";
 import { FORM_STYLE } from "../../constants/styles";
 import { ISignUpForm } from "../../utils/interfaces";
-import {
-  CHATO_TOKEN,
-  getAccessToken,
-  ID_REGEX,
-  PW_REGEX,
-  toastConfig,
-} from "../../utils/utils";
 import Image from "next/image";
 import { requestSignUp } from "../../apis/userApis";
+import { CHATO_TOKEN, ID_REGEX, PW_REGEX } from "../../constants/etc";
+import { getAccessTokenInCookies, toastConfig } from "../../utils/utils";
 
 let userProfilePic: File | undefined;
 
@@ -70,7 +65,7 @@ function SingUp() {
   useEffect(() => {
     setIsRendered(true);
     // clearPreviousRoomId();
-    if (getAccessToken(CHATO_TOKEN)) {
+    if (getAccessTokenInCookies(CHATO_TOKEN)) {
       toast.error("Please sign out ahead of sign up.", toastConfig);
       router.push("/chat/list");
     }

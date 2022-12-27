@@ -1,9 +1,9 @@
 import React, { useEffect, useRef } from "react";
-import { EXECUTE, IUserInfo } from "../../pages/user/settings";
 import { motion } from "framer-motion";
-import { modalBgVariant } from "../../utils/utils";
 import { useRouter } from "next/router";
 import { classNames } from "../../constants/className";
+import { EXECUTE, IUserInfo } from "../../utils/enums";
+import { modalBgVariant } from "../../constants/styles";
 
 interface IModal {
   alteredUserInfo: IUserInfo;
