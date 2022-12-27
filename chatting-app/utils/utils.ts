@@ -3,8 +3,8 @@ import { toast } from "react-toastify";
 import { Cookies } from "react-cookie";
 import { ICookieOpt, ISignedIn } from "./interfaces";
 import { CHATO_TOKEN } from "../constants/etc";
+import { SERVER_STATUS } from "./enums";
 
-axios.defaults.baseURL = `${process.env.NEXT_PUBLIC_API_URL}`;
 const cookies = new Cookies();
 
 export const setCookie = (name: string, value: string, options: ICookieOpt) => {
@@ -65,6 +65,8 @@ export const toastConfig = {
   theme: "colored",
 };
 
+axios.defaults.baseURL = `${process.env.NEXT_PUBLIC_API_URL}`;
+
 export const signupAxios = axios.create();
 
 signupAxios.interceptors.response.use(
@@ -76,16 +78,16 @@ signupAxios.interceptors.response.use(
 );
 
 const handleErrors = (status: number) => {
-  if (status === 500) {
+  if (status === SERVER_STATUS.INTERNET_SERVER_ERROR) {
     toast.error("Please upload your pic in smaller sizes.", toastConfig);
-  } else if (status === 400) {
+  } else if (status === SERVER_STATUS.BAD_REQUEST) {
     toast.error(
       "There might be some errors on the server. Please try later. :(",
       toastConfig
     );
-  } else if (status === 409) {
+  } else if (status === SERVER_STATUS.CONFLICT) {
     toast.error("Id is duplicate. Please try another id.", toastConfig);
-  } else if (status === 403) {
+  } else if (status === SERVER_STATUS.FORBIDDEN) {
     toast.error("You are not authorized!", toastConfig);
   }
 };
@@ -128,7 +130,8 @@ requestWithTokenAxios.interceptors.request.use(
 requestWithTokenAxios.interceptors.response.use(
   (response: AxiosResponse) => {
     const data = response.data;
-    if (typeof data === "string" && data.length > 50) {
+    const minimumTokenLenght = 50;
+    if (typeof data === "string" && data.length > minimumTokenLenght) {
       const refreshToken = getRefreshTokenInCookies(CHATO_TOKEN);
       if (refreshToken) bakeCookie(data, refreshToken);
     }
@@ -136,7 +139,9 @@ requestWithTokenAxios.interceptors.response.use(
   },
   async ({ response, config }: AxiosError) => {
     const status = response?.status;
-    if (status === 401) {
+    const refreshToken = getRefreshTokenInCookies(CHATO_TOKEN);
+    const prevToken = getAccessTokenInCookies(CHATO_TOKEN);
+    if (status === 401 && refreshToken && prevToken) {
       const targetUrl = config.url;
       const method = config.method;
       const body = config.data;
@@ -148,24 +153,23 @@ requestWithTokenAxios.interceptors.response.use(
         `${process.env.NEXT_PUBLIC_API_URL}/user/reissue_token`,
         {
           headers: {
-            refresh_token: `Bearer ${getRefreshTokenInCookies(CHATO_TOKEN)}`,
-            authorization: `Bearer ${getAccessTokenInCookies(CHATO_TOKEN)}`,
+            refresh_token: `Bearer ${refreshToken}`,
+            authorization: `Bearer ${prevToken}`,
           },
         }
       );
-      if (accessTokenRequestStatus === 200 && accessToken) {
+      if (accessTokenRequestStatus === SERVER_STATUS.OK && accessToken) {
         const refreshToken = getRefreshTokenInCookies(CHATO_TOKEN);
         if (refreshToken) bakeCookie(accessToken, refreshToken);
         const result = await resendRequest(method, targetUrl, body, env);
-
-        if (result?.status === 200 && "data" in result)
+        if (result?.status === SERVER_STATUS.OK && "data" in result)
           return {
-            status: 200,
+            status: SERVER_STATUS.OK,
             data: result.data,
           };
         else return { status: result?.status };
-      } else if (accessTokenRequestStatus !== 200) {
-        return { status: 401 };
+      } else if (accessTokenRequestStatus !== SERVER_STATUS.OK) {
+        return { status: SERVER_STATUS.UNAUTHORIZED };
       }
     } else handleTokenErrors(response?.status);
     return response;
@@ -173,16 +177,19 @@ requestWithTokenAxios.interceptors.response.use(
 );
 
 const handleTokenErrors = (status: number | undefined) => {
-  if (status === 403 || status === 400)
+  if (
+    status === SERVER_STATUS.FORBIDDEN ||
+    status === SERVER_STATUS.BAD_REQUEST
+  )
     toast.error(
       "Unauthorized or, the password does not matches!.",
       toastConfig
     );
-  else if (status === 409)
+  else if (status === SERVER_STATUS.CONFLICT)
     toast.error("Id is duplicate. Please try another id.", toastConfig);
-  else if (status === 404)
+  else if (status === SERVER_STATUS.NOT_FOUND)
     toast.error("No such Id in our records.", toastConfig);
-  else if (status === 304)
+  else if (status === SERVER_STATUS.NOT_MODIFIED)
     toast.error("The number of participants exceeds the limit.");
   else toast.error("It cannot be done!", toastConfig);
 };

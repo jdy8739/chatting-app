@@ -113,7 +113,8 @@ function Settings() {
         const value = updatedUserInfo[key];
         if (value !== null) formData.append(key, value);
       }
-      const isAlterSuccessful = await requestAlterUserSettingsInfo(formData);
+      const [isAlterSuccessful, isInvalidToken] =
+        await requestAlterUserSettingsInfo(formData);
       if (isAlterSuccessful) {
         toast.success("Your info has been altered successfully!", toastConfig);
         if (userInfo?.id === data.id) handleSignOut();
@@ -126,8 +127,8 @@ function Settings() {
         }, 500);
         success(true);
       } else {
-        fail(false);
-        handleTokenException();
+        if (isInvalidToken) handleTokenException();
+        else fail(false);
       }
     });
   };
@@ -139,15 +140,17 @@ function Settings() {
   };
   const handleUserWithdraw = (inputPassword: string): Promise<boolean> => {
     return new Promise(async (success, fail) => {
-      const isWithdrawalSuccessful = await requestWithdrawal(inputPassword);
+      const [isWithdrawalSuccessful, isInvalidToken] = await requestWithdrawal(
+        inputPassword
+      );
       if (isWithdrawalSuccessful) {
         toast.success("Your id has been removed.", toastConfig);
         removeAccessTokenInCookies(CHATO_TOKEN, { path: "/" });
         handleSignIn({ userNo: -1, userId: "", userNickName: "" });
         success(true);
       } else {
-        fail(false);
-        handleTokenException();
+        if (isInvalidToken) handleTokenException();
+        else fail(false);
       }
     });
   };

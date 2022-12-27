@@ -126,26 +126,30 @@ export const fetchUserSettingsInfo = async () => {
 
 export const requestAlterUserSettingsInfo = async (formData: FormData) => {
   let isAlterSuccessful = false;
+  let isInvalidToken = false;
   try {
     const { status } = await requestWithTokenAxios.put(`/user/alter`, formData);
     if (status === SERVER_STATUS.OK) isAlterSuccessful = true;
   } catch (e) {
+    isInvalidToken = true;
     // show toast;
   }
-  return isAlterSuccessful;
+  return [isAlterSuccessful, isInvalidToken];
 };
 
 export const requestWithdrawal = async (inputPassword: string) => {
   let isWithdrawalSuccessful = false;
+  let isInvalidToken = false;
   try {
     const { status } = await requestWithTokenAxios.put(`/user/withdraw`, {
       inputPassword,
     });
     if (status === SERVER_STATUS.OK) isWithdrawalSuccessful = true;
   } catch (e) {
+    isInvalidToken = true;
     // show toast;
   }
-  return isWithdrawalSuccessful;
+  return [isWithdrawalSuccessful, isInvalidToken];
 };
 
 export const requestSignIn = async (id: string, password: string) => {
