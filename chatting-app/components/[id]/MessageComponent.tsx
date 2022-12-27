@@ -1,5 +1,5 @@
 import React from "react";
-import { MASTER_PROTOCOL } from "../../constants/enums";
+import { MASTER_PROTOCOL } from "../../utils/enums";
 import Image from "next/image";
 import { IMessageComponent, IMessageContent } from "../../utils/interfaces";
 import { IMAGE_STYLE } from "../../constants/styles";

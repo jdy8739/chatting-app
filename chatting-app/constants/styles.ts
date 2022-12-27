@@ -44,3 +44,15 @@ export const SETTINGS_FORM_STYLE = {
   PAD_LEFT: { paddingLeft: "60px" },
   MARGIN: { margin: "40px 0" },
 };
+
+export const modalBgVariant = {
+  initial: {
+    opacity: 0,
+  },
+  animate: {
+    opacity: 1,
+  },
+  exit: {
+    opacity: 0,
+  },
+};

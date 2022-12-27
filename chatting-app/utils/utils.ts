@@ -1,58 +1,34 @@
 import axios, { AxiosError, AxiosResponse } from "axios";
 import { toast } from "react-toastify";
 import { Cookies } from "react-cookie";
-import webstomp, { Client } from "webstomp-client";
-import { ISignedIn } from "./interfaces";
+import { ICookieOpt, ISignedIn } from "./interfaces";
+import { CHATO_TOKEN } from "../constants/etc";
 
 axios.defaults.baseURL = `${process.env.NEXT_PUBLIC_API_URL}`;
 const cookies = new Cookies();
-
-export const API_KEY_REQUEST_URL = "https://api.ipdata.co?api-key=";
-
-interface ICookieOpt {
-  path: string;
-  expires?: Date;
-  secure?: boolean;
-  httpOnly?: boolean;
-}
-
-export class SocketStomp {
-  socket: WebSocket;
-  stomp: Client;
-  constructor() {
-    this.socket = new WebSocket(
-      `${process.env.NEXT_PUBLIC_SOCKET_URL}/stomp/chat`
-    );
-    this.stomp = webstomp.over(this.socket);
-    this.stomp.debug = () => null;
-  }
-}
 
 export const setCookie = (name: string, value: string, options: ICookieOpt) => {
   return cookies.set(name, value, options);
 };
 
-export const getAccessToken = (name: string): string | null => {
+export const getAccessTokenInCookies = (name: string): string | null => {
   const tokens: string[] = cookies.get(name);
   if (tokens) return tokens[0];
   else return null;
 };
 
-export const getRefreshToken = (name: string): string | null => {
+export const getRefreshTokenInCookies = (name: string): string | null => {
   const tokens: string[] = cookies.get(name);
   if (tokens) return tokens[1];
   else return null;
 };
 
-export const removeCookie = (name: string, options: ICookieOpt) => {
+export const removeAccessTokenInCookies = (
+  name: string,
+  options: ICookieOpt
+) => {
   return cookies.remove(name, options);
 };
-
-export const CHATO_TOKEN = "CHATO_TOKEN";
-
-export const ID_REGEX = /^(?!.*[!#$%&’'*+/=?^_`])[a-zA-Z0-9]+$/;
-
-export const PW_REGEX = /^(?=.*[~`!@#$%^&*()--+={}\[\]|\\:;"'<>,.?/_₹])/;
 
 export const generateRandonUserId = () => {
   const bytes = new Uint32Array(3);
@@ -125,7 +101,7 @@ signinAxios.interceptors.response.use(
       bakeCookie(accessToken, refreshToken);
       delete response.data.refreshToken;
     } else if (accessToken) {
-      const refreshToken = getRefreshToken(CHATO_TOKEN);
+      const refreshToken = getRefreshTokenInCookies(CHATO_TOKEN);
       if (refreshToken) bakeCookie(accessToken, refreshToken);
     }
     delete response.data.accessToken;
@@ -141,7 +117,7 @@ export const requestWithTokenAxios = axios.create();
 
 requestWithTokenAxios.interceptors.request.use(
   (request) => {
-    const accessToken = getAccessToken(CHATO_TOKEN);
+    const accessToken = getAccessTokenInCookies(CHATO_TOKEN);
     if (request.headers && accessToken)
       request.headers["authorization"] = `Bearer ${accessToken}`;
     return request;
@@ -153,7 +129,7 @@ requestWithTokenAxios.interceptors.response.use(
   (response: AxiosResponse) => {
     const data = response.data;
     if (typeof data === "string" && data.length > 50) {
-      const refreshToken = getRefreshToken(CHATO_TOKEN);
+      const refreshToken = getRefreshTokenInCookies(CHATO_TOKEN);
       if (refreshToken) bakeCookie(data, refreshToken);
     }
     return response;
@@ -172,13 +148,13 @@ requestWithTokenAxios.interceptors.response.use(
         `${process.env.NEXT_PUBLIC_API_URL}/user/reissue_token`,
         {
           headers: {
-            refresh_token: `Bearer ${getRefreshToken(CHATO_TOKEN)}`,
-            authorization: `Bearer ${getAccessToken(CHATO_TOKEN)}`,
+            refresh_token: `Bearer ${getRefreshTokenInCookies(CHATO_TOKEN)}`,
+            authorization: `Bearer ${getAccessTokenInCookies(CHATO_TOKEN)}`,
           },
         }
       );
       if (accessTokenRequestStatus === 200 && accessToken) {
-        const refreshToken = getRefreshToken(CHATO_TOKEN);
+        const refreshToken = getRefreshTokenInCookies(CHATO_TOKEN);
         if (refreshToken) bakeCookie(accessToken, refreshToken);
         const result = await resendRequest(method, targetUrl, body, env);
 
@@ -211,7 +187,7 @@ const handleTokenErrors = (status: number | undefined) => {
   else toast.error("It cannot be done!", toastConfig);
 };
 
-type Tenv = (new (...args: any[]) => object) | undefined;
+type Tenv = (new (...args: unknown[]) => object) | undefined;
 
 type result = AxiosResponse | AxiosError | undefined;
 
@@ -258,18 +234,6 @@ const resendRequest = (
       fail(result);
     }
   });
-};
-
-export const modalBgVariant = {
-  initial: {
-    opacity: 0,
-  },
-  animate: {
-    opacity: 1,
-  },
-  exit: {
-    opacity: 0,
-  },
 };
 
 export const getNowTime = (): string => {

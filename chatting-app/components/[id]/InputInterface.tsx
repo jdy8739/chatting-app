@@ -2,11 +2,12 @@ import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import React, { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { LIMIT, MASTER_PROTOCOL, SEND_PROTOCOL } from "../../constants/enums";
-import { getNowTime, modalBgVariant, toastConfig } from "../../utils/utils";
+import { LIMIT, MASTER_PROTOCOL, SEND_PROTOCOL } from "../../utils/enums";
+import { getNowTime, toastConfig } from "../../utils/utils";
 import { IInputInterface } from "../../utils/interfaces";
 import SettingsContent from "./SettingsContent";
 import { requestRoomDelete } from "../../apis/roomApis";
+import { modalBgVariant } from "../../constants/styles";
 
 let imageFile: ArrayBuffer | null;
 

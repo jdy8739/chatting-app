@@ -1,5 +1,5 @@
 import axios, { AxiosError } from "axios";
-import { SERVER_STATUS } from "../constants/enums";
+import { SERVER_STATUS } from "../utils/enums";
 import { IRoom } from "../types/types";
 import { IRoomMoved } from "../utils/interfaces";
 import { requestWithTokenAxios } from "../utils/utils";

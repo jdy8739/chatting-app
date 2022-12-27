@@ -13,10 +13,14 @@ import {
   signOut,
 } from "../../lib/store/modules/signInReducer";
 import { IUserInfoSelector } from "../../utils/interfaces";
-import { CHATO_TOKEN, removeCookie } from "../../utils/utils";
 import SearchModal from "./SearchModal";
 import Image from "next/image";
 import { fetchUserInfo, requestSignOut } from "../../apis/userApis";
+import { CHATO_TOKEN } from "../../constants/etc";
+import {
+  getAccessTokenInCookies,
+  removeAccessTokenInCookies,
+} from "../../utils/utils";
 
 function NavBar() {
   const router = useRouter();
@@ -42,7 +46,7 @@ function NavBar() {
     } else handleTokenException();
   };
   const initializeUserInfo = () => {
-    removeCookie(CHATO_TOKEN, { path: "/" });
+    removeAccessTokenInCookies(CHATO_TOKEN, { path: "/" });
     handleSignOut();
     dispatch(truncateList());
   };
@@ -59,7 +63,8 @@ function NavBar() {
   };
   const hideSearchModal = () => setIsSearhModalShown(false);
   useEffect(() => {
-    getUserInfo();
+    const token = getAccessTokenInCookies(CHATO_TOKEN);
+    if (token) getUserInfo();
   }, []);
   return (
     <>

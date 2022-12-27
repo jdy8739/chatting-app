@@ -1,15 +1,12 @@
-import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import ClassifiedRooms from "../../components/list/Table";
 import { IMessageBody, IRoom } from "../../types/types";
 import {
-  CHATO_TOKEN,
-  getAccessToken,
+  getAccessTokenInCookies,
   getPinnedSubjectStorage,
-  removeCookie,
+  removeAccessTokenInCookies,
   setPinnedSubjectStorage,
-  SocketStomp,
 } from "../../utils/utils";
 import BottomIcons from "../../components/list/BottomIcons";
 import { useSelector, useDispatch } from "react-redux";
@@ -25,12 +22,13 @@ import {
   MSG_TYPE,
   SECTION,
   SEND_PROTOCOL,
-} from "../../constants/enums";
+} from "../../utils/enums";
 import {
   IRoomMoved,
   ISubjectListSelector,
   ITable,
   IUserInfoSelector,
+  SocketStomp,
 } from "../../utils/interfaces";
 import { TABLE_SHOW } from "../../constants/styles";
 import {
@@ -39,6 +37,7 @@ import {
   requestRoomDelete,
   requestToggleSubjectLike,
 } from "../../apis/roomApis";
+import { CHATO_TOKEN } from "../../constants/etc";
 
 let socketStomp: SocketStomp;
 let renderingCount = 0;
@@ -352,7 +351,8 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
   };
   const toggleLikeList = useCallback(
     (destination: SECTION, subject: string, subjectList: string[]) => {
-      if (!getAccessToken(CHATO_TOKEN)) setPinnedSubjectStorage(subject);
+      if (!getAccessTokenInCookies(CHATO_TOKEN))
+        setPinnedSubjectStorage(subject);
       else toggleSubjectToServer(subject, subjectList);
       updateTableMoved(destination, subject);
     },
@@ -374,7 +374,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     } else handleTokenException();
   };
   const handleTokenException = () => {
-    removeCookie(CHATO_TOKEN, { path: "/" });
+    removeAccessTokenInCookies(CHATO_TOKEN, { path: "/" });
     dispatch(signOut());
     dispatch(truncateList());
     router.push("/user/signin");
@@ -384,7 +384,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     socketStomp.stomp.connect({}, () => {
       subscribeRoomParticipants();
     });
-    if (!getAccessToken(CHATO_TOKEN))
+    if (!getAccessTokenInCookies(CHATO_TOKEN))
       arrangeRoomList(getPinnedSubjectStorage());
     return () => {
       socketStomp.stomp.disconnect(() => null, {});

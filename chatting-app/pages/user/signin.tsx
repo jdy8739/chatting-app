@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import { requestSignIn } from "../../apis/userApis";
+import { CHATO_TOKEN } from "../../constants/etc";
 import { SIGN_IN_FORM_STYLE } from "../../constants/styles";
 import { replaceList } from "../../lib/store/modules/likedSubjectReducer";
 import {
@@ -11,9 +12,8 @@ import {
   signIn,
 } from "../../lib/store/modules/signInReducer";
 import {
-  CHATO_TOKEN,
   clearPreviousRoomId,
-  getAccessToken,
+  getAccessTokenInCookies,
   toastConfig,
 } from "../../utils/utils";
 
@@ -45,7 +45,7 @@ function Signin() {
   };
   useEffect(() => {
     clearPreviousRoomId();
-    if (getAccessToken(CHATO_TOKEN)) {
+    if (getAccessTokenInCookies(CHATO_TOKEN)) {
       toast.error("You are already singed in.", toastConfig);
       router.push("/chat/list");
     }

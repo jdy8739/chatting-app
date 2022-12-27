@@ -1,13 +1,13 @@
 import axios from "axios";
-import { SERVER_STATUS } from "../constants/enums";
+import { SERVER_STATUS } from "../utils/enums";
 import { Iipdata, IParticipants } from "../types/types";
 import { IBannedUserList, ISignedIn } from "../utils/interfaces";
 import {
-  API_KEY_REQUEST_URL,
   requestWithTokenAxios,
   signinAxios,
   signupAxios,
 } from "../utils/utils";
+import { API_KEY_REQUEST_URL } from "../constants/routes";
 
 export const fetchUserInfo = async () => {
   let userInfo = null;
