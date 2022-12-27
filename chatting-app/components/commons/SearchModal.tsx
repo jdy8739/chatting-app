@@ -85,6 +85,7 @@ function SearchModal({ hideSearchModal }: { hideSearchModal: () => void }) {
           border: 1px solid green;
           border-radius: 4px;
           padding: 6px;
+          outline: none;
         }
         h3 {
           color: orange;

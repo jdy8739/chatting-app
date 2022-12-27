@@ -182,15 +182,11 @@ function Settings() {
           <label htmlFor="pic" style={SETTINGS_FORM_STYLE.JUSTIFY_CENTER}>
             {picBlobString || userInfo?.profilePicUrl ? (
               <Image
-                // className="profile-img big-img"
-                src={""}
-                style={{
-                  backgroundImage: `url(${
-                    picBlobString ? picBlobString : userInfo?.profilePicUrl
-                  })`,
-                }}
-                width="100px"
-                height="100px"
+                src={`${
+                  picBlobString ? picBlobString : userInfo?.profilePicUrl
+                }`}
+                width="150px"
+                height="150px"
                 alt="profile-image"
               />
             ) : (

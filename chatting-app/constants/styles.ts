@@ -33,7 +33,7 @@ export const FORM_STYLE = {
 };
 
 export const SIGN_IN_FORM_STYLE = {
-  FORM: { width: "400px", height: "250px" },
+  FORM: { width: "400px", height: "250px", marginBottom: "100px" },
   TITLE: { width: "80%", margin: "auto" },
   SUBMIT: { width: "100%", marginTop: "45px" },
 };
