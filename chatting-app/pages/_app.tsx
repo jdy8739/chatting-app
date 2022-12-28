@@ -71,7 +71,7 @@ function MyApp({ Component, pageProps }: AppProps) {
         }
         .master-chat {
           text-align: center;
-          color: rgb(179, 179, 179);
+          color: grey;
           font-size: 12px;
           display: block;
         }
@@ -85,6 +85,10 @@ function MyApp({ Component, pageProps }: AppProps) {
         }
         .others-chat-box {
           text-align: left;
+        }
+        .chat-time {
+          font-size: 7px;
+          color: #888888;
         }
         .deleted-chat {
           background-color: gray;
@@ -323,6 +327,19 @@ function MyApp({ Component, pageProps }: AppProps) {
         }
         input[type="range"]:focus::-webkit-slider-runnable-track {
           background: #ccc;
+        }
+        input[type="file"]::file-selector-button {
+          width: 75px;
+          height: 30px;
+          background: transparent;
+          border: 1px solid orange;
+          border-radius: 15px;
+          cursor: pointer;
+          transition: all 1s;
+        }
+        input[type="file"]::file-selector-button:hover {
+          background-color: orange;
+          color: white;
         }
       `}</style>
     </>
