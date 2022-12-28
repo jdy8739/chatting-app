@@ -36,6 +36,7 @@ const Home: NextPage = () => {
         }
         .relative {
           position: relative;
+          z-index: 0;
         }
         .greetings {
           top: 200px;

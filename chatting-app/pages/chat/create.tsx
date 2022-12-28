@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
+import Seo from "../../components/commons/Seo";
 import { IUserSignedInInfo } from "../../lib/store/modules/signInReducer";
 import { toastConfig } from "../../utils/utils";
 
@@ -100,14 +101,14 @@ function CreateChat() {
     // clearPreviousRoomId();
   }, []);
   return (
-    <div className="all">
+    <div>
+      <Seo title="Chato room create"></Seo>
       <form
-        className="submit-form"
-        style={{ height: "450px" }}
+        className="submit-form slide-up"
         onSubmit={handleSubmit(submitRoomForm)}
       >
-        <h4 className="title">Make your own chat room :)</h4>
         <div className="form-body">
+          <h4 className="title">Make your own chat room :)</h4>
           <label>
             <input
               className="input-box"
@@ -212,17 +213,15 @@ function CreateChat() {
           </label>
           <div className="error-message">{errors.password?.message}</div>
         </div>
-        <button className="submit-btn" style={{ marginTop: "45px" }}>
-          submit
-        </button>
+        <button className="submit-btn">submit</button>
+        <style jsx>{`
+          .slide-up {
+            transition: all 1s;
+            opacity: ${isRendered ? "1" : "0"};
+            transform: translateY(${isRendered ? "0px" : "80px"});
+          }
+        `}</style>
       </form>
-      <style jsx>{`
-        .all {
-          transition: all 1s;
-          opacity: ${isRendered ? "1" : "0"};
-          transform: translateY(${isRendered ? "0px" : "80px"});
-        }
-      `}</style>
     </div>
   );
 }

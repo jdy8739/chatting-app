@@ -74,15 +74,14 @@ function SingUp() {
     };
   }, []);
   return (
-    <div className="all">
-      <Seo title="Chato SignUp"></Seo>
+    <div style={{ height: "1000px" }}>
+      <Seo title="Chato Sign up"></Seo>
       <form
-        className="submit-form"
-        style={FORM_STYLE.FORM}
+        className="submit-form slide-up"
         onSubmit={handleSubmit(handleSignUpFormSubmit)}
       >
-        <h4 className="title">Welcome to Chato :)</h4>
-        <div className="form-body">
+        <div className="form-body" style={{ height: "650px" }}>
+          <h4 className="title">Welcome to Chato :)</h4>
           <label htmlFor="id">
             <span className="item">input your id</span>
             <input
@@ -187,28 +186,24 @@ function SingUp() {
               })}
             />
           </label>
+          {picBlobString && (
+            <div className="profile-image-box">
+              <Image
+                className="profile-img"
+                width="150px"
+                height="150px"
+                src={picBlobString}
+                alt="profile-image"
+              />
+              <span className="del-btn" onClick={removeProfilePic}>
+                delete
+              </span>
+            </div>
+          )}
         </div>
-        {picBlobString && (
-          <div className="profile-image-box">
-            <Image
-              className="profile-img"
-              width="150px"
-              height="150px"
-              src={picBlobString}
-              alt="profile-image"
-            />
-            <span className="del-btn" onClick={removeProfilePic}>
-              delete
-            </span>
-          </div>
-        )}
-        <button className="submit-btn submit">submit</button>
+        <button className="submit-btn">submit</button>
       </form>
       <style jsx>{`
-        .submit {
-          position: absolute;
-          bottom: -80px;
-        }
         .profile-image-box {
           width: 150px;
           height: 150px;
@@ -226,7 +221,7 @@ function SingUp() {
           cursor: pointer;
           font-size: 12px;
         }
-        .all {
+        .slide-up {
           transition: all 1s;
           opacity: ${isRendered ? "1" : "0"};
           transform: translateY(${isRendered ? "0px" : "80px"});

@@ -45,14 +45,14 @@ function SettingsContent({
       <div>
         <button
           onClick={() => setSettingOption(true)}
-          style={{ color: settingOption ? "orange" : "rgb(0, 219, 146)" }}
+          className={`${settingOption ? "chosen" : "normal"}`}
         >
           password
         </button>
         &emsp;
         <button
           onClick={() => setSettingOption(false)}
-          style={{ color: !settingOption ? "orange" : "rgb(0, 219, 146)" }}
+          className={`${!settingOption ? "chosen" : "normal"}`}
         >
           capacity
         </button>
@@ -60,7 +60,7 @@ function SettingsContent({
       <form onSubmit={handleSubmit(submitSettingsChange)}>
         {settingOption ? (
           <div>
-            <p>Set the room password.</p>
+            <p className="title">Set the room password.</p>
             <span className="small">use password</span>
             <input
               type="checkbox"
@@ -108,11 +108,37 @@ function SettingsContent({
             <span className="small">capacity {getValues("limitation")}</span>
           </div>
         )}
-        <button type="submit">apply</button>
+        <button type="submit" className="normal">
+          apply
+        </button>
       </form>
       <style jsx>{`
+        p,
+        span {
+          color: grey;
+        }
         .small {
           font-size: 12px;
+        }
+        .normal {
+          border: rgb(0, 219, 146);
+          color: rgb(0, 219, 146);
+          background-color: rgb(0, 219, 146, 0.3);
+          border: 1px solid rgb(0, 219, 146);
+        }
+        .normal:hover {
+          color: white;
+          background-color: rgb(0, 219, 146);
+        }
+        .chosen {
+          border: rgb(239, 158, 66);
+          color: rgb(239, 158, 66);
+          background-color: rgb(239, 158, 66, 0.3);
+          border: 1px solid rgb(239, 158, 66);
+        }
+        .chosen:hover {
+          color: white;
+          background-color: rgb(239, 158, 66);
         }
       `}</style>
     </>

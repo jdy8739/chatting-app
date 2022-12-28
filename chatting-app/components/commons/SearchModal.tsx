@@ -40,7 +40,7 @@ function SearchModal({ hideSearchModal }: { hideSearchModal: () => void }) {
     prevPathName = router.pathname;
   }, [router.pathname]);
   return (
-    <>
+    <div>
       <motion.div
         className="modal-bg"
         variants={modalBgVariant}
@@ -53,8 +53,9 @@ function SearchModal({ hideSearchModal }: { hideSearchModal: () => void }) {
         <div className="modal big-modal" onClick={stopProppagation}>
           <h3>search chat rooms</h3>
           <form onSubmit={startSearch}>
-            <input ref={inputRef} />
-            <button>search</button>
+            <input ref={inputRef} className="input-box" />
+            &nbsp;
+            <button className="outlined-btn">search</button>
           </form>
           <br></br>
           <DragDropContext>
@@ -80,19 +81,16 @@ function SearchModal({ hideSearchModal }: { hideSearchModal: () => void }) {
       <style jsx>{`
         .big-modal {
           height: 500px;
-        }
-        input {
-          border: 1px solid green;
-          border-radius: 4px;
-          padding: 6px;
-          outline: none;
+          width: 300px;
+          z-index: 1000;
+          overflow-y: scroll;
         }
         h3 {
           color: orange;
           font-weight: bold;
         }
       `}</style>
-    </>
+    </div>
   );
 }
 

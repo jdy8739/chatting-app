@@ -254,11 +254,6 @@ function ChattingRoom({
   return (
     <>
       <Seo title={`Chato room ${roomName}`} />
-      {isAllChatShown || (
-        <div className="previous-chat-show" onClick={showPreviousChat}>
-          <h4>show previous</h4>
-        </div>
-      )}
       <UserContainer
         roomId={id}
         participants={participants}
@@ -271,6 +266,11 @@ function ChattingRoom({
         numberOfPcps={numberOfPcps}
       />
       <div className="container">
+        {isAllChatShown || (
+          <div className="previous-chat-show" onClick={showPreviousChat}>
+            <h4>show previous</h4>
+          </div>
+        )}
         {messages.map((msg, i) => {
           return (
             <MessageComponent
@@ -318,6 +318,7 @@ function ChattingRoom({
             background-color: gray;
             position: absolute;
             top: 65px;
+            right: 0;
             opacity: 0.4;
             cursor: pointer;
             display: flex;
