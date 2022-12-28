@@ -80,6 +80,8 @@ function SearchModal({ hideSearchModal }: { hideSearchModal: () => void }) {
       <style jsx>{`
         .big-modal {
           height: 500px;
+          z-index: 1000;
+          overflow-y: scroll;
         }
         input {
           border: 1px solid green;
