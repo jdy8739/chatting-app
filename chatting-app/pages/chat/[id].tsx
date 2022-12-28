@@ -158,16 +158,14 @@ function ChattingRoom({
   };
   const handleChatDblClick = useCallback(
     (index: number, isNumberMatches: boolean) => {
-      if (isNumberMatches) {
-        clearTimeout(timeOut);
-        setTargetChatNumber(-1);
-      } else {
+      if (isNumberMatches) setTargetChatNumber(-1);
+      else {
         setTargetChatNumber(index);
-        clearTimeout(timeOut);
         timeOut = setTimeout(() => {
           setTargetChatNumber(-1);
         }, 3000);
       }
+      clearTimeout(timeOut);
     },
     []
   );
@@ -298,10 +296,6 @@ function ChattingRoom({
             border-radius: 12px;
             padding: 12px;
             resize: vertical;
-          }
-          .time {
-            font-size: 7px;
-            color: gray;
           }
           .picture-submit {
             border: 1px solid rgb(0, 219, 146);

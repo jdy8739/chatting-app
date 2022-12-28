@@ -3,6 +3,7 @@ import { MASTER_PROTOCOL } from "../../utils/enums";
 import Image from "next/image";
 import { IMessageComponent, IMessageContent } from "../../utils/interfaces";
 import { IMAGE_STYLE } from "../../constants/styles";
+import { PUBLIC_ICONS_PATH } from "../../constants/icons";
 
 function MessageComponent({
   msg,
@@ -48,7 +49,7 @@ function MessageComponent({
           {index !== 0 &&
             isSameTimeMessage &&
             ((userNo < 0 && checkIfIsMyChat(msg.writer)) || isMyMessage) && (
-              <ChatTimeComponent time={msg.time || ""} />
+              <ChatTime time={msg.time || ""} />
             )}
           <span
             onDoubleClick={() =>
@@ -84,7 +85,7 @@ function MessageComponent({
           {index !== 0 &&
             isSameTimeMessage &&
             !checkIfIsMyChat(msg.writer) &&
-            !isMyMessage && <ChatTimeComponent time={msg.time || ""} />}
+            !isMyMessage && <ChatTime time={msg.time || ""} />}
         </>
       )}
     </div>
@@ -106,7 +107,7 @@ function ChatInfo({
             <Image
               width="30px"
               height="25px"
-              src="/crown.png"
+              src={`${PUBLIC_ICONS_PATH.CROWN}`}
               alt="crown-icon"
             />
           )}
@@ -117,10 +118,10 @@ function ChatInfo({
   );
 }
 
-function ChatTimeComponent({ time }: { time: string }) {
+function ChatTime({ time }: { time: string }) {
   return (
     <>
-      &emsp;<span className="time">{time}</span>&emsp;
+      &emsp;<span className="chat-time">{time}</span>&emsp;
     </>
   );
 }
@@ -138,7 +139,9 @@ function ChatContent({
         <Image
           src={`${process.env.NEXT_PUBLIC_API_URL}/room/content-pic/${roomId}/${msgNo}`}
           style={IMAGE_STYLE}
-          alt="content"
+          width="180px"
+          height="150px"
+          alt={`room: ${roomId} image-content: ${msgNo}`}
         />
       ) : (
         <span>{isDeleted ? "deleted message" : content}</span>
