@@ -75,7 +75,7 @@ function SingUp() {
   }, []);
   return (
     <div style={{ height: "1000px" }}>
-      <Seo title="Chato SignUp"></Seo>
+      <Seo title="Chato Sign up"></Seo>
       <form
         className="submit-form slide-up"
         onSubmit={handleSubmit(handleSignUpFormSubmit)}

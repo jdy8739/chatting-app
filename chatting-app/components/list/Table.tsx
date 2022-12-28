@@ -34,16 +34,17 @@ function Table({
           >
             <div className="title">
               <h3>{subject}</h3>
-              <div className="liked" onClick={updateRoomMoved}>
-                {isPinned && (
+              <div className="like-btn" onClick={updateRoomMoved}></div>
+              {isPinned && (
+                <span className="pin">
                   <Image
-                    width="32px"
-                    height="32px"
+                    width="25px"
+                    height="25px"
                     src={`${PUBLIC_ICONS_PATH.PIN}`}
                     alt="pinned-icon"
                   />
-                )}
-              </div>
+                </span>
+              )}
             </div>
             <Droppable droppableId={subject} key={subject} type="active">
               {(provided, snapshot) => (
@@ -81,7 +82,7 @@ function Table({
           text-align: center;
           position: relative;
         }
-        .liked {
+        .like-btn {
           position: absolute;
           top: 3px;
           right: 3px;
@@ -95,9 +96,10 @@ function Table({
         .liked:hover {
           background-color: orange;
         }
-        .liked > img {
+        .pin {
           position: absolute;
-          top: -22px;
+          top: -14px;
+          right: -15px;
         }
         .body {
           flex-grow: 1;

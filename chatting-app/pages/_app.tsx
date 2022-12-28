@@ -94,7 +94,6 @@ function MyApp({ Component, pageProps }: AppProps) {
           max-width: 2250px;
           min-width: 450px;
           padding: 120px 62px;
-          position: relative;
           margin: 60px auto 0 auto;
         }
         .delete-btn {
@@ -214,11 +213,16 @@ function MyApp({ Component, pageProps }: AppProps) {
           background-color: rgb(0, 219, 146, 0.3);
           border: 1px solid rgb(0, 219, 146);
         }
+        .outlined-btn {
+          border: 1px solid rgb(0, 219, 146);
+          background-color: rgb(0, 219, 146, 0.3);
+        }
         .input-box {
           padding: 12px;
           border: 1px solid orange;
           border-radius: 20px;
           margin: 12px 0;
+          outline: none;
         }
         input[type="checkbox"] {
           width: 20px;

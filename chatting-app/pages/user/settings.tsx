@@ -28,6 +28,7 @@ import {
 } from "../../apis/userApis";
 import { SETTINGS_FORM_STYLE } from "../../constants/styles";
 import { CHATO_TOKEN, ID_REGEX } from "../../constants/etc";
+import Seo from "../../components/commons/Seo";
 
 let userProfilePic: File | undefined;
 let tmpPicUrl = "";
@@ -171,92 +172,93 @@ function Settings() {
     };
   }, []);
   return (
-    <>
+    <div>
+      <Seo title="Chato User Settings"></Seo>
       <form
         onSubmit={handleSubmit(() => setProtocol(EXECUTE.ALTER_USER_INFO))}
         className="submit-form"
         style={SETTINGS_FORM_STYLE.HEIGHT}
       >
-        <h4 className="title">User Information Settings</h4>
-        <div className="profile-image-box">
-          <label htmlFor="pic" style={SETTINGS_FORM_STYLE.JUSTIFY_CENTER}>
-            {picBlobString || userInfo?.profilePicUrl ? (
-              <Image
-                src={`${
-                  picBlobString ? picBlobString : userInfo?.profilePicUrl
-                }`}
-                width="150px"
-                height="150px"
-                alt="profile-image"
-              />
-            ) : (
-              <div className="profile-img big-img"></div>
-            )}
-            <button
-              className="del-btn"
-              type="button"
-              onClick={toggleProfilePic}
-            >{`use ${
-              userInfo?.profilePicUrl || picBlobString ? "" : "no"
-            } profile pic`}</button>
+        <div className="form-body" style={{ height: "480px" }}>
+          <h4 className="title">User Information Settings</h4>
+          <div className="profile-image-box">
+            <label htmlFor="pic" style={SETTINGS_FORM_STYLE.JUSTIFY_CENTER}>
+              {picBlobString || userInfo?.profilePicUrl ? (
+                <Image
+                  src={`${
+                    picBlobString ? picBlobString : userInfo?.profilePicUrl
+                  }`}
+                  width="150px"
+                  height="150px"
+                  alt="profile-image"
+                />
+              ) : (
+                <div className="profile-img big-img"></div>
+              )}
+              <button
+                className="del-btn"
+                type="button"
+                onClick={toggleProfilePic}
+              >{`use ${
+                userInfo?.profilePicUrl || picBlobString ? "" : "no"
+              } profile pic`}</button>
+            </label>
+          </div>
+          <br></br>
+          <div>
+            <input
+              id="pic"
+              type="file"
+              style={SETTINGS_FORM_STYLE.PAD_LEFT}
+              {...register("profilePicUrl", {
+                onChange: handleFileChange,
+              })}
+            />
+          </div>
+          <label className="item">
+            <span>ID</span>
+            <input
+              className="input-box"
+              placeholder="id"
+              {...register("id", {
+                required: "ID is essential!",
+                pattern: {
+                  value: ID_REGEX,
+                  message: "Id must include english and numbers only.",
+                },
+                minLength: {
+                  value: 8,
+                  message: "Id must be longer than 8.",
+                },
+                maxLength: {
+                  value: 15,
+                  message: "Id must be shorter than 15.",
+                },
+              })}
+            />
+          </label>
+          <div className="error-message">{errors.id?.message}</div>
+          <label className="item">
+            <span>NickName</span>
+            <input
+              className="input-box"
+              {...register("nickName", {
+                required: "NickName is required!",
+              })}
+            />
+          </label>
+          <div className="error-message">{errors.nickName?.message}</div>
+          <label className="item">
+            <div></div>
+            <span
+              className="withdraw"
+              onClick={() => setProtocol(EXECUTE.WITHDRAW)}
+            >
+              withdrawal
+            </span>
           </label>
         </div>
-        <br></br>
-        <div>
-          <input
-            id="pic"
-            type="file"
-            style={SETTINGS_FORM_STYLE.PAD_LEFT}
-            {...register("profilePicUrl", {
-              onChange: handleFileChange,
-            })}
-          />
-        </div>
-        <label className="item">
-          <span>ID</span>
-          <input
-            className="input-box"
-            placeholder="id"
-            {...register("id", {
-              required: "ID is essential!",
-              pattern: {
-                value: ID_REGEX,
-                message: "Id must include english and numbers only.",
-              },
-              minLength: {
-                value: 8,
-                message: "Id must be longer than 8.",
-              },
-              maxLength: {
-                value: 15,
-                message: "Id must be shorter than 15.",
-              },
-            })}
-          />
-        </label>
-        <div className="error-message">{errors.id?.message}</div>
-        <label className="item">
-          <span>NickName</span>
-          <input
-            className="input-box"
-            {...register("nickName", {
-              required: "NickName is required!",
-            })}
-          />
-        </label>
-        <div className="error-message">{errors.nickName?.message}</div>
-        <label className="item">
-          <div></div>
-          <span
-            className="withdraw"
-            onClick={() => setProtocol(EXECUTE.WITHDRAW)}
-          >
-            withdrawal
-          </span>
-        </label>
-        <button className="submit-btn" style={SETTINGS_FORM_STYLE.MARGIN}>
-          submit
-        </button>
+        <button className="submit-btn">submit</button>
       </form>
       <AnimatePresence>
         {protocol > 0 && (
@@ -302,7 +304,7 @@ function Settings() {
           color: red;
         }
       `}</style>
-    </>
+    </div>
   );
 }
 

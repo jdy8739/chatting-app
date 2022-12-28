@@ -156,6 +156,12 @@ function InputInterface({
         )}
       </AnimatePresence>
       <style jsx>{`
+        textarea {
+          outline: 1px solid rgb(0, 219, 146);
+        }
+        textarea:focus {
+          outline: 1px solid orange;
+        }
         .chat-form {
           width: 100%;
           display: flex;
@@ -169,8 +175,9 @@ function InputInterface({
           padding: 12px;
           resize: vertical;
         }
-        .picture-submit {
+        button {
           border: 1px solid rgb(0, 219, 146);
+          background-color: rgb(0, 219, 146, 0.3);
         }
         .submit-button {
           width: 20%;
@@ -180,7 +187,6 @@ function InputInterface({
         }
         .buttons {
           float: right;
-          color: orange;
         }
         .settings {
           height: 265px;

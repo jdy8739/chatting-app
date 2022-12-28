@@ -65,9 +65,11 @@ function Room({ room, index }: { room: IRoom; index: number }) {
             {...provided.dragHandleProps}
             onClick={handleClickChatRoom}
           >
-            {room.roomName.length > 30
-              ? room.roomName.slice(0, 29) + "..."
-              : room.roomName}
+            <span className="room-name">
+              {room.roomName.length > 30
+                ? room.roomName.slice(0, 29) + "..."
+                : room.roomName}
+            </span>
             <div className="sub-info">
               <Image
                 width="50px"
@@ -101,11 +103,16 @@ function Room({ room, index }: { room: IRoom; index: number }) {
       </AnimatePresence>
       <style jsx>{`
         .element {
+          height: 50px;
           padding: 12px;
           margin: 5px;
           color: #2d2d2d;
           transition: all 1s;
-          position: relative;
+          display: flex;
+        }
+        .room-name {
+          width: 150px;
+          padding-top: 2px;
         }
         .isNotDragging {
           background-color: #f6d79f;
@@ -129,9 +136,6 @@ function Room({ room, index }: { room: IRoom; index: number }) {
         }
         .sub-info {
           width: 110px;
-          position: absolute;
-          top: 9px;
-          right: 10px;
           display: flex;
         }
         .sub-info > p {
