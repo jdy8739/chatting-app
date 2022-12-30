@@ -18,6 +18,7 @@ import {
 } from "../../apis/userApis";
 import { removeAccessTokenInCookies } from "../../utils/utils";
 import { CHATO_TOKEN } from "../../constants/etc";
+import { shootChatMessage } from "../../utils/socket";
 
 let fetchCount = 0;
 
@@ -29,7 +30,6 @@ function UserContainer({
   roomOwner,
   roomOwnerId,
   setParticipants,
-  shootChatMessage,
   numberOfPcps,
 }: IUserContainer) {
   /* console.log('user container updated.'); */

@@ -33,8 +33,9 @@ import {
   requestUserExpel,
 } from "../../apis/userApis";
 import { CHATO_TOKEN } from "../../constants/etc";
+import { shootChatMessage } from "../../utils/socket";
 
-let socketStomp: SocketStomp;
+export let chattingSocketStomp: SocketStomp;
 let currentUserName = "";
 let previousShowCnt = 0;
 let timeOut: NodeJS.Timeout;
@@ -60,7 +61,7 @@ function ChattingRoom({
     ({ signInReducer: { userInfo } }: IUserInfoSelector) => userInfo
   );
   const subscribeNewMessage = () => {
-    socketStomp.stomp.subscribe(
+    chattingSocketStomp.stomp.subscribe(
       `/sub/chat/room/${id}`,
       ({ body }: { body: string }) => {
         const newMessage: IMessageBody = JSON.parse(body);
@@ -182,16 +183,6 @@ function ChattingRoom({
       setTargetChatNumber(-1);
     }
   }, []);
-  const shootChatMessage = useCallback(
-    (target: SEND_PROTOCOL, message: IMessageBody) => {
-      if (socketStomp) {
-        socketStomp.stomp.send(`/pub/chat/${target}`, JSON.stringify(message), {
-          sampleHeader: "sampleHeader",
-        });
-      }
-    },
-    []
-  );
   const expelUser = async () => {
     const userPrivateIpAddress = await fetchUserPrivateIpAddress();
     if (userPrivateIpAddress) {
@@ -209,15 +200,15 @@ function ChattingRoom({
   }, []);
   const startAndSubscribeChatting = () => {
     currentUserName = userNickName ? userNickName : generateRandonUserId();
-    socketStomp.stomp.connect({}, () => {
+    chattingSocketStomp.stomp.connect({}, () => {
       subscribeNewMessage();
     });
   };
   useEffect(() => {
-    socketStomp = new SocketStomp();
+    chattingSocketStomp = new SocketStomp();
     if (!getAccessTokenInCookies(CHATO_TOKEN)) startAndSubscribeChatting();
     return () => {
-      socketStomp.stomp.disconnect(() => null, {});
+      chattingSocketStomp.stomp.disconnect(() => null, {});
       currentUserName = "";
       previousShowCnt = 0;
       clearTimeout(timeOut);
@@ -260,7 +251,6 @@ function ChattingRoom({
         roomOwner={roomOwner}
         roomOwnerId={roomOwnerId}
         setParticipants={setParticipants}
-        shootChatMessage={shootChatMessage}
         numberOfPcps={numberOfPcps}
       />
       <div className="container">
@@ -281,12 +271,10 @@ function ChattingRoom({
           );
         })}
         <InputInterface
-          socketStomp={socketStomp}
           roomId={id}
           isMyRoom={roomOwner === userNo}
           userNo={userNo}
           currentUserName={currentUserName}
-          shootChatMessage={shootChatMessage}
         />
         <style jsx>{`
           textarea {
