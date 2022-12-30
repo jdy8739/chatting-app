@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
 import ClassifiedRooms from "../../components/list/Table";
-import { IMessageBody, IRoom } from "../../types/types";
+import { IRoom } from "../../types/types";
 import {
   getAccessTokenInCookies,
   getPinnedSubjectStorage,
@@ -17,12 +17,7 @@ import {
   truncateList,
 } from "../../lib/store/modules/likedSubjectReducer";
 import { useRouter } from "next/router";
-import {
-  MASTER_PROTOCOL,
-  MSG_TYPE,
-  SECTION,
-  SEND_PROTOCOL,
-} from "../../utils/enums";
+import { MASTER_PROTOCOL, MSG_TYPE, SECTION } from "../../utils/enums";
 import {
   IRoomMoved,
   ISubjectListSelector,
@@ -38,8 +33,14 @@ import {
   requestToggleSubjectLike,
 } from "../../apis/roomApis";
 import { CHATO_TOKEN } from "../../constants/etc";
+import { sendRoomDeleteMessage } from "../../utils/socket";
+import {
+  arrangeEachRoom,
+  findSubjectAndRoomIndexByRoomId,
+  getArrangedRoomList,
+} from "../../utils/roomList";
 
-let socketStomp: SocketStomp;
+export let listSocketStomp: SocketStomp;
 let renderingCount = 0;
 
 function ChattingList({ rooms }: { rooms: IRoom[] }) {
@@ -57,50 +58,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     ({ likedSubjectReducer: { subjectList } }: ISubjectListSelector) =>
       subjectList
   );
-  const arrangeRoomList = (pinnedSubjects: string[] | null) => {
-    const defaultRoomListObject: ITable = {};
-    chatRooms.forEach((chatRoom) =>
-      arrangeEachRoom(chatRoom, defaultRoomListObject)
-    );
-    if (pinnedSubjects) {
-      Object.keys(defaultRoomListObject).forEach((subject) => {
-        checkIfSubjectPinned(subject, defaultRoomListObject, pinnedSubjects);
-      });
-      makeVacantTableIfPinned(defaultRoomListObject, pinnedSubjects);
-    }
-    setRoomList({ ...defaultRoomListObject });
-  };
-  const arrangeEachRoom = (chatRoom: IRoom, roomList: ITable) => {
-    const subject = chatRoom.subject;
-    if (!Object.hasOwn(roomList, subject))
-      roomList[subject] = {
-        list: [chatRoom],
-        isPinned: false,
-      };
-    else roomList[subject]["list"].push(chatRoom);
-    if (userNo === -1) chatRoom.isMyRoom = false;
-    else if (chatRoom.owner === userNo) chatRoom.isMyRoom = true;
-  };
-  const checkIfSubjectPinned = (
-    targetSubject: string,
-    roomList: ITable,
-    pinnedSubjects: string[]
-  ) => {
-    if (pinnedSubjects.some((subject) => subject === targetSubject)) {
-      roomList[targetSubject].isPinned = true;
-    } else roomList[targetSubject].isPinned = false;
-  };
-  const makeVacantTableIfPinned = (
-    defaultRoomListObject: ITable,
-    pinnedSubjects: string[]
-  ) => {
-    pinnedSubjects.forEach((subject) => {
-      if (!Object.hasOwn(defaultRoomListObject, subject)) {
-        defaultRoomListObject[subject] = { list: [], isPinned: true };
-      }
-    });
-  };
-  const onDragEnd = ({ destination, source, draggableId }: DropResult) => {
+  const onRoomDragEnd = ({ destination, source, draggableId }: DropResult) => {
     const destinationId = destination?.droppableId;
     const sourceId = source.droppableId;
     const isDestinationAboutPin =
@@ -201,19 +159,12 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
       });
     } else handleTokenException();
   };
-  const sendRoomDeleteMessage = (message: IMessageBody) => {
-    if (socketStomp)
-      socketStomp.stomp.send(
-        `/pub/chat/${SEND_PROTOCOL.DELETE}`,
-        JSON.stringify(message)
-      );
-  };
   const changeToNewSubject = async (roomMovedInfo: IRoomMoved) => {
     const isChangeSuccessful = await requestChangeToNewSubject(roomMovedInfo);
     if (!isChangeSuccessful) handleTokenException();
   };
   const subscribeRoomParticipants = () => {
-    socketStomp.stomp.subscribe(
+    listSocketStomp.stomp.subscribe(
       "/sub/chat/room/list",
       ({ body }: { body: string }) => {
         const messageObj = JSON.parse(body);
@@ -260,7 +211,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
   };
   const updateRoomCreated = (chatRoom: IRoom) => {
     setRoomList((roomList) => {
-      arrangeEachRoom(chatRoom, roomList);
+      arrangeEachRoom(chatRoom, roomList, userNo);
       const targetRoomList = roomList[chatRoom.subject].list;
       return {
         ...roomList,
@@ -332,23 +283,6 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         };
     });
   };
-  const findSubjectAndRoomIndexByRoomId = (
-    roomId: number,
-    roomList: ITable
-  ) => {
-    let targetKey = "";
-    let targetIndex = -1;
-    Object.keys(roomList).some((key) => {
-      targetIndex = roomList[key].list.findIndex(
-        (room) => room.roomId === roomId
-      );
-      if (targetIndex !== -1) {
-        targetKey = key;
-        return true;
-      }
-    });
-    return [targetKey, targetIndex];
-  };
   const toggleLikeList = useCallback(
     (destination: SECTION, subject: string, subjectList: string[]) => {
       if (!getAccessTokenInCookies(CHATO_TOKEN))
@@ -380,27 +314,35 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     router.push("/user/signin");
   };
   useEffect(() => {
-    socketStomp = new SocketStomp();
-    socketStomp.stomp.connect({}, () => {
+    listSocketStomp = new SocketStomp();
+    listSocketStomp.stomp.connect({}, () => {
       subscribeRoomParticipants();
     });
-    if (!getAccessTokenInCookies(CHATO_TOKEN))
-      arrangeRoomList(getPinnedSubjectStorage());
+    if (!getAccessTokenInCookies(CHATO_TOKEN)) {
+      setRoomList(
+        getArrangedRoomList(getPinnedSubjectStorage(), chatRooms, userNo)
+      );
+    }
     return () => {
-      socketStomp.stomp.disconnect(() => null, {});
+      listSocketStomp.stomp.disconnect(() => null, {});
       renderingCount = 0;
     };
   }, []);
   useEffect(() => {
-    if (userId && (renderingCount++ === 0 || subjectList.length === 8))
-      arrangeRoomList(subjectList);
+    if (userId && (renderingCount++ === 0 || subjectList.length === 8)) {
+      setRoomList(getArrangedRoomList(subjectList, chatRooms, userNo));
+    }
   }, [subjectList]);
   useEffect(() => {
-    if (userNo === -1) arrangeRoomList(getPinnedSubjectStorage());
+    if (userNo === -1) {
+      setRoomList(
+        getArrangedRoomList(getPinnedSubjectStorage(), chatRooms, userNo)
+      );
+    }
   }, [userNo]);
   return (
     <>
-      <DragDropContext onDragEnd={onDragEnd}>
+      <DragDropContext onDragEnd={onRoomDragEnd}>
         {[true, false].map((value) => {
           return (
             <Droppable

@@ -8,6 +8,8 @@ import { IInputInterface } from "../../utils/interfaces";
 import SettingsContent from "./SettingsContent";
 import { requestRoomDelete } from "../../apis/roomApis";
 import { modalBgVariant } from "../../constants/styles";
+import { chattingSocketStomp } from "../../pages/chat/[id]";
+import { shootChatMessage } from "../../utils/socket";
 
 let imageFile: ArrayBuffer | null;
 
@@ -19,12 +21,10 @@ const handleReaderOnLoad = (readerEvent: ProgressEvent<FileReader>) => {
 };
 
 function InputInterface({
-  socketStomp,
   roomId,
   isMyRoom,
   userNo,
   currentUserName,
-  shootChatMessage,
 }: IInputInterface) {
   let newMessage: string;
   const [isModalShown, setIsModalShown] = useState(false);
@@ -53,8 +53,8 @@ function InputInterface({
         time: getNowTime(),
       };
       Object.freeze(headers);
-      if (socketStomp) {
-        socketStomp.stomp.send(
+      if (chattingSocketStomp) {
+        chattingSocketStomp.stomp.send(
           `/pub/chat/${SEND_PROTOCOL.BINARY}`,
           imageFile,
           headers
@@ -79,7 +79,7 @@ function InputInterface({
       newMessage = textAreaRef.current.value;
       textAreaRef.current.value = "";
     }
-    if (socketStomp) {
+    if (chattingSocketStomp) {
       shootChatMessage(SEND_PROTOCOL.MESSEGE, {
         msgNo: 0,
         roomId: String(roomId),
@@ -95,8 +95,8 @@ function InputInterface({
   const terminateChatRoom = async () => {
     const isRoomDeleteSuccessful = await requestRoomDelete(roomId);
     if (isRoomDeleteSuccessful) {
-      if (socketStomp)
-        socketStomp.stomp.send(
+      if (chattingSocketStomp)
+        chattingSocketStomp.stomp.send(
           `/pub/chat/${SEND_PROTOCOL.DELETE}`,
           JSON.stringify({
             msgNo: 0,

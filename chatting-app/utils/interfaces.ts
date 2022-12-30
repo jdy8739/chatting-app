@@ -127,7 +127,6 @@ export interface IUserContainer {
   roomOwner: number | null;
   roomOwnerId: string;
   setParticipants: React.Dispatch<React.SetStateAction<IParticipants[]>>;
-  shootChatMessage: (target: SEND_PROTOCOL, message: IMessageBody) => void;
   numberOfPcps: number;
 }
 
@@ -181,12 +180,10 @@ export interface IMessageContent {
 }
 
 export interface IInputInterface {
-  socketStomp: SocketStomp;
   roomId: number;
   isMyRoom: boolean;
   userNo: number;
   currentUserName: string;
-  shootChatMessage: (target: SEND_PROTOCOL, message: IMessageBody) => void;
 }
 
 export interface IRoomSettings {
