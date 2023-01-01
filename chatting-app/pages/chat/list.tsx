@@ -148,7 +148,9 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
   };
   const deleteRoom = async (sourceId: string, index: number) => {
     const targetRoomId = roomList[sourceId].list[index].roomId;
-    const isRoomDeleteSuccessful = await requestRoomDelete(targetRoomId);
+    const [isRoomDeleteSuccessful, isInValidToken] = await requestRoomDelete(
+      targetRoomId
+    );
     if (isRoomDeleteSuccessful) {
       sendRoomDeleteMessage({
         msgNo: 0,
@@ -157,11 +159,11 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         writer: MASTER_PROTOCOL.MASTER,
         writerNo: null,
       });
-    } else handleTokenException();
+    } else if (isInValidToken) handleTokenException();
   };
   const changeToNewSubject = async (roomMovedInfo: IRoomMoved) => {
-    const isChangeSuccessful = await requestChangeToNewSubject(roomMovedInfo);
-    if (!isChangeSuccessful) handleTokenException();
+    const isInValidToken = await requestChangeToNewSubject(roomMovedInfo);
+    if (isInValidToken) handleTokenException();
   };
   const subscribeRoomParticipants = () => {
     listSocketStomp.stomp.subscribe(

@@ -19,11 +19,7 @@ import {
   IUserInfoSelector,
   SocketStomp,
 } from "../../utils/interfaces";
-import {
-  generateRandonUserId,
-  getAccessTokenInCookies,
-  scrollViewDown,
-} from "../../utils/utils";
+import { getAccessTokenInCookies, scrollViewDown } from "../../utils/utils";
 import {
   fetchRoomOwnerAndPreviousChat,
   requestMessageDelete,
@@ -33,7 +29,11 @@ import {
   requestUserExpel,
 } from "../../apis/userApis";
 import { CHATO_TOKEN } from "../../constants/etc";
-import { shootChatMessage } from "../../utils/socket";
+import {
+  makeUserName,
+  shootChatMessage,
+  startChatting,
+} from "../../utils/socket";
 
 export let chattingSocketStomp: SocketStomp;
 let currentUserName = "";
@@ -61,6 +61,7 @@ function ChattingRoom({
     ({ signInReducer: { userInfo } }: IUserInfoSelector) => userInfo
   );
   const subscribeNewMessage = () => {
+    // socket.ts로 분리 중
     chattingSocketStomp.stomp.subscribe(
       `/sub/chat/room/${id}`,
       ({ body }: { body: string }) => {
@@ -198,15 +199,16 @@ function ChattingRoom({
     if (typeof arg === "string") return arg === currentUserName;
     else if (typeof arg === "number") return arg === userNo;
   }, []);
-  const startAndSubscribeChatting = () => {
-    currentUserName = userNickName ? userNickName : generateRandonUserId();
-    chattingSocketStomp.stomp.connect({}, () => {
-      subscribeNewMessage();
-    });
+  const initiateChattingEnviroment = async () => {
+    currentUserName = makeUserName(userNickName);
+    const isChattingStartedSuccessfully = await startChatting(
+      subscribeNewMessage
+    );
+    if (!isChattingStartedSuccessfully) router.push("/chat/list");
   };
   useEffect(() => {
     chattingSocketStomp = new SocketStomp();
-    if (!getAccessTokenInCookies(CHATO_TOKEN)) startAndSubscribeChatting();
+    if (!getAccessTokenInCookies(CHATO_TOKEN)) initiateChattingEnviroment();
     return () => {
       chattingSocketStomp.stomp.disconnect(() => null, {});
       currentUserName = "";
@@ -215,7 +217,7 @@ function ChattingRoom({
     };
   }, []);
   useEffect(() => {
-    if (userNo !== -1) startAndSubscribeChatting();
+    if (userNo !== -1) initiateChattingEnviroment();
   }, [userNo]);
 
   /* start making props for message-components. */
