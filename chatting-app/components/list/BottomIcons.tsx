@@ -5,6 +5,7 @@ import { SECTION } from "../../utils/enums";
 import { ITable } from "../../utils/interfaces";
 import Modal from "./Modal";
 import Image from "next/image";
+import { PUBLIC_ICONS_PATH } from "../../constants/icons";
 
 function BottomIcons({
   setRoomList,
@@ -30,14 +31,15 @@ function BottomIcons({
   };
   return (
     <div className="icons">
-      <Image
-        className="icon"
-        width="70px"
-        height="70px"
-        src={"/pen.png"}
-        onClick={() => setIsModalShown(true)}
-        alt="pen-icon"
-      />
+      <span className="icon">
+        <Image
+          width="70px"
+          height="70px"
+          src={`${PUBLIC_ICONS_PATH.PEN}`}
+          onClick={() => setIsModalShown(true)}
+          alt="pen-icon"
+        />
+      </span>
       <Droppable droppableId={`${SECTION.TRASH_CAN}`} type="active">
         {(provided, snapshot) => (
           <span
@@ -45,15 +47,18 @@ function BottomIcons({
             {...provided.droppableProps}
             {...snapshot}
           >
-            <Image
-              width="70px"
-              height="70px"
-              src={"/trash_can.png"}
+            <span
               className={`icon trash-can ${
                 snapshot.isDraggingOver ? "bigger" : ""
               }`}
-              alt="trash-can-icon"
-            />
+            >
+              <Image
+                width="70px"
+                height="70px"
+                src={`${PUBLIC_ICONS_PATH.TRASH_CAN}`}
+                alt="trash-can-icon"
+              />
+            </span>
           </span>
         )}
       </Droppable>
@@ -75,14 +80,15 @@ function BottomIcons({
         .icon {
           margin: 8px;
         }
-        .icon:first-child {
+        .icons > .icon:first-child {
           cursor: pointer;
         }
         .trash-can {
           transition: all 0.5s;
         }
         .bigger {
-          transform: scale(1.2);
+          // transform: scale(1.2);
+          background-color: red;
         }
       `}</style>
     </div>

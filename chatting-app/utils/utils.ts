@@ -141,7 +141,7 @@ requestWithTokenAxios.interceptors.response.use(
     const status = response?.status;
     const refreshToken = getRefreshTokenInCookies(CHATO_TOKEN);
     const prevToken = getAccessTokenInCookies(CHATO_TOKEN);
-    if (status === 401 && refreshToken && prevToken) {
+    if (status === SERVER_STATUS.UNAUTHORIZED && refreshToken && prevToken) {
       const targetUrl = config.url;
       const method = config.method;
       const body = config.data;

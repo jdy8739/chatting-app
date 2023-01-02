@@ -19,11 +19,7 @@ import {
   IUserInfoSelector,
   SocketStomp,
 } from "../../utils/interfaces";
-import {
-  generateRandonUserId,
-  getAccessTokenInCookies,
-  scrollViewDown,
-} from "../../utils/utils";
+import { getAccessTokenInCookies, scrollViewDown } from "../../utils/utils";
 import {
   fetchRoomOwnerAndPreviousChat,
   requestMessageDelete,
@@ -33,7 +29,12 @@ import {
   requestUserExpel,
 } from "../../apis/userApis";
 import { CHATO_TOKEN } from "../../constants/etc";
-import { shootChatMessage } from "../../utils/socket";
+import {
+  disconnectSocketCommunication,
+  makeUserName,
+  shootChatMessage,
+  startChatting,
+} from "../../utils/socket";
 
 export let chattingSocketStomp: SocketStomp;
 let currentUserName = "";
@@ -60,29 +61,19 @@ function ChattingRoom({
   const { userNo, userId, userNickName } = useSelector(
     ({ signInReducer: { userInfo } }: IUserInfoSelector) => userInfo
   );
-  const subscribeNewMessage = () => {
-    chattingSocketStomp.stomp.subscribe(
-      `/sub/chat/room/${id}`,
-      ({ body }: { body: string }) => {
-        const newMessage: IMessageBody = JSON.parse(body);
-        const isSentFromMaster = newMessage.writer === MASTER_PROTOCOL.MASTER;
-        if (
-          isSentFromMaster &&
-          newMessage.message === MASTER_PROTOCOL.DISBANDED
-        ) {
-          expelUser();
-        } else {
-          const msgNo = newMessage.msgNo;
-          const isParticipantsListChanged =
-            msgNo >= RECEIVE_PROTOCOL.SUBSCRIBE &&
-            msgNo <= RECEIVE_PROTOCOL.BAN;
-          if (isSentFromMaster && isParticipantsListChanged)
-            reflectNewMessageAndUser(newMessage);
-          else updateMessageList(newMessage);
-        }
-      },
-      { roomId: String(id), userId: userId || currentUserName }
-    );
+  const handleSubscribedChatMessages = ({ body }: { body: string }) => {
+    const newMessage: IMessageBody = JSON.parse(body);
+    const isSentFromMaster = newMessage.writer === MASTER_PROTOCOL.MASTER;
+    if (isSentFromMaster && newMessage.message === MASTER_PROTOCOL.DISBANDED) {
+      expelUser();
+    } else {
+      const msgNo = newMessage.msgNo;
+      const isParticipantsListChanged =
+        msgNo >= RECEIVE_PROTOCOL.SUBSCRIBE && msgNo <= RECEIVE_PROTOCOL.BAN;
+      if (isSentFromMaster && isParticipantsListChanged)
+        reflectNewMessageAndUser(newMessage);
+      else updateMessageList(newMessage);
+    }
   };
   const reflectNewMessageAndUser = (newMessage: IMessageBody) => {
     const msgNo = newMessage.msgNo;
@@ -198,24 +189,27 @@ function ChattingRoom({
     if (typeof arg === "string") return arg === currentUserName;
     else if (typeof arg === "number") return arg === userNo;
   }, []);
-  const startAndSubscribeChatting = () => {
-    currentUserName = userNickName ? userNickName : generateRandonUserId();
-    chattingSocketStomp.stomp.connect({}, () => {
-      subscribeNewMessage();
-    });
+  const initiateChattingEnviroment = async () => {
+    currentUserName = makeUserName(userNickName);
+    const isChattingStartedSuccessfully = await startChatting(
+      id,
+      userId || currentUserName,
+      handleSubscribedChatMessages
+    );
+    if (!isChattingStartedSuccessfully) router.push("/chat/list");
   };
   useEffect(() => {
     chattingSocketStomp = new SocketStomp();
-    if (!getAccessTokenInCookies(CHATO_TOKEN)) startAndSubscribeChatting();
+    if (!getAccessTokenInCookies(CHATO_TOKEN)) initiateChattingEnviroment();
     return () => {
-      chattingSocketStomp.stomp.disconnect(() => null, {});
+      disconnectSocketCommunication();
       currentUserName = "";
       previousShowCnt = 0;
       clearTimeout(timeOut);
     };
   }, []);
   useEffect(() => {
-    if (userNo !== -1) startAndSubscribeChatting();
+    if (userNo !== -1) initiateChattingEnviroment();
   }, [userNo]);
 
   /* start making props for message-components. */

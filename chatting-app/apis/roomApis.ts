@@ -18,15 +18,21 @@ export const fetchAllRoomsList = async () => {
 
 export const requestRoomDelete = async (targetRoomId: number) => {
   let isRoomDeleteSuccessful = false;
+  let isInvalidToken = false;
   try {
     const { status } = await requestWithTokenAxios.delete(
       `/room/delete/${targetRoomId}`
     );
     if (status === SERVER_STATUS.OK) isRoomDeleteSuccessful = true;
+    else {
+      if (status !== SERVER_STATUS.FORBIDDEN) isInvalidToken = true;
+      throw new AxiosError(String(status));
+    }
   } catch (e) {
+    const { message: status } = e as AxiosError;
     // show toast;
   }
-  return isRoomDeleteSuccessful;
+  return [isRoomDeleteSuccessful, isInvalidToken];
 };
 
 export const requestToggleSubjectLike = async (
@@ -41,23 +47,27 @@ export const requestToggleSubjectLike = async (
     );
     if (status === SERVER_STATUS.OK) isToggleSubjectLikeSuccessful = true;
   } catch (e) {
+    const { message: status } = e as AxiosError;
     // show toast;
   }
   return isToggleSubjectLikeSuccessful;
 };
 
 export const requestChangeToNewSubject = async (roomMovedInfo: IRoomMoved) => {
-  let isChangeSuccessful = false;
+  let isInvalidToken = false;
   try {
     const { status } = await requestWithTokenAxios.put(
       `/room/change_subject`,
       roomMovedInfo
     );
-    if (status === SERVER_STATUS.OK) isChangeSuccessful = true;
+    if (status !== SERVER_STATUS.FORBIDDEN) {
+      isInvalidToken = true;
+      throw new AxiosError(String(status));
+    }
   } catch (e) {
     // show toast;
   }
-  return isChangeSuccessful;
+  return isInvalidToken;
 };
 
 export const fetchRoomsByKeyword = async (keyword: string) => {

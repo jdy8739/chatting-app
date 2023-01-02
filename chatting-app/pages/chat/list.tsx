@@ -33,7 +33,11 @@ import {
   requestToggleSubjectLike,
 } from "../../apis/roomApis";
 import { CHATO_TOKEN } from "../../constants/etc";
-import { sendRoomDeleteMessage } from "../../utils/socket";
+import {
+  connectSocketRoomsChange,
+  disconnectSocketRoomsChange,
+  sendRoomDeleteMessage,
+} from "../../utils/socket";
 import {
   arrangeEachRoom,
   findSubjectAndRoomIndexByRoomId,
@@ -148,7 +152,9 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
   };
   const deleteRoom = async (sourceId: string, index: number) => {
     const targetRoomId = roomList[sourceId].list[index].roomId;
-    const isRoomDeleteSuccessful = await requestRoomDelete(targetRoomId);
+    const [isRoomDeleteSuccessful, isInValidToken] = await requestRoomDelete(
+      targetRoomId
+    );
     if (isRoomDeleteSuccessful) {
       sendRoomDeleteMessage({
         msgNo: 0,
@@ -157,28 +163,23 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
         writer: MASTER_PROTOCOL.MASTER,
         writerNo: null,
       });
-    } else handleTokenException();
+    } else if (isInValidToken) handleTokenException();
   };
   const changeToNewSubject = async (roomMovedInfo: IRoomMoved) => {
-    const isChangeSuccessful = await requestChangeToNewSubject(roomMovedInfo);
-    if (!isChangeSuccessful) handleTokenException();
+    const isInValidToken = await requestChangeToNewSubject(roomMovedInfo);
+    if (isInValidToken) handleTokenException();
   };
-  const subscribeRoomParticipants = () => {
-    listSocketStomp.stomp.subscribe(
-      "/sub/chat/room/list",
-      ({ body }: { body: string }) => {
-        const messageObj = JSON.parse(body);
-        if (Object.hasOwn(messageObj, MSG_TYPE.ENTER))
-          updateRoomParticipants(messageObj);
-        else if (Object.hasOwn(messageObj, MSG_TYPE.DELETE))
-          updateRoomDeleted(messageObj);
-        else if (Object.hasOwn(messageObj, MSG_TYPE.MOVE))
-          updateRoomMoved(messageObj);
-        else if (Object.hasOwn(messageObj, MSG_TYPE.CHANGE))
-          updateRoomInfoChange(messageObj);
-        else updateRoomCreated(messageObj);
-      }
-    );
+  const handleAllRoomsStatusChange = ({ body }: { body: string }) => {
+    const messageObj = JSON.parse(body);
+    if (Object.hasOwn(messageObj, MSG_TYPE.ENTER))
+      updateRoomParticipants(messageObj);
+    else if (Object.hasOwn(messageObj, MSG_TYPE.DELETE))
+      updateRoomDeleted(messageObj);
+    else if (Object.hasOwn(messageObj, MSG_TYPE.MOVE))
+      updateRoomMoved(messageObj);
+    else if (Object.hasOwn(messageObj, MSG_TYPE.CHANGE))
+      updateRoomInfoChange(messageObj);
+    else updateRoomCreated(messageObj);
   };
   const updateRoomParticipants = (info: {
     roomId: number;
@@ -315,16 +316,14 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
   };
   useEffect(() => {
     listSocketStomp = new SocketStomp();
-    listSocketStomp.stomp.connect({}, () => {
-      subscribeRoomParticipants();
-    });
+    connectSocketRoomsChange(handleAllRoomsStatusChange);
     if (!getAccessTokenInCookies(CHATO_TOKEN)) {
       setRoomList(
         getArrangedRoomList(getPinnedSubjectStorage(), chatRooms, userNo)
       );
     }
     return () => {
-      listSocketStomp.stomp.disconnect(() => null, {});
+      disconnectSocketRoomsChange();
       renderingCount = 0;
     };
   }, []);
