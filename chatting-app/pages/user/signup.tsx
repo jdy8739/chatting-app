@@ -7,8 +7,13 @@ import { FORM_STYLE } from "../../constants/styles";
 import { ISignUpForm } from "../../utils/interfaces";
 import Image from "next/image";
 import { requestSignUp } from "../../apis/userApis";
-import { CHATO_TOKEN, ID_REGEX, PW_REGEX } from "../../constants/etc";
-import { getAccessTokenInCookies, toastConfig } from "../../utils/utils";
+import {
+  CHATO_TOKEN,
+  ID_REGEX,
+  PW_REGEX,
+  toastConfig,
+} from "../../constants/etc";
+import { getAccessTokenInCookies } from "../../utils/utils";
 
 let userProfilePic: File | undefined;
 

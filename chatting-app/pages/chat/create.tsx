@@ -6,7 +6,7 @@ import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import Seo from "../../components/commons/Seo";
 import { IUserSignedInInfo } from "../../lib/store/modules/signInReducer";
-import { toastConfig } from "../../utils/utils";
+import { toastConfig } from "../../constants/etc";
 
 const roomSubjectOptions = [
   "life",

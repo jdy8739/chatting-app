@@ -6,7 +6,7 @@ import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { IRoom } from "../../types/types";
 import { IUserInfoSelector } from "../../utils/interfaces";
-import { toastConfig } from "../../utils/utils";
+import { toastConfig } from "../../constants/etc";
 import Modal from "./Modal";
 import Image from "next/image";
 import { FlexGrow } from "../../constants/styles";

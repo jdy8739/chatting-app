@@ -1,10 +1,9 @@
 import { motion } from "framer-motion";
 import React, { useEffect, useRef } from "react";
-import { toast } from "react-toastify";
 import { checkIfIsPasswordCorrect } from "../../apis/roomApis";
 import { classNames } from "../../constants/className";
+import { modalBgVariant } from "../../constants/styles";
 import { IModal } from "../../utils/interfaces";
-import { modalBgVariant, toastConfig } from "../../utils/utils";
 
 let timeOut: NodeJS.Timeout;
 
@@ -43,7 +42,6 @@ function Modal({
             () => targetRef.classList.remove(classNames.wrong_pw),
             300
           );
-          toast.error("Password is not correct.", toastConfig);
         }
       }
     }

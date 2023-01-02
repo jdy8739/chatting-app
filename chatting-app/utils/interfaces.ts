@@ -1,7 +1,7 @@
 import webstomp, { Client } from "webstomp-client";
 import { IUserSignedInInfo } from "../lib/store/modules/signInReducer";
 import { IMessageBody, IParticipants, IRoom } from "../types/types";
-import { SECTION, SEND_PROTOCOL } from "./enums";
+import { SECTION } from "./enums";
 
 export interface ISubjectListSelector {
   likedSubjectReducer: {
@@ -72,7 +72,6 @@ export interface IServerProps {
 }
 
 /*** These are for User page [id] ***/
-
 export interface IChatRoomProps {
   id: number;
   roomName: string;
@@ -118,7 +117,6 @@ export class SocketStomp {
 }
 
 /*** These are for User Container Component ***/
-
 export interface IUserContainer {
   roomId: number;
   participants: IParticipants[];
@@ -138,7 +136,6 @@ export interface IBannedUserList {
 }
 
 /*** These are for User Table Component ***/
-
 export interface ITableComponent {
   rooms: IRoom[];
   subject: string;
@@ -153,7 +150,6 @@ export interface ITableComponent {
 }
 
 /*** These are for User Message Component ***/
-
 export interface IMessageComponent {
   msg: IMessageBody;
   index: number;
@@ -170,7 +166,6 @@ export interface IMessageComponent {
 }
 
 /*** These are for User InputInterface Component ***/
-
 export interface IMessageContent {
   content: string;
   roomId: number;

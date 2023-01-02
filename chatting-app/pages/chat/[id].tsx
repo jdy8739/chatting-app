@@ -65,7 +65,7 @@ function ChattingRoom({
     const newMessage: IMessageBody = JSON.parse(body);
     const isSentFromMaster = newMessage.writer === MASTER_PROTOCOL.MASTER;
     if (isSentFromMaster && newMessage.message === MASTER_PROTOCOL.DISBANDED) {
-      expelUser();
+      expelUser(false);
     } else {
       const msgNo = newMessage.msgNo;
       const isParticipantsListChanged =
@@ -80,7 +80,7 @@ function ChattingRoom({
     const [targetId, targetNickName] = newMessage.message.split("/");
     if (msgNo === RECEIVE_PROTOCOL.BAN) {
       if (userId ? targetId === userId : targetId === currentUserName)
-        expelUser();
+        expelUser(true);
       newMessage.message = `${targetId.slice(0, 9)} has been banned.`;
     } else if (msgNo !== null) {
       newMessage.message = `${targetId.slice(0, 9)} has just ${
@@ -174,13 +174,14 @@ function ChattingRoom({
       setTargetChatNumber(-1);
     }
   }, []);
-  const expelUser = async () => {
+  const expelUser = async (isBanUser: boolean) => {
     const userPrivateIpAddress = await fetchUserPrivateIpAddress();
     if (userPrivateIpAddress) {
       const isUserBanSuccessful = await requestUserExpel(
         id,
         userPrivateIpAddress,
-        currentUserName
+        currentUserName,
+        isBanUser
       );
       if (isUserBanSuccessful) router.push("/chat/list");
     }

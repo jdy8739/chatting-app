@@ -3,13 +3,14 @@ import Link from "next/link";
 import React, { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { LIMIT, MASTER_PROTOCOL, SEND_PROTOCOL } from "../../utils/enums";
-import { getNowTime, toastConfig } from "../../utils/utils";
+import { getNowTime } from "../../utils/utils";
 import { IInputInterface } from "../../utils/interfaces";
 import SettingsContent from "./SettingsContent";
 import { requestRoomDelete } from "../../apis/roomApis";
 import { modalBgVariant } from "../../constants/styles";
 import { chattingSocketStomp } from "../../pages/chat/[id]";
 import { shootChatMessage } from "../../utils/socket";
+import { toastConfig } from "../../constants/etc";
 
 let imageFile: ArrayBuffer | null;
 
@@ -44,7 +45,7 @@ function InputInterface({
     } else if (imageFile.byteLength > LIMIT.STMOP_MESSAGE_SIZE) {
       toast.error("The picture size exceeds the limit.", toastConfig);
     } else {
-      const headers = {
+      const binaryFileHeaders = {
         "content-type": "application/octet-stream",
         "image-size": imageFile.byteLength,
         "room-id": roomId,
@@ -52,12 +53,12 @@ function InputInterface({
         "writer-no": userNo > 0 ? userNo : null,
         time: getNowTime(),
       };
-      Object.freeze(headers);
+      Object.freeze(binaryFileHeaders);
       if (chattingSocketStomp) {
         chattingSocketStomp.stomp.send(
           `/pub/chat/${SEND_PROTOCOL.BINARY}`,
           imageFile,
-          headers
+          binaryFileHeaders
         );
       }
       imageFile = null;
