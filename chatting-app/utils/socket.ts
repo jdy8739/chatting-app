@@ -1,6 +1,6 @@
 import { listSocketStomp } from "../pages/chat/list";
 import { chattingSocketStomp } from "../pages/chat/[id]";
-import { IMessageBody } from "../types/types";
+import { IMessageBody, SocketCallback } from "../types/types";
 import { SEND_PROTOCOL } from "./enums";
 import { generateRandonUserId } from "./utils";
 
@@ -25,14 +25,31 @@ export const sendRoomDeleteMessage = (message: IMessageBody) => {
     );
 };
 
-export const startChatting = async (subscribeNewMessage: () => void) => {
+export const startChatting = async (
+  id: number,
+  userId: string,
+  handleSubscribedChatMessages: SocketCallback
+) => {
   const isChattingStartedSuccessfully = await connectSocketCommunication();
-  if (isChattingStartedSuccessfully) subscribeNewMessage();
+  if (isChattingStartedSuccessfully)
+    subscribeChatMessage(id, userId, handleSubscribedChatMessages);
   return isChattingStartedSuccessfully;
 };
 
 export const makeUserName = (userNickName: string) => {
   return userNickName ? userNickName : generateRandonUserId();
+};
+
+export const subscribeChatMessage = (
+  id: number,
+  userId: string,
+  handleSubscribedChatMessages: SocketCallback
+) => {
+  chattingSocketStomp.stomp.subscribe(
+    `/sub/chat/room/${id}`,
+    handleSubscribedChatMessages,
+    { roomId: String(id), userId: userId }
+  );
 };
 
 const connectSocketCommunication = () => {
@@ -47,4 +64,29 @@ const connectSocketCommunication = () => {
       }
     );
   });
+};
+
+export const connectSocketRoomsChange = (
+  handleAllRoomsStatusChange: SocketCallback
+) => {
+  listSocketStomp.stomp.connect({}, () => {
+    subscribeAllRoomsChange(handleAllRoomsStatusChange);
+  });
+};
+
+export const subscribeAllRoomsChange = (
+  handleAllRoomsStatusChange: SocketCallback
+) => {
+  listSocketStomp.stomp.subscribe(
+    "/sub/chat/room/list",
+    handleAllRoomsStatusChange
+  );
+};
+
+export const disconnectSocketCommunication = () => {
+  chattingSocketStomp.stomp.disconnect(() => null, {});
+};
+
+export const disconnectSocketRoomsChange = () => {
+  listSocketStomp.stomp.disconnect(() => null, {});
 };

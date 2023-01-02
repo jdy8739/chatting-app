@@ -131,3 +131,5 @@ export interface Iipdata {
   threat: Threat;
   count: string;
 }
+
+type SocketCallback = ({ body }: { body: string }) => void;

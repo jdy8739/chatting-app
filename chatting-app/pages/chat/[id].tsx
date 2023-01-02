@@ -30,6 +30,7 @@ import {
 } from "../../apis/userApis";
 import { CHATO_TOKEN } from "../../constants/etc";
 import {
+  disconnectSocketCommunication,
   makeUserName,
   shootChatMessage,
   startChatting,
@@ -60,30 +61,19 @@ function ChattingRoom({
   const { userNo, userId, userNickName } = useSelector(
     ({ signInReducer: { userInfo } }: IUserInfoSelector) => userInfo
   );
-  const subscribeNewMessage = () => {
-    // socket.ts로 분리 중
-    chattingSocketStomp.stomp.subscribe(
-      `/sub/chat/room/${id}`,
-      ({ body }: { body: string }) => {
-        const newMessage: IMessageBody = JSON.parse(body);
-        const isSentFromMaster = newMessage.writer === MASTER_PROTOCOL.MASTER;
-        if (
-          isSentFromMaster &&
-          newMessage.message === MASTER_PROTOCOL.DISBANDED
-        ) {
-          expelUser();
-        } else {
-          const msgNo = newMessage.msgNo;
-          const isParticipantsListChanged =
-            msgNo >= RECEIVE_PROTOCOL.SUBSCRIBE &&
-            msgNo <= RECEIVE_PROTOCOL.BAN;
-          if (isSentFromMaster && isParticipantsListChanged)
-            reflectNewMessageAndUser(newMessage);
-          else updateMessageList(newMessage);
-        }
-      },
-      { roomId: String(id), userId: userId || currentUserName }
-    );
+  const handleSubscribedChatMessages = ({ body }: { body: string }) => {
+    const newMessage: IMessageBody = JSON.parse(body);
+    const isSentFromMaster = newMessage.writer === MASTER_PROTOCOL.MASTER;
+    if (isSentFromMaster && newMessage.message === MASTER_PROTOCOL.DISBANDED) {
+      expelUser();
+    } else {
+      const msgNo = newMessage.msgNo;
+      const isParticipantsListChanged =
+        msgNo >= RECEIVE_PROTOCOL.SUBSCRIBE && msgNo <= RECEIVE_PROTOCOL.BAN;
+      if (isSentFromMaster && isParticipantsListChanged)
+        reflectNewMessageAndUser(newMessage);
+      else updateMessageList(newMessage);
+    }
   };
   const reflectNewMessageAndUser = (newMessage: IMessageBody) => {
     const msgNo = newMessage.msgNo;
@@ -202,7 +192,9 @@ function ChattingRoom({
   const initiateChattingEnviroment = async () => {
     currentUserName = makeUserName(userNickName);
     const isChattingStartedSuccessfully = await startChatting(
-      subscribeNewMessage
+      id,
+      userId || currentUserName,
+      handleSubscribedChatMessages
     );
     if (!isChattingStartedSuccessfully) router.push("/chat/list");
   };
@@ -210,7 +202,7 @@ function ChattingRoom({
     chattingSocketStomp = new SocketStomp();
     if (!getAccessTokenInCookies(CHATO_TOKEN)) initiateChattingEnviroment();
     return () => {
-      chattingSocketStomp.stomp.disconnect(() => null, {});
+      disconnectSocketCommunication();
       currentUserName = "";
       previousShowCnt = 0;
       clearTimeout(timeOut);

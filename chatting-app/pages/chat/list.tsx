@@ -33,7 +33,11 @@ import {
   requestToggleSubjectLike,
 } from "../../apis/roomApis";
 import { CHATO_TOKEN } from "../../constants/etc";
-import { sendRoomDeleteMessage } from "../../utils/socket";
+import {
+  connectSocketRoomsChange,
+  disconnectSocketRoomsChange,
+  sendRoomDeleteMessage,
+} from "../../utils/socket";
 import {
   arrangeEachRoom,
   findSubjectAndRoomIndexByRoomId,
@@ -165,22 +169,17 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     const isInValidToken = await requestChangeToNewSubject(roomMovedInfo);
     if (isInValidToken) handleTokenException();
   };
-  const subscribeRoomParticipants = () => {
-    listSocketStomp.stomp.subscribe(
-      "/sub/chat/room/list",
-      ({ body }: { body: string }) => {
-        const messageObj = JSON.parse(body);
-        if (Object.hasOwn(messageObj, MSG_TYPE.ENTER))
-          updateRoomParticipants(messageObj);
-        else if (Object.hasOwn(messageObj, MSG_TYPE.DELETE))
-          updateRoomDeleted(messageObj);
-        else if (Object.hasOwn(messageObj, MSG_TYPE.MOVE))
-          updateRoomMoved(messageObj);
-        else if (Object.hasOwn(messageObj, MSG_TYPE.CHANGE))
-          updateRoomInfoChange(messageObj);
-        else updateRoomCreated(messageObj);
-      }
-    );
+  const handleAllRoomsStatusChange = ({ body }: { body: string }) => {
+    const messageObj = JSON.parse(body);
+    if (Object.hasOwn(messageObj, MSG_TYPE.ENTER))
+      updateRoomParticipants(messageObj);
+    else if (Object.hasOwn(messageObj, MSG_TYPE.DELETE))
+      updateRoomDeleted(messageObj);
+    else if (Object.hasOwn(messageObj, MSG_TYPE.MOVE))
+      updateRoomMoved(messageObj);
+    else if (Object.hasOwn(messageObj, MSG_TYPE.CHANGE))
+      updateRoomInfoChange(messageObj);
+    else updateRoomCreated(messageObj);
   };
   const updateRoomParticipants = (info: {
     roomId: number;
@@ -317,16 +316,14 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
   };
   useEffect(() => {
     listSocketStomp = new SocketStomp();
-    listSocketStomp.stomp.connect({}, () => {
-      subscribeRoomParticipants();
-    });
+    connectSocketRoomsChange(handleAllRoomsStatusChange);
     if (!getAccessTokenInCookies(CHATO_TOKEN)) {
       setRoomList(
         getArrangedRoomList(getPinnedSubjectStorage(), chatRooms, userNo)
       );
     }
     return () => {
-      listSocketStomp.stomp.disconnect(() => null, {});
+      disconnectSocketRoomsChange();
       renderingCount = 0;
     };
   }, []);
