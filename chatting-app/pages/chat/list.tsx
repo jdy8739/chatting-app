@@ -34,9 +34,9 @@ import {
 } from "../../apis/roomApis";
 import { CHATO_TOKEN } from "../../constants/etc";
 import {
-  connectSocketRoomsChange,
   disconnectSocketRoomsChange,
   sendRoomDeleteMessage,
+  startRoomsSubscribing,
 } from "../../utils/socket";
 import {
   arrangeEachRoom,
@@ -315,13 +315,18 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     router.push("/user/signin");
   };
   useEffect(() => {
-    listSocketStomp = new SocketStomp();
-    connectSocketRoomsChange(handleAllRoomsStatusChange);
-    if (!getAccessTokenInCookies(CHATO_TOKEN)) {
-      setRoomList(
-        getArrangedRoomList(getPinnedSubjectStorage(), chatRooms, userNo)
+    (async () => {
+      listSocketStomp = new SocketStomp();
+      const isRoomsSubscribingStartedSuccessfully = await startRoomsSubscribing(
+        handleAllRoomsStatusChange
       );
-    }
+      if (!isRoomsSubscribingStartedSuccessfully) router.push("/");
+      if (!getAccessTokenInCookies(CHATO_TOKEN)) {
+        setRoomList(
+          getArrangedRoomList(getPinnedSubjectStorage(), chatRooms, userNo)
+        );
+      }
+    })();
     return () => {
       disconnectSocketRoomsChange();
       renderingCount = 0;
