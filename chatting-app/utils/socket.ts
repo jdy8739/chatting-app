@@ -40,7 +40,7 @@ export const makeUserName = (userNickName: string) => {
   return userNickName ? userNickName : generateRandonUserId();
 };
 
-export const subscribeChatMessage = (
+const subscribeChatMessage = (
   id: number,
   userId: string,
   handleSubscribedChatMessages: SocketCallback
@@ -52,7 +52,7 @@ export const subscribeChatMessage = (
   );
 };
 
-const connectSocketCommunication = () => {
+const connectSocketCommunication = (): Promise<boolean> => {
   return new Promise((connectSuccess, connectFail) => {
     chattingSocketStomp.stomp.connect(
       {},
@@ -66,15 +66,31 @@ const connectSocketCommunication = () => {
   });
 };
 
-export const connectSocketRoomsChange = (
+export const startRoomsSubscribing = async (
   handleAllRoomsStatusChange: SocketCallback
 ) => {
-  listSocketStomp.stomp.connect({}, () => {
+  const isRoomsSubscribingStartedSuccessfully =
+    await connectSocketRoomsChange();
+  if (isRoomsSubscribingStartedSuccessfully)
     subscribeAllRoomsChange(handleAllRoomsStatusChange);
+  return isRoomsSubscribingStartedSuccessfully;
+};
+
+const connectSocketRoomsChange = (): Promise<boolean> => {
+  return new Promise((connectSuccess, connectFail) => {
+    listSocketStomp.stomp.connect(
+      {},
+      () => {
+        connectSuccess(true);
+      },
+      () => {
+        connectFail(false);
+      }
+    );
   });
 };
 
-export const subscribeAllRoomsChange = (
+const subscribeAllRoomsChange = (
   handleAllRoomsStatusChange: SocketCallback
 ) => {
   listSocketStomp.stomp.subscribe(
