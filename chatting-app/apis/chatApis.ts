@@ -1,6 +1,7 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { SERVER_STATUS } from "../utils/enums";
 import { IChatRoomInfo, IFetchMessagesProps } from "../utils/interfaces";
+import { handleNormalErrors } from "../utils/utils";
 
 export const fetchRoomOwnerAndPreviousChat = async ({
   id,
@@ -18,7 +19,8 @@ export const fetchRoomOwnerAndPreviousChat = async ({
     });
     fetchedChatRoomInfo = data;
   } catch (e) {
-    // show toast;
+    console.log(e);
+    if (!fetchedChatRoomInfo) throw new Error();
   }
   return fetchedChatRoomInfo;
 };
@@ -31,7 +33,9 @@ export const requestMessageDelete = async (id: number, msgNo: number) => {
     );
     if (status === SERVER_STATUS.OK) isDeleteSuccessful = true;
   } catch (e) {
-    // show toast;
+    const { response } = e as AxiosError;
+    const status = response?.status;
+    if (status) handleNormalErrors(status);
   }
   return isDeleteSuccessful;
 };

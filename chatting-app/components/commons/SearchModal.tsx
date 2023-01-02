@@ -2,11 +2,9 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/router";
 import React, { useEffect, useRef, useState } from "react";
 import { DragDropContext, Droppable } from "react-beautiful-dnd";
-import { toast } from "react-toastify";
 import { fetchRoomsByKeyword } from "../../apis/roomApis";
 import { modalBgVariant, zIndex100 } from "../../constants/styles";
 import { IRoom } from "../../types/types";
-import { toastConfig } from "../../utils/utils";
 import Room from "../list/Room";
 
 let prevPathName = "";
@@ -22,10 +20,8 @@ function SearchModal({ hideSearchModal }: { hideSearchModal: () => void }) {
     const keyword = inputRef.current?.value;
     if (keyword) {
       const searchedRooms = await fetchRoomsByKeyword(keyword);
-      if (!searchedRooms || searchedRooms.length === 0) {
-        toast.error("No rooms have been found. :(", toastConfig);
-        setSearchedRooms([]);
-      } else setSearchedRooms(searchedRooms);
+      if (!searchedRooms || searchedRooms.length === 0) setSearchedRooms([]);
+      else setSearchedRooms(searchedRooms);
     }
   };
   useEffect(() => {

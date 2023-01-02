@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { IRoomSettings } from "../../utils/interfaces";
-import { requestWithTokenAxios } from "../../utils/utils";
+import { requestWithTokenAxios } from "../../utils/axios";
 
 function SettingsContent({
   roomId,

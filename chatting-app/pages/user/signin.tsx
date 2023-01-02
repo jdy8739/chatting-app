@@ -5,7 +5,7 @@ import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import { requestSignIn } from "../../apis/userApis";
 import Seo from "../../components/commons/Seo";
-import { CHATO_TOKEN } from "../../constants/etc";
+import { CHATO_TOKEN, toastConfig } from "../../constants/etc";
 import { SIGN_IN_FORM_STYLE } from "../../constants/styles";
 import { replaceList } from "../../lib/store/modules/likedSubjectReducer";
 import {
@@ -15,7 +15,6 @@ import {
 import {
   clearPreviousRoomId,
   getAccessTokenInCookies,
-  toastConfig,
 } from "../../utils/utils";
 
 function Signin() {

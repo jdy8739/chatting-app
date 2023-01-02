@@ -18,7 +18,6 @@ import {
   clearPreviousRoomId,
   getAccessTokenInCookies,
   removeAccessTokenInCookies,
-  toastConfig,
 } from "../../utils/utils";
 import Image from "next/image";
 import {
@@ -27,7 +26,7 @@ import {
   requestWithdrawal,
 } from "../../apis/userApis";
 import { SETTINGS_FORM_STYLE } from "../../constants/styles";
-import { CHATO_TOKEN, ID_REGEX } from "../../constants/etc";
+import { CHATO_TOKEN, ID_REGEX, toastConfig } from "../../constants/etc";
 import Seo from "../../components/commons/Seo";
 
 let userProfilePic: File | undefined;
