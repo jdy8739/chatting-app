@@ -139,10 +139,11 @@ function ChatContent({
           src={`${process.env.NEXT_PUBLIC_API_URL}/room/content-pic/${roomId}/${msgNo}`}
           style={IMAGE_STYLE}
           width="180px"
-          height="150px"
+          height="180px"
           alt={`room: ${roomId} image-content: ${msgNo}`}
           loading="lazy"
           layout="intrinsic"
+          placeholder="empty"
         />
       ) : (
         <span>{isDeleted ? "deleted message" : content}</span>
