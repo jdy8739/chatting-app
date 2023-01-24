@@ -50,10 +50,9 @@ const likedSubjectReducer = (
         }),
       };
     case LIKED_LIST.REPLACE:
-      if (action.subjectList)
-        return {
-          subjectList: action.subjectList,
-        };
+      return {
+        subjectList: action.subjectList || [],
+      };
     case LIKED_LIST.TRUNCATE:
       return {
         subjectList: [],

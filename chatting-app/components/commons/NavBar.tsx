@@ -14,7 +14,6 @@ import {
 } from "../../lib/store/modules/signInReducer";
 import { IUserInfoSelector } from "../../utils/interfaces";
 import SearchModal from "./SearchModal";
-import Image from "next/image";
 import { fetchUserInfo, requestSignOut } from "../../apis/userApis";
 import { CHATO_TOKEN } from "../../constants/etc";
 import {
@@ -99,16 +98,19 @@ function NavBar() {
             {userInfo.userId ? (
               <>
                 <div className="profile-img">
-                  <Image
+                  <img
                     width="100%"
                     height="100%"
                     src={`${process.env.NEXT_PUBLIC_API_URL}/user/profile-pic/${userInfo.userId}`}
                     alt="profile-icon"
                   />
                 </div>
-                <div id="user-id" onClick={() => router.push("/user/settings")}>
+                <button
+                  id="user-id"
+                  onClick={() => router.push("/user/settings")}
+                >
                   {userInfo.userId}
-                </div>
+                </button>
                 <button onClick={signOutAndClearUserInfo}>sign out</button>
               </>
             ) : (
