@@ -96,7 +96,7 @@ function MyApp({ Component, pageProps }: AppProps) {
         .container {
           width: 70%;
           max-width: 2250px;
-          min-width: 450px;
+          min-width: 500px;
           padding: 120px 62px;
           margin: 60px auto 0 auto;
         }

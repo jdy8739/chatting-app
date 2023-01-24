@@ -1,7 +1,7 @@
 import webstomp, { Client } from "webstomp-client";
 import { IUserSignedInInfo } from "../lib/store/modules/signInReducer";
 import { IMessageBody, IParticipants, IRoom } from "../types/types";
-import { SECTION } from "./enums";
+import { IUserInfo, SECTION } from "./enums";
 
 export interface ISubjectListSelector {
   likedSubjectReducer: {
@@ -28,6 +28,17 @@ export interface IModal {
   hideModal: () => void;
   pushToChatRoom?: (password?: string) => void;
   addSubjectTable?: (newTableName: string) => void;
+}
+
+export interface ISettingsModal {
+  alteredUserInfo: IUserInfo;
+  handleUserSettingsSubmit: (
+    value: IUserInfo,
+    inputPassword: string
+  ) => Promise<boolean>;
+  handleUserWithdraw: (inputPassword: string) => Promise<boolean>;
+  setProtocol: (value: number) => void;
+  protocol: number;
 }
 
 export interface ILikedSubject {

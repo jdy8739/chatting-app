@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
-import Modal from "../../components/settings/Modal";
+import SettingsModal from "../../components/settings/SettingsModal";
 import { EXECUTE, IUserInfo } from "../../utils/enums";
 import { truncateList } from "../../lib/store/modules/likedSubjectReducer";
 import {
@@ -19,7 +19,6 @@ import {
   getAccessTokenInCookies,
   removeAccessTokenInCookies,
 } from "../../utils/utils";
-import Image from "next/image";
 import {
   fetchUserSettingsInfo,
   requestAlterUserSettingsInfo,
@@ -183,7 +182,7 @@ function Settings() {
           <div className="profile-image-box">
             <label htmlFor="pic" style={SETTINGS_FORM_STYLE.JUSTIFY_CENTER}>
               {picBlobString || userInfo?.profilePicUrl ? (
-                <Image
+                <img
                   src={`${
                     picBlobString ? picBlobString : userInfo?.profilePicUrl
                   }`}
@@ -261,7 +260,7 @@ function Settings() {
       </form>
       <AnimatePresence>
         {protocol > 0 && (
-          <Modal
+          <SettingsModal
             alteredUserInfo={{
               id: getValues("id"),
               nickName: getValues("nickName"),

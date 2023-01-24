@@ -29,7 +29,8 @@
     "@next/next/no-page-custom-font": "off",
     "react/react-in-jsx-scope": "off",
     "react-hooks/exhaustive-deps": "off",
-    "no-async-promise-executor": "off"
+    "no-async-promise-executor": "off",
+    "@next/next/no-img-element": "off"
   },
   "settings": {
     "react": {

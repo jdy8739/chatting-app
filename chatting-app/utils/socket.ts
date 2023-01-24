@@ -48,7 +48,7 @@ const subscribeChatMessage = (
   chattingSocketStomp.stomp.subscribe(
     `/sub/chat/room/${id}`,
     handleSubscribedChatMessages,
-    { roomId: String(id), userId: userId }
+    { roomId: String(id), userId }
   );
 };
 

@@ -2,19 +2,9 @@ import React, { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/router";
 import { classNames } from "../../constants/className";
-import { EXECUTE, IUserInfo } from "../../utils/enums";
+import { EXECUTE } from "../../utils/enums";
 import { modalBgVariant } from "../../constants/styles";
-
-interface IModal {
-  alteredUserInfo: IUserInfo;
-  handleUserSettingsSubmit: (
-    value: IUserInfo,
-    inputPassword: string
-  ) => Promise<boolean>;
-  handleUserWithdraw: (inputPassword: string) => Promise<boolean>;
-  setProtocol: (value: number) => void;
-  protocol: number;
-}
+import { ISettingsModal } from "../../utils/interfaces";
 
 let timeOut: NodeJS.Timeout;
 
@@ -24,7 +14,7 @@ function Modal({
   setProtocol,
   protocol,
   alteredUserInfo,
-}: IModal) {
+}: ISettingsModal) {
   const router = useRouter();
   const modalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);

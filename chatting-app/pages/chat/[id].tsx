@@ -214,13 +214,13 @@ function ChattingRoom({
   }, [userNo]);
 
   /* start making props for message-components. */
-  const array: IMessageProps[] = [];
+  const propsArrayForMessageComponent: IMessageProps[] = [];
   let count = 0;
   for (const message of messages) {
     const prevWriter = messages[count - 1]?.writer;
     const prevTime = messages[count - 1]?.time;
     const isNumberMatches = targetChatNumber === count;
-    array.push({
+    propsArrayForMessageComponent.push({
       prevWriter,
       prevTime,
       isNumberMatches,
@@ -259,7 +259,7 @@ function ChattingRoom({
             <MessageComponent
               key={msg.msgNo}
               msg={msg}
-              {...array[i]}
+              {...propsArrayForMessageComponent[i]}
               {...profileAndRoomInfo}
               {...comparisonLogicFunctions}
             />
