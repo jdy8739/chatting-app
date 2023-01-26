@@ -159,9 +159,12 @@ function InputInterface({
       <style jsx>{`
         textarea {
           outline: 1px solid rgb(0, 219, 146);
+          resize: none;
+          background-color: rgba(255, 255, 255, 0.6);
         }
         textarea:focus {
           outline: 1px solid orange;
+          background-color: rgba(255, 255, 255, 0.85);
         }
         .chat-form {
           width: 100%;

@@ -90,7 +90,20 @@ function MyApp({ Component, pageProps }: AppProps) {
           font-size: 7px;
           color: #888888;
         }
+        .picture-chat {
+          width: 180px;
+          padding: 8px;
+          border-radius: 8px;
+        }
+        .my-picture {
+          margin-left: auto;
+          margin-right: 0;
+        }
         .deleted-chat {
+          color: white;
+          padding: 8px;
+          border-radius: 8px;
+          position: relative;
           background-color: gray;
         }
         .container {

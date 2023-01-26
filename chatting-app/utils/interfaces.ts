@@ -183,6 +183,7 @@ export interface IMessageContent {
   msgNo: number;
   isDeleted?: boolean;
   isPicture?: boolean;
+  isMyNickNameMessage: boolean;
 }
 
 export interface IInputInterface {
