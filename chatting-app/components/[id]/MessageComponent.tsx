@@ -2,7 +2,6 @@ import React from "react";
 import { MASTER_PROTOCOL } from "../../utils/enums";
 import Image from "next/image";
 import { IMessageComponent, IMessageContent } from "../../utils/interfaces";
-import { IMAGE_STYLE } from "../../constants/styles";
 import { PUBLIC_ICONS_PATH } from "../../constants/icons";
 
 function MessageComponent({
@@ -20,6 +19,7 @@ function MessageComponent({
 }: IMessageComponent) {
   /* console.log('A message component rendered.'); */
   const isMyMessage = msg.writerNo === userNo;
+  const isMyNickNameMessage = checkIfIsMyChat(msg.writer) || isMyMessage;
   const isSameTimeMessage = prevTime !== msg.time;
   const checkIsEligibleToDelete = () => {
     return checkIfIsMyChat(msg.writer) || isMyMessage || roomOwner === userNo;
@@ -27,9 +27,7 @@ function MessageComponent({
   return (
     <div
       className={`chat-box ${
-        checkIfIsMyChat(msg.writer) || isMyMessage
-          ? "my-chat-box"
-          : "others-chat-box"
+        isMyNickNameMessage ? "my-chat-box" : "others-chat-box"
       }`}
     >
       {index === 0 ? (
@@ -56,13 +54,10 @@ function MessageComponent({
               checkIsEligibleToDelete() &&
               handleChatDblClick(index, isNumberMatches)
             }
-            className={`chat 
-              ${
-                checkIfIsMyChat(msg.writer) || isMyMessage
-                  ? "my-chat"
-                  : "others-chat"
-              }
+            className={`
+              ${!msg.isPicture ? "chat" : ""}
               ${msg.isDeleted ? "deleted-chat" : ""}
+              ${isMyNickNameMessage ? "my-chat" : "others-chat"}
             `}
           >
             {!msg.isDeleted && isNumberMatches && (
@@ -79,6 +74,7 @@ function MessageComponent({
               content={msg.message}
               msgNo={msg.msgNo}
               roomId={roomId}
+              isMyNickNameMessage={isMyNickNameMessage}
             />
           </span>
           {index !== 0 &&
@@ -131,20 +127,27 @@ function ChatContent({
   content,
   roomId,
   msgNo,
+  isMyNickNameMessage,
 }: IMessageContent) {
   return (
     <>
       {isPicture && !isDeleted ? (
-        <Image
-          src={`${process.env.NEXT_PUBLIC_API_URL}/room/content-pic/${roomId}/${msgNo}`}
-          style={IMAGE_STYLE}
-          width="180px"
-          height="180px"
-          alt={`room: ${roomId} image-content: ${msgNo}`}
-          loading="lazy"
-          layout="intrinsic"
-          placeholder="empty"
-        />
+        <div
+          className={`picture-chat ${
+            isMyNickNameMessage ? "my-chat my-picture" : "others-chat"
+          }`}
+        >
+          <Image
+            src={`${process.env.NEXT_PUBLIC_API_URL}/room/content-pic/${roomId}/${msgNo}`}
+            width="100%"
+            height="100%"
+            alt={`room: ${roomId} image-content: ${msgNo}`}
+            loading="lazy"
+            layout="responsive"
+            placeholder="empty"
+            objectFit="contain"
+          />
+        </div>
       ) : (
         <span>{isDeleted ? "deleted message" : content}</span>
       )}
