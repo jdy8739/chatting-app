@@ -3,6 +3,7 @@ import { MASTER_PROTOCOL } from "../../utils/enums";
 import Image from "next/image";
 import { IMessageComponent, IMessageContent } from "../../utils/interfaces";
 import { PUBLIC_ICONS_PATH } from "../../constants/icons";
+import { classNames } from "../../constants/className";
 
 function MessageComponent({
   msg,
@@ -26,8 +27,10 @@ function MessageComponent({
   };
   return (
     <div
-      className={`chat-box ${
-        isMyNickNameMessage ? "my-chat-box" : "others-chat-box"
+      className={`${classNames.chat.chat_box} ${
+        isMyNickNameMessage
+          ? classNames.chat.my_chat_box
+          : classNames.chat.others_chat_box
       }`}
     >
       {index === 0 ? (
@@ -41,7 +44,7 @@ function MessageComponent({
         )
       )}
       {msg.writer === MASTER_PROTOCOL.MASTER ? (
-        <span className="master-chat">{msg.message}</span>
+        <span className={classNames.chat.master_chat}>{msg.message}</span>
       ) : (
         <>
           {index !== 0 &&
@@ -55,15 +58,19 @@ function MessageComponent({
               handleChatDblClick(index, isNumberMatches)
             }
             className={`
-              ${!msg.isPicture ? "chat" : ""}
-              ${msg.isDeleted ? "deleted-chat" : ""}
-              ${isMyNickNameMessage ? "my-chat" : "others-chat"}
+              ${!msg.isPicture ? classNames.chat.chat : ""}
+              ${msg.isDeleted ? classNames.chat.deleted_chat : ""}
+              ${
+                isMyNickNameMessage
+                  ? classNames.chat.my_chat
+                  : classNames.chat.others_chat
+              }
             `}
           >
             {!msg.isDeleted && isNumberMatches && (
               <span
                 onClick={() => deleteChat(roomId, msg.msgNo)}
-                className="delete-btn"
+                className={classNames.button.delete_btn}
               >
                 <span>x</span>
               </span>
@@ -116,7 +123,7 @@ function ChatInfo({
 function ChatTime({ time }: { time: string }) {
   return (
     <>
-      &emsp;<span className="chat-time">{time}</span>&emsp;
+      &emsp;<span className={classNames.chat.chat_time}>{time}</span>&emsp;
     </>
   );
 }
@@ -133,8 +140,10 @@ function ChatContent({
     <>
       {isPicture && !isDeleted ? (
         <div
-          className={`picture-chat ${
-            isMyNickNameMessage ? "my-chat my-picture" : "others-chat"
+          className={`${classNames.chat.picture_chat} ${
+            isMyNickNameMessage
+              ? `${classNames.chat.my_chat} ${classNames.chat.my_picture}`
+              : classNames.chat.others_chat
           }`}
         >
           <Image
