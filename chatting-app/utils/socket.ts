@@ -1,6 +1,10 @@
 import { listSocketStomp } from "../pages/chat/list";
 import { chattingSocketStomp } from "../pages/chat/[id]";
-import { IMessageBody, SocketCallback } from "../types/types";
+import {
+  IMessageBody,
+  SocketCallback,
+  TBinaryFileHeader,
+} from "../types/types";
 import { MASTER_PROTOCOL, SEND_PROTOCOL } from "./enums";
 import { generateRandonUserId } from "./utils";
 
@@ -106,8 +110,6 @@ export const disconnectSocketCommunication = () => {
 export const disconnectSocketRoomsChange = () => {
   listSocketStomp.stomp.disconnect(() => null, {});
 };
-
-type TBinaryFileHeader = { [key: string]: string | number | null };
 
 export const sendBinaryImageFile = (
   binaryImageFile: ArrayBuffer,
