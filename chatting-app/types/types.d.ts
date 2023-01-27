@@ -33,6 +33,12 @@ declare module "webstomp-client" {
   }
 }
 
+declare module "react-beautiful-dnd" {
+  export interface Responders {
+    onDragEnd?: OnDragEndResponder;
+  }
+}
+
 export interface IRoom {
   roomId: number;
   roomName: string;
