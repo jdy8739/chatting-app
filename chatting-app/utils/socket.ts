@@ -1,7 +1,11 @@
 import { listSocketStomp } from "../pages/chat/list";
 import { chattingSocketStomp } from "../pages/chat/[id]";
-import { IMessageBody, SocketCallback } from "../types/types";
-import { SEND_PROTOCOL } from "./enums";
+import {
+  IMessageBody,
+  SocketCallback,
+  TBinaryFileHeader,
+} from "../types/types";
+import { MASTER_PROTOCOL, SEND_PROTOCOL } from "./enums";
 import { generateRandonUserId } from "./utils";
 
 export const shootChatMessage = (
@@ -105,4 +109,28 @@ export const disconnectSocketCommunication = () => {
 
 export const disconnectSocketRoomsChange = () => {
   listSocketStomp.stomp.disconnect(() => null, {});
+};
+
+export const sendBinaryImageFile = (
+  binaryImageFile: ArrayBuffer,
+  binaryFileHeaders: TBinaryFileHeader
+) => {
+  chattingSocketStomp.stomp.send(
+    `/pub/chat/${SEND_PROTOCOL.BINARY}`,
+    binaryImageFile,
+    binaryFileHeaders
+  );
+};
+
+export const sendRoomDeleteMasterMessage = (roomId: number) => {
+  chattingSocketStomp.stomp.send(
+    `/pub/chat/${SEND_PROTOCOL.DELETE}`,
+    JSON.stringify({
+      msgNo: 0,
+      roomId: String(roomId),
+      message: MASTER_PROTOCOL.DISBANDED,
+      writer: MASTER_PROTOCOL.MASTER,
+      writerNo: null,
+    })
+  );
 };

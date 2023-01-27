@@ -2,14 +2,18 @@ import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import React, { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { LIMIT, MASTER_PROTOCOL, SEND_PROTOCOL } from "../../utils/enums";
+import { LIMIT, SEND_PROTOCOL } from "../../utils/enums";
 import { getNowTime } from "../../utils/utils";
 import { IInputInterface } from "../../utils/interfaces";
 import SettingsContent from "./SettingsContent";
 import { requestRoomDelete } from "../../apis/roomApis";
 import { modalBgVariant } from "../../constants/styles";
 import { chattingSocketStomp } from "../../pages/chat/[id]";
-import { shootChatMessage } from "../../utils/socket";
+import {
+  sendBinaryImageFile,
+  sendRoomDeleteMasterMessage,
+  shootChatMessage,
+} from "../../utils/socket";
 import { toastConfig } from "../../constants/etc";
 
 let imageFile: ArrayBuffer | null;
@@ -49,18 +53,11 @@ function InputInterface({
         "content-type": "application/octet-stream",
         "image-size": imageFile.byteLength,
         "room-id": roomId,
-        writer: currentUserName,
         "writer-no": userNo > 0 ? userNo : null,
+        writer: currentUserName,
         time: getNowTime(),
       };
-      Object.freeze(binaryFileHeaders);
-      if (chattingSocketStomp) {
-        chattingSocketStomp.stomp.send(
-          `/pub/chat/${SEND_PROTOCOL.BINARY}`,
-          imageFile,
-          binaryFileHeaders
-        );
-      }
+      sendBinaryImageFile(imageFile, binaryFileHeaders);
       imageFile = null;
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
@@ -95,19 +92,7 @@ function InputInterface({
   const handleRoomSettings = () => setIsModalShown(true);
   const terminateChatRoom = async () => {
     const isRoomDeleteSuccessful = await requestRoomDelete(roomId);
-    if (isRoomDeleteSuccessful) {
-      if (chattingSocketStomp)
-        chattingSocketStomp.stomp.send(
-          `/pub/chat/${SEND_PROTOCOL.DELETE}`,
-          JSON.stringify({
-            msgNo: 0,
-            roomId: String(roomId),
-            message: MASTER_PROTOCOL.DISBANDED,
-            writer: MASTER_PROTOCOL.MASTER,
-            writerNo: null,
-          })
-        );
-    }
+    if (isRoomDeleteSuccessful) sendRoomDeleteMasterMessage(roomId);
   };
   const stopProppagation = (e: React.MouseEvent<HTMLDivElement>) =>
     e.stopPropagation();

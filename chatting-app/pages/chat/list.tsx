@@ -28,7 +28,7 @@ import {
 import { TABLE_SHOW } from "../../constants/styles";
 import {
   fetchAllRoomsList,
-  requestRoomSubjectChange,
+  requestChangeToNewSubject,
   requestRoomDelete,
   requestToggleSubjectLike,
 } from "../../apis/roomApis";
@@ -166,7 +166,7 @@ function ChattingList({ rooms }: { rooms: IRoom[] }) {
     } else if (isInValidToken) handleTokenException();
   };
   const changeToNewSubject = async (roomMovedInfo: IRoomMoved) => {
-    const isInValidToken = await requestRoomSubjectChange(roomMovedInfo);
+    const isInValidToken = await requestChangeToNewSubject(roomMovedInfo);
     if (isInValidToken) handleTokenException();
   };
   const handleAllRoomsStatusChange = ({ body }: { body: string }) => {

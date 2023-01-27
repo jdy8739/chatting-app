@@ -1,7 +1,5 @@
 import "react-toastify";
 import "webstomp-client";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import react from "react";
 
 declare module "react" {
   interface StyleHTMLAttributes<T> extends React.HTMLAttributes<T> {
@@ -23,15 +21,15 @@ declare module "react-toastify" {
   }
 }
 
-type ISendMethod = (
-  destination: string,
-  body?: string | ArrayBuffer | undefined,
-  headers?: ExtendedHeaders | undefined
-) => void;
+export type TBinaryFileHeader = { [key: string]: string | number | null };
 
 declare module "webstomp-client" {
   export interface Client {
-    send: ISendMethod;
+    send(
+      destination: string,
+      body?: string | ArrayBuffer,
+      headers?: TBinaryFileHeader
+    ): void;
   }
 }
 
@@ -66,7 +64,7 @@ export interface IParticipants {
 export interface Asn {
   asn: string;
   name: string;
-  domain?: any;
+  domain?: unknown;
   route: string;
   type: string;
 }
@@ -103,7 +101,7 @@ export interface Threat {
   is_known_abuser: boolean;
   is_threat: boolean;
   is_bogon: boolean;
-  blocklists: any[];
+  blocklists: unknown[];
 }
 
 export interface Iipdata {
